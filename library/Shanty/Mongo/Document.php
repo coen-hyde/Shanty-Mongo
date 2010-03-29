@@ -44,7 +44,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 			$this->_id = new MongoId();
 		}
 		
-		// If this document is not new and has key then add it to the update criteria
+		// If has key then add it to the update criteria
 		if ($this->hasKey()) {
 			$this->setCriteria($this->getPathToProperty('_id'), $this->getId());
 		}
@@ -560,7 +560,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		$validators = $this->getValidators($property);
 		
 		// Throw exception if value is not valid
-		if (!$validators->isValid($value)) {
+		if (!is_null($value) && !$validators->isValid($value)) {
 			require_once 'Shanty/Mongo/Exception.php';
 			throw new Shanty_Mongo_Exception(implode($validators->getMessages(), "\n"));
 		}
