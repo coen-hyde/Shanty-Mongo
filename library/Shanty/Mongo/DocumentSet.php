@@ -1,9 +1,10 @@
 <?php
+
 /**
  * @category   Shanty
  * @package    Shanty_Mongo
- * @subpackage DocumentSet
  * @copyright  Shanty Tech Pty Ltd
+ * @license    New BSD License
  * @author     Coen Hyde
  */
 class Shanty_Mongo_DocumentSet extends Shanty_Mongo_Document
@@ -15,26 +16,29 @@ class Shanty_Mongo_DocumentSet extends Shanty_Mongo_Document
 	 * 
 	 * @param mixed $property
 	 */
-	public function getProperty($property = null)
+	public function getProperty($index = null)
 	{
+		$new = is_null($index);
+		
 		// If property exists and initialised then return it
-		if (!is_null($property) && array_key_exists($property, $this->_data)) {
-			return $this->_data[$property];
+		if (!$new && array_key_exists($index, $this->_data)) {
+			return $this->_data[$index];
 		}
 			
 		// Fetch clean data for this property
-		if (!is_null($property) && array_key_exists($property, $this->_cleanData)) $data = $this->_cleanData[$property];
+		if (!$new && array_key_exists($index, $this->_cleanData)) $data = $this->_cleanData[$index];
 		else $data = array();
 		
 		// If property is a reference to another document then fetch the reference document
-		$reference = false;
-		$collection = $this->getCollection();
 		if (MongoDBRef::isRef($data)) {
 			$collection = $data['$ref'];
 			$data = MongoDBRef::get(static::getMongoDB(), $data);
 			$reference = true;
 		}
-		
+		else {
+			$reference = false;
+			$collection = $this->getCollection();
+		}
 		
 		$config = array ();
 		$config['collection'] = $collection;
@@ -43,9 +47,9 @@ class Shanty_Mongo_DocumentSet extends Shanty_Mongo_Document
 		$config['hasId'] = $this->hasRequirement(self::DYNAMIC_INDEX, 'hasId');
 		
 		if (!$reference) {
-			// If this is a new array element. send the path to array. we will $push to the array when saving
-			if (is_null($property)) $path = $this->getPathToDocument();
-			else $path = $this->getPathToProperty($property);
+			// If this is a new array element. We will $push to the array when saving
+			if ($new) $path = $this->getPathToDocument();
+			else $path = $this->getPathToProperty($index);
 			
 			$config['pathToDocument'] = $path;
 			$config['criteria'] = $this->getCriteria();
@@ -56,12 +60,28 @@ class Shanty_Mongo_DocumentSet extends Shanty_Mongo_Document
 			$className = 'Shanty_Mongo_Document';
 		}
 		
-		$document = new $className($data, $config);
-		
-		// Make sure object is a document
-		if (!($document instanceof Shanty_Mongo_Document)) {
+		// Make sure document class is a document
+		if ($className !== 'Shanty_Mongo_Document' && !is_subclass_of($className, 'Shanty_Mongo_Document')) {
 			require_once 'Shanty/Mongo/Exception.php';
 			throw new Shanty_Mongo_Exception("{$className} is not a Shanty_Mongo_Document");
+		}
+		
+		// If this is a new document and document will be saved as a reference, make sure it has a collection to be saved to
+		if ($new && $this->hasRequirement(static::DYNAMIC_INDEX, 'AsReference') && !$className::hasCollectionName()) {
+			require_once 'Shanty/Mongo/Exception.php';
+			throw new Shanty_Mongo_Exception("Document class of '{$className}' is not associated with a collection");
+		}
+		
+		$document = new $className($data, $config);
+		
+		// if this document was a reference then remember that
+		if ($reference) {
+			$this->_references->attach($document);
+		}
+		
+		// If this is not a new document cache it
+		if (!$new) {
+			$this->_data[$index] = $document;
 		}
 		
 		return $document;
@@ -75,32 +95,46 @@ class Shanty_Mongo_DocumentSet extends Shanty_Mongo_Document
 	 */
 	public function setProperty($index, Shanty_Mongo_Document $document)
 	{
+		$new = is_null($index);
+		
 		// Make sure index is numeric
-		if (!is_null($index) && !is_numeric($index)) {
+		if (!$new && !is_numeric($index)) {
 			require_once 'Shanty/Mongo/Exception.php';
 			throw new Shanty_Mongo_Exception("Index must be numeric '{$index}' given");
 		}
 		
+		// Make sure we are not keeping a copy of the old document in reference memory
+		if (!$new && isset($this->_data[$index]) && !is_null($this->_data[$index])) {
+			$this->_references->detach($this->_data[$index]);
+		}
+		
 		// Throw exception if value is not valid
 		$validators = $this->getValidators(self::DYNAMIC_INDEX);
+		
 		if (!$validators->isValid($document)) {
 			require_once 'Shanty/Mongo/Exception.php';
 			throw new Shanty_Mongo_Exception(implode($validators->getMessages(), "\n"));
 		}
 		
-		// Clone document
-		$documentClone = clone $document;
-		
-		// Inform the document of it's surroundings
-		$documentClone->setCollection($this->getCollection());
-		$documentClone->setPathToDocument($this->getPathToDocument());
-		$documentClone->setConfigAttribute('criteria', $this->getCriteria());
+		// Clone document if it has been saved somewhere else
+		if (!$document->isNewDocument()) {
+			$document = clone $document;
+		}
 			
 		// Filter value
-		$value = $this->getFilters(self::DYNAMIC_INDEX)->filter($documentClone);
+//		$value = $this->getFilters(self::DYNAMIC_INDEX)->filter($document);
 		
-		if (is_null($index)) $this->_data[] = $documentClone;
-		else $this->_data[$index] = $documentClone;
+		if ($new) {
+			$keys = $this->getPropertyKeys();
+			$index = max($keys)+1;
+			$this->_data[$index] = $document;
+		}
+		else $this->_data[$index] = $document;
+
+		// Inform the document of it's surroundings
+		$document->setCollection($this->getCollection());
+		$document->setPathToDocument($this->getPathToProperty($index));
+		$document->setConfigAttribute('criteria', $this->getCriteria());
 	}
 	
 	/**
@@ -135,10 +169,44 @@ class Shanty_Mongo_DocumentSet extends Shanty_Mongo_Document
 		return $this->setProperty(null, $document);
 	}
 	
+	/**
+	 * Add a document to the push queue
+	 * 
+	 * @param Shanty_Mongo_Document $document
+	 */
+	public function pushDocument(Shanty_Mongo_Document $document)
+	{
+		$this->push($this->pathToDocument(), $document);
+	}
+	
+	/**
+	 * Get all operations
+	 * 
+	 * @param Boolean $includingChildren Get operations from children as well
+	 */
+	public function getOperations($includingChildren = false)
+	{
+		if ($this->hasRequirement(self::DYNAMIC_INDEX, 'AsReference')) $includingChildren = false;
+		
+		return parent::getOperations($includingChildren);
+	}
+	
+	/**
+	 * Remove all operations
+	 * 
+	 * @param Boolean $includingChildren Remove operations from children as wells
+	 */
+	public function purgeOperations($includingChildren = false)
+	{
+		if ($this->hasRequirement(self::DYNAMIC_INDEX, 'AsReference')) $includingChildren = false;
+		
+		return parent::purgeOperations($includingChildren);
+	}
+	
 	public function __call($name, $arguments = array())
 	{
 		switch ($name) {
-			case 'new' :
+			case 'new':
 				return $this->getProperty();
 		}
 		

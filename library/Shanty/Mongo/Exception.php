@@ -3,11 +3,11 @@
 /**
  * @category   Shanty
  * @package    Shanty_Mongo
- * @subpackage Exception
  * @copyright  Shanty Tech Pty Ltd
+ * @license    New BSD License
  * @author     Coen Hyde
  */
-class Shanty_Mongo_Exception extends Shanty_Exception
+class Shanty_Mongo_Exception extends Exception
 {
 	
 }

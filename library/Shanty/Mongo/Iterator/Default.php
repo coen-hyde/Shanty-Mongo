@@ -1,19 +1,27 @@
 <?php
 
+/**
+ * @category   Shanty
+ * @package    Shanty_Mongo
+ * @copyright  Shanty Tech Pty Ltd
+ * @license    New BSD License
+ * @author     Coen Hyde
+ */
 class Shanty_Mongo_Iterator_Default implements SeekableIterator, RecursiveIterator
 {
 	protected $_document = null;
 	protected $_position = null;
 	protected $_properties = array();
+	protected $_init = false;
 	protected $_counter = 0;
 	
 	public function __construct(Shanty_Mongo_Document $document)
 	{
 		$this->_document = $document;
 		$this->_properties = $document->getPropertyKeys();
+		$this->_position = current($this->_properties);
 		
 		reset($this->_properties);
-		$this->_position = current($this->_properties);
 	}
 	
 	/**

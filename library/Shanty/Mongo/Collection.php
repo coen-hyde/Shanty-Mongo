@@ -3,8 +3,8 @@
 /**
  * @category   Shanty
  * @package    Shanty_Mongo
- * @subpackage Collection
  * @copyright  Shanty Tech Pty Ltd
+ * @license    New BSD License
  * @author     Coen Hyde
  */
 abstract class Shanty_Mongo_Collection
@@ -31,6 +31,26 @@ abstract class Shanty_Mongo_Collection
 	public static function getCollectionName()
 	{
 		return static::$_collectionName;
+	}
+
+	/**
+	 * Determine if this collection has a database name set
+	 * 
+	 * @return boolean
+	 */
+	public static function hasDbName()
+	{
+		return !is_null(static::getDbName());
+	}
+	
+	/**
+	 * Determine if this collection has a collection name set
+	 * 
+	 * @return boolean
+	 */
+	public static function hasCollectionName()
+	{
+		return !is_null(static::getCollectionName());
 	}
 	
 	/**
@@ -74,7 +94,7 @@ abstract class Shanty_Mongo_Collection
 	 */
 	protected static function getMongoDb()
 	{
-		if (is_null(static::getDbName())) {
+		if (!static::hasDbName()) {
 			throw new Shanty_Mongo_Exception(get_called_class().'::$_dbName is null');
 		}
 		
@@ -88,7 +108,7 @@ abstract class Shanty_Mongo_Collection
 	 */
 	protected static function getMongoCollection()
 	{
-		if (is_null(static::getCollectionName())) {
+		if (!static::hasCollectionName()) {
 			throw new Shanty_Mongo_Exception(get_called_class().'::$_collectionName is null');
 		}
 		

@@ -4,6 +4,7 @@
  * @category   Shanty
  * @package    Shanty_Mongo
  * @copyright  Shanty Tech Pty Ltd
+ * @license    New BSD License
  * @author     Coen Hyde
  */
 class Shanty_Mongo
@@ -35,7 +36,7 @@ class Shanty_Mongo
 		self::addRequirement('Hostname', new Zend_Validate_Hostname());
 		self::addRequirement('Int', new Zend_Validate_Int());
 		self::addRequirement('Ip', new Zend_Validate_Ip());
-		self::addRequirement('NotEmpty', new Zend_Validate_NotEmpty());
+		self::addRequirement('NotEmpty', new Shanty_Mongo_Validate_StubTrue());
 		self::addRequirement('MongoId', new Shanty_Mongo_Validate_Class('MongoId'));
 		
 		// Filter requirements

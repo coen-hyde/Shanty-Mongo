@@ -3,8 +3,8 @@
 /**
  * @category   Shanty
  * @package    Shanty_Mongo
- * @subpackage Document
  * @copyright  Shanty Tech Pty Ltd
+ * @license    New BSD License
  * @author     Coen Hyde
  */
 class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAccess, Countable, IteratorAggregate
@@ -40,12 +40,12 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		$this->addRequirement('_id', 'MongoId');
 		
 		// Create document id if one is required
-		if ($this->isNewDocument() && $this->hasKey()) {
+		if ($this->isNewDocument() && ($this->hasKey() || (isset($this->_config['hasId']) && $this->_config['hasId']))) {
 			$this->_id = new MongoId();
 		}
 		
 		// If this document is not new and has key then add it to the update criteria
-		if (!$this->isNewDocument() && $this->hasKey()) {
+		if ($this->hasKey()) {
 			$this->setCriteria($this->getPathToProperty('_id'), $this->getId());
 		}
 	}
@@ -333,10 +333,48 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		if (!array_key_exists($property, $this->_requirements)) {
 			$this->_requirements[$property] = array();
 		}
+		
 		// Return if requirement has already been added to property
 		elseif (in_array($requirement, $this->_requirements[$property])) return;
 		
 		$this->_requirements[$property][] = $requirement;
+	}
+	
+	/**
+	 * Remove a requirement from a property
+	 * 
+	 * @param string $property
+	 * @param string $requirement
+	 */
+	public function removeRequirement($property, $requirement)
+	{
+		if (!array_key_exists($property, $this->_requirements)) return;
+		
+		foreach ($this->_requirements[$property] as $index => $requirementItem) {
+			if ($requirement === $requirement) {
+				unset($this->_requirements[$property][$index]);
+			}
+		}
+	}
+	
+	/**
+	 * Get all the properties with a particular requirement
+	 * 
+	 * @param array $requirement
+	 */
+	public function getPropertiesWithRequirement($requirement)
+	{
+		$properties = array();
+		
+		foreach ($this->_requirements as $property => $requirementList) {
+			if (strpos($property, '.') > 0) continue;
+			
+			if (in_array($requirement, $requirementList)) {
+				$properties[] = $property;
+			}
+		}
+		
+		return $properties;
 	}
 	
 	/**
@@ -351,7 +389,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		
 		// Return if no requirements are set for this property
 		if (!array_key_exists($property, $this->_requirements)) return $validators;
-		
+
 		foreach ($this->_requirements[$property] as $requirement) {
 			// continue if requirement does not exist or is not a validator requirement
 			$validator = Shanty_Mongo::getRequirement($requirement);
@@ -488,17 +526,18 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 			$config['criteria'] = $this->getCriteria();
 		}
 		
+		// Make sure document class is a document or document set
+		if ($className !== $docType && !is_subclass_of($className, $docType)) {
+			require_once 'Shanty/Mongo/Exception.php';
+			throw new Shanty_Mongo_Exception("{$className} is not a {$docType}");
+		}
+		
 		// Initialise document
 		$document = new $className($data, $config);
 		
 		// if this document was a reference then remember that
 		if ($reference) {
 			$this->_references->attach($document);
-		}
-		
-		if (!($document instanceof $docType)) {
-			require_once 'Shanty/Mongo/Exception.php';
-			throw new Shanty_Mongo_Exception("{$className} is not a {$docType}");
 		}
 		
 		$this->_data[$property] = $document;
@@ -669,14 +708,14 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 			if ($property === '_id') continue;
 			
 			if (!array_key_exists($property, $this->_cleanData) || $this->_cleanData[$property] !== $value) {
-				$this->addOperation('$set', $this->getPathToProperty($property), $value);
+				$this->addOperation('$set', $property, $value);
 			}
 		}
 		
 		foreach ($this->_cleanData as $property => $value) {
 			if (array_key_exists($property, $data)) continue;
 			
-			$this->addOperation('$unset', $this->getPathToProperty($property), 1);
+			$this->addOperation('$unset', $property, 1);
 		}
 	}
 	
@@ -696,6 +735,15 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		$mongoCollection = static::getMongoDb()->selectCollection($this->getCollection());
 		$exportData = $this->export();
 		
+		// make sure required properties are not empty
+		$requiredProperties = $this->getPropertiesWithRequirement('NotEmpty');
+		foreach ($requiredProperties as $property) {
+			if (!isset($exportData[$property]) || empty($exportData[$property])) {
+				require_once 'Shanty/Mongo/Exception.php';
+				throw new Shanty_Mongo_Exception("Property '{$property}' must not be null.");
+			}
+		}
+		
 		if ($this->isRootDocument() && ($this->isNewDocument() || $entierDocument)) {
 			// Save the entier document
 			$operations = $exportData;
@@ -705,7 +753,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 			if (!$this->isRootDocument()) {
 				// are we updating a child of an array?
 				if ($this->isNewDocument() && $this->isParentArray()) {
-					$this->addOperation('$push', $this->getPathToDocument(), $exportData);
+					$this->_operations['$push'][$this->getPathToDocument()] = $exportData;
 					$exportData = array();
 				}
 			}
@@ -724,6 +772,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		$result = $mongoCollection->update($this->getCriteria(), $operations, array('upsert' => true));
 		$this->_cleanData = $exportData;
 		$this->purgeOperations(true);
+		
 		return $result;
 	}
 	
@@ -864,10 +913,11 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	{
 		$operations = array();
 		if ($includingChildren) {
-			$docIterator = new RecursiveIteratorIterator($this->getIterator(), RecursiveIteratorIterator::SELF_FIRST);
-			foreach ($docIterator as $property => $subDocument) {
-				if ($subDocument instanceof Shanty_Mongo_Document && !$this->isReference($subDocument)) {
-					array_merge($operations, $subDocument->getOperations());
+			foreach ($this as $property => $document) {
+				if (!($document instanceof Shanty_Mongo_Document)) continue;
+				
+				if (!$this->isReference($document) || $this->hasRequirement($property, 'AsReference')) {
+					array_merge($operations, $document->getOperations(true));
 				}
 			}
 		}
@@ -883,10 +933,11 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	public function purgeOperations($includingChildren = false)
 	{
 		if ($includingChildren) {
-			$docIterator = new RecursiveIteratorIterator($this->getIterator(), RecursiveIteratorIterator::SELF_FIRST);
-			foreach ($docIterator as $subDocument) {
-				if ($subDocument instanceof Shanty_Mongo_Document && !$this->isReference($subDocument)) {
-					$subDocument->purgeOperations();
+			foreach ($this as $property => $document) {
+				if (!($document instanceof Shanty_Mongo_Document)) continue;
+				
+				if (!$this->isReference($document) || $this->hasRequirement($property, 'AsReference')) {
+					$document->purgeOperations(true);
 				}
 			}
 		}
@@ -914,7 +965,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		}
 		
 		// Save the operation
-		$this->_operations[$operation][$property] = $value;
+		$this->_operations[$operation][$this->getPathToProperty($property)] = $value;
 	}
 	
 	/**
@@ -925,7 +976,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	 */
 	public function inc($property, $value)
 	{
-		return $this->addOperation('$inc', $this->getPathToProperty($property), $value);
+		return $this->addOperation('$inc', $property, $value);
 	}
 	
 	/**
@@ -941,7 +992,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 			$value = $value->export();
 		}
 		
-		return $this->addOperation('$pushAll', $this->getPathToProperty($property), array($value));
+		return $this->addOperation('$pushAll', $property, array($value));
 	}
 	
 	/**
@@ -952,6 +1003,6 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	 */
 	public function pull($property, $value)
 	{
-		return $this->addOperation('$pullAll', $this->getPathToProperty($property), $value);
+		return $this->addOperation('$pullAll', $property, $value);
 	}
 }
