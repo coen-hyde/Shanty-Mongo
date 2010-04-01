@@ -93,12 +93,24 @@ class Shanty_Mongo_DocumentSet extends Shanty_Mongo_Document
 	 * @param $index
 	 * @param $document
 	 */
-	public function setProperty($index, Shanty_Mongo_Document $document)
+	public function setProperty($index, $document)
 	{
 		$new = is_null($index);
 		
 		// Make sure index is numeric
 		if (!$new && !is_numeric($index)) {
+			require_once 'Shanty/Mongo/Exception.php';
+			throw new Shanty_Mongo_Exception("Index must be numeric '{$index}' given");
+		}
+		
+		// Unset element
+		if (!$new && is_null($value)) {
+			$this->_data[$index] = null;
+			return;
+		}
+		
+		// Make sure this document is a Shanty_Mongo_Document
+		if (!($document instanceof Shanty_Mongo_Document)) {
 			require_once 'Shanty/Mongo/Exception.php';
 			throw new Shanty_Mongo_Exception("Index must be numeric '{$index}' given");
 		}

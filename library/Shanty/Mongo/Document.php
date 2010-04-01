@@ -440,28 +440,6 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	}
 	
 	/**
-	 * Get all the properties that must not be empty
-	 * 
-	 * @return array
-	 */
-	public function getRequiredProperties()
-	{
-		$requiredProperties = array();
-		foreach ($this->_requirements as $property => $requirements) {
-			if (strstr($property, '.') || strstr($property, '[')) continue;
-			
-			if ($this->hasRequirement($property, 'NotEmpty')) $requiredProperties[] = $property;
-		}
-		
-		return $requiredProperties;
-	}
-	
-	public function enforceNotEmpty()
-	{
-		
-	}
-	
-	/**
 	 * Get a property
 	 * 
 	 * @param mixed $property
@@ -552,17 +530,18 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	 */
 	public function setProperty($property, $value)
 	{
-		if (is_null($value) && !$this->hasRequirement($property, 'NotEmpty')) {
-			$this->_data[$property] = null;
-			return;
-		}
-		
 		$validators = $this->getValidators($property);
 		
 		// Throw exception if value is not valid
 		if (!is_null($value) && !$validators->isValid($value)) {
 			require_once 'Shanty/Mongo/Exception.php';
 			throw new Shanty_Mongo_Exception(implode($validators->getMessages(), "\n"));
+		}
+		
+		// Unset property
+		if (is_null($value)) {
+			$this->_data[$property] = null;
+			return;
 		}
 		
 		if ($value instanceof Shanty_Mongo_Document) {
@@ -736,7 +715,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		$exportData = $this->export();
 		
 		// make sure required properties are not empty
-		$requiredProperties = $this->getPropertiesWithRequirement('NotEmpty');
+		$requiredProperties = $this->getPropertiesWithRequirement('Required');
 		foreach ($requiredProperties as $property) {
 			if (!isset($exportData[$property]) || empty($exportData[$property])) {
 				require_once 'Shanty/Mongo/Exception.php';

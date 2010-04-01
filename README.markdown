@@ -4,7 +4,7 @@ Shanty Mongo
 Summary
 -------
 
-Shanty Mongo is a prototype mongodb adapter for the Zend Framework. It's intention is to make working with mongodb documents as natural and as simple as possible. In particular allowing embeded documents to also have custom document classes.
+Shanty Mongo is a prototype mongodb adapter for the Zend Framework. It's intention is to make working with mongodb documents as natural and as simple as possible. In particular allowing embedded documents to also have custom document classes.
 
 Requirements
 ------------
@@ -12,6 +12,7 @@ Requirements
 - PHP 5.3 or greater
 - Zend Framework 1.10.0 or greater
 - Mongodb 1.3 or greater
+- Mongo extension from pecl
 
 Features
 --------
@@ -50,19 +51,101 @@ How to Use
 
 ### Adding requirements
 
+There are 3 types of requirements. Validators, filters and special. 
+
+#### Validators
+
+- Alnum
+
+- Alpha
+
+- Array
+
+- CreditCard
+
+- Digits
+
+- Document
+
+- DocumentSet
+
+- EmailAddress
+
+- Float
+
+- GreaterThan:{Number}  
+  Validate that a property is greater than the number provided. eg GreaterThan:13
+  
+- Hex
+
+- Hostname
+
+- Int
+
+- Ip
+
+- LessThan:{Number}  
+  Validate that a property is less than the number provided. eg LessThan:44
+  
+- NotEmpty
+
+- MongoId
+
+#### Filters
+
+- AsAlnum
+
+- AsAlpha
+
+- AsDigits
+
+- AsHtmlEntities
+
+- AsInt
+
+- StripNewlines
+
+- StringToLower
+
+- StringToUpper
+
+- StripTags
+
+#### Requirements with special meaning or behaviour
+
+- Document:{ClassName}  
+  Validates a property is of type ClassName and lazy loads an instance of the document on first access. If no ClassName is provided then Shanty_Mongo_Document is assumed. eg 'Document:User' or without a class name 'Document'.
+
+- DocumentSet:{ClassName}  
+  Validates a property is of type ClassName and lazy loads an instance of the documentset on first access. If no ClassName is provided then Shanty_Mongo_DocumentSet is assumed. eg 'DocumentSet:Posts' or without a class name 'DocumentSet'.
+
+- Required  
+  Ensures that a property exists. Unlike most validators that run when a property is set, Required is run when a document is saved.
+
+- AsReference  
+  Will save a document as a reference
+
+#### Lets put some of them to use
+
 	class User extends Shanty_Mongo_Document 
 	{
 		protected static $_collectionName = 'user';
 		
 		protected $_requirements = array(
-			'name' => 'NotEmpty',
-			'email' => array('NotEmpty', 'EmailAddress'),
+			'name' => 'Required',
+			'email' => array('Required', 'EmailAddress'),
+			'friends' => 'DocumentSet',
+			'friends.$' => array('Document:User', 'AsReference')
 		);
 	}
 
-Here we have enforced that both the properties 'name' and 'email' must not be empty when this document is saved. We have also stated that the 'email' property must be an email address. When an attempt to set the 'email' property is made, the value will be run through the validator Zend_Validate_EmailAddress. If it fails validation an exception will be thrown. If you wanted to determine if an email address is valid without throwing an exception call $user->isValid('email', 'invalid@email#address.com');
+There is a lot going on here so i don't expect you to understand what is happening just yet. 
 
-There are many different available requirements, including Zends validators and filters.
+Even though there are 4 keys in the requirement list we are actually only specifying requirements for 3 properties. The last two 'friends' and 'friends.$' both refer to the 'friends' property. 
+
+We have enforced that both the properties 'name' and 'email' are required while 'friends' is optional. We have also stated that the 'email' property must be an email address. When an attempt to set the 'email' property is made, the value will be run through the validator Zend_Validate_EmailAddress. If it fails validation an exception will be thrown. If you wanted to determine if an email address is valid without throwing an exception call $user->isValid('email', 'invalid@email#address.com');
+
+The property 'friends' is a document set and all it's elements are documents of type 'User'. When this document set is saved all the 'User' documents will be saved as references. More on document sets later.
 
 ### Creating embedded documents
 
@@ -81,10 +164,10 @@ Since we know all users must have a first and last name lets enforce it
 		protected static $_collectionName = 'user';
 		
 		protected $_requirements = array(
-			'name' => array('Document', 'NotEmpty'),
-			'name.first' => 'NotEmpty',
-			'name.last' => 'NotEmpty',
-			'email' => array('NotEmpty', 'EmailAddress'),
+			'name' => array('Document', 'Required'),
+			'name.first' => 'Required',
+			'name.last' => 'Required',
+			'email' => array('Required', 'EmailAddress'),
 		);
 	}
 
@@ -116,8 +199,8 @@ First we'll define the name document
 	class Name extends Shanty_Mongo_Document
 	{
 		protected $_requirements = array(
-			'first' => 'NotEmpty',
-			'last' => 'NotEmpty',
+			'first' => 'Required',
+			'last' => 'Required',
 		);
 		
 		public function full()
@@ -133,8 +216,8 @@ Next we'll tell the user document to use our new document
 		protected static $_collectionName = 'user';
 		
 		protected $_requirements = array(
-			'name' => array('Document:Name', 'NotEmpty'),
-			'email' => array('NotEmpty', 'EmailAddress'),
+			'name' => array('Document:Name', 'Required'),
+			'email' => array('Required', 'EmailAddress'),
 		);
 	}
 
@@ -159,13 +242,13 @@ Lets store a list of addresses against a user. First we must inform the User doc
 		protected static $_collectionName = 'user';
 		
 		protected $_requirements = array(
-			'name' => array('Document:Name', 'NotEmpty'),
-			'email' => array('NotEmpty', 'EmailAddress'),
+			'name' => array('Document:Name', 'Required'),
+			'email' => array('Required', 'EmailAddress'),
 			'addresses' => 'DocumentSet',
-			'addresses.$.street' => 'NotEmpty',
-			'addresses.$.suburb' => 'NotEmpty',
-			'addresses.$.state' => 'NotEmpty',
-			'addresses.$.postCode' => 'NotEmpty'
+			'addresses.$.street' => 'Required',
+			'addresses.$.suburb' => 'Required',
+			'addresses.$.state' => 'Required',
+			'addresses.$.postCode' => 'Required'
 		);
 	}
 

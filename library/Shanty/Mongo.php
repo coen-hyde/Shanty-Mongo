@@ -36,7 +36,7 @@ class Shanty_Mongo
 		self::addRequirement('Hostname', new Zend_Validate_Hostname());
 		self::addRequirement('Int', new Zend_Validate_Int());
 		self::addRequirement('Ip', new Zend_Validate_Ip());
-		self::addRequirement('NotEmpty', new Shanty_Mongo_Validate_StubTrue());
+		self::addRequirement('NotEmpty', new Zend_Validate_NotEmpty());
 		self::addRequirement('MongoId', new Shanty_Mongo_Validate_Class('MongoId'));
 		
 		// Filter requirements
@@ -51,6 +51,7 @@ class Shanty_Mongo
 		self::addRequirement('StripTags', new Zend_Filter_StripTags());
 		
 		// Stubs
+		self::addRequirement('Required', new Shanty_Mongo_Validate_StubTrue());
 		self::addRequirement('AsReference', new Shanty_Mongo_Validate_StubTrue());
 		
 		// Create requirement creators
