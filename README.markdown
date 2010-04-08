@@ -58,7 +58,7 @@ There are 3 types of requirements. Validators, filters and special.
 
 #### Validators
 
-To use a validator add a requirement with the prefix 'Validator:' followed by the name of the validator. Please see the Zend reference guide for the list of Zend validators. I addition to the validators supported by Zend, Shanty Mongo supports the following validators:
+To use a validator add a requirement with the prefix 'Validator:' followed by the name of the validator. Please see the Zend reference guide for the list of [Zend validators](http://framework.zend.com/manual/en/zend.validate.set.html). I addition to the validators supported by Zend, Shanty Mongo supports the following validators:
 
 - Validator:Array
 
@@ -66,7 +66,7 @@ To use a validator add a requirement with the prefix 'Validator:' followed by th
 
 #### Filters
 
-To use a filter add a requirement with the prefix 'Filter:' followed by the name of the filter. Please see the Zend reference guide for the list of Zend filters. 
+To use a filter add a requirement with the prefix 'Filter:' followed by the name of the filter. Please see the Zend reference guide for the list of [Zend filters](http://framework.zend.com/manual/en/zend.filter.set.html). 
 
 #### Requirements with special meaning or behaviour
 
