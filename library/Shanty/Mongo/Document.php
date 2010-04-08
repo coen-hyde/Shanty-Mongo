@@ -37,7 +37,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		$this->mergeRequirements();
 		
 		// Force _id property to be of type MongoId
-		$this->addRequirement('_id', 'MongoId');
+		$this->addRequirement('_id', 'Validator:MongoId');
 		
 		// Create document id if one is required
 		if ($this->isNewDocument() && ($this->hasKey() || (isset($this->_config['hasId']) && $this->_config['hasId']))) {
