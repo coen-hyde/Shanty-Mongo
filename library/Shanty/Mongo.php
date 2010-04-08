@@ -22,45 +22,36 @@ class Shanty_Mongo
 		// If requirements are not empty then we have already initialised requirements
 		if (!empty(self::$_requirements)) return;
 		
-		// Validator requirements
-		self::addRequirement('Alnum', new Zend_Validate_Alnum());
-		self::addRequirement('Alpha', new Zend_Validate_Alpha());
-		self::addRequirement('Array', new Shanty_Mongo_Validate_Array());
-		self::addRequirement('CreditCard', new Zend_Validate_CreditCard());
-		self::addRequirement('Digits', new Zend_Validate_Digits());
+		// Custom validators
+		self::addRequirement('Validator:Array', new Shanty_Mongo_Validate_Array());
+		self::addRequirement('Validator:MongoId', new Shanty_Mongo_Validate_Class('MongoId'));
 		self::addRequirement('Document', new Shanty_Mongo_Validate_Class('Shanty_Mongo_Document'));
 		self::addRequirement('DocumentSet', new Shanty_Mongo_Validate_Class('Shanty_Mongo_DocumentSet'));
-		self::addRequirement('EmailAddress', new Zend_Validate_EmailAddress());
-		self::addRequirement('Float', new Zend_Validate_Float());
-		self::addRequirement('Hex', new Zend_Validate_Hex());
-		self::addRequirement('Hostname', new Zend_Validate_Hostname());
-		self::addRequirement('Int', new Zend_Validate_Int());
-		self::addRequirement('Ip', new Zend_Validate_Ip());
-		self::addRequirement('NotEmpty', new Zend_Validate_NotEmpty());
-		self::addRequirement('MongoId', new Shanty_Mongo_Validate_Class('MongoId'));
-		
-		// Filter requirements
-		self::addRequirement('AsAlnum', new Zend_Filter_Alnum());
-		self::addRequirement('AsAlpha', new Zend_Filter_Alpha());
-		self::addRequirement('AsDigits', new Zend_Filter_Digits());
-		self::addRequirement('AsHtmlEntities', new Zend_Filter_HtmlEntities());
-		self::addRequirement('AsInt', new Zend_Filter_Int());
-		self::addRequirement('StripNewlines', new Zend_Filter_StripNewlines());
-		self::addRequirement('StringToLower', new Zend_Filter_StringToLower());
-		self::addRequirement('StringToUpper', new Zend_Filter_StringToUpper());
-		self::addRequirement('StripTags', new Zend_Filter_StripTags());
 		
 		// Stubs
 		self::addRequirement('Required', new Shanty_Mongo_Validate_StubTrue());
 		self::addRequirement('AsReference', new Shanty_Mongo_Validate_StubTrue());
 		
-		// Create requirement creators
-		self::addRequirementCreator('/^GreaterThan([\d]+)$/', function($data) {
-			return new Zend_Validate_GreaterThan($data[1]);
+		// Requirement creator for validators and filters
+		self::addRequirementCreator('/^Validator:([A-Za-z]+[\w\-:]*)$/', function($data, $options = null) {
+			$instanceClass = 'Zend_Validate_'.$data[1];
+			if (!class_exists($instanceClass)) return null;
+			
+			$validator = new $instanceClass($options);
+			if (!($validator instanceof Zend_Validate_Interface)) return null;
+			
+			return $validator;
 		});
 		
-		self::addRequirementCreator('/^LessThan([\d]+)$/', function($data) {
-			return new Zend_Validate_LessThan($data[1]);
+		// Requirement creator for filters
+		self::addRequirementCreator('/^Filter:([A-Za-z]+[\w\-:]*)$/', function($data, $options = null) {
+			$instanceClass = 'Zend_Filter_'.$data[1];
+			if (!class_exists($instanceClass)) return null;
+			
+			$validator = new $instanceClass($options);
+			if (!($validator instanceof Zend_Filter_Interface)) return null;
+			
+			return $validator;
 		});
 		
 		// Creates requirements to match classes
@@ -70,8 +61,8 @@ class Shanty_Mongo
 			return new Shanty_Mongo_Validate_Class($data[1]);
 		};
 		
-		self::addRequirementCreator('/^Document:([A-Za-z][\w\-]*)$/', $classValidator);
-		self::addRequirementCreator('/^DocumentSet:([A-Za-z][\w\-]*)$/', $classValidator);
+		self::addRequirementCreator('/^Document:([A-Za-z]+[\w\-]*)$/', $classValidator);
+		self::addRequirementCreator('/^DocumentSet:([A-Za-z]+[\w\-]*)$/', $classValidator);
 	}
 	
 	/**
@@ -80,23 +71,29 @@ class Shanty_Mongo
 	 * @param $name String Name of requirement
 	 * @return mixed
 	 **/
-	public static function getRequirement($name)
+	public static function getRequirement($name, $options = null)
 	{
 		// Requirement is already initialised return it
 		if (array_key_exists($name, self::$_requirements)) {
-			return self::$_requirements[$name];
+			// If requirement does not have options, returned cached instance
+			if (is_null($options))  return self::$_requirements[$name];
+			
+			$requirementClass = get_class(self::$_requirements[$name]);
+			return new $requirementClass($options);
 		}
 		
 		// Attempt to create requirement
-		if (!$requirement = self::createRequirement($name)) {
+		if (!$requirement = self::createRequirement($name, $options)) {
 			require_once 'Shanty/Mongo/Exception.php';
 			throw new Shanty_Mongo_Exception("No requirement exists for '{$name}'");
 		}
 		
 		// Requirement found. Store it for later use
-		self::addRequirement($name, $requirement);
+		if (!is_null($options)) {
+			self::addRequirement($name, $requirement);
+		}
 		
-		return self::$_requirements[$name];
+		return $requirement;
 	}
 	
 	/**
@@ -130,7 +127,7 @@ class Shanty_Mongo
 	 * @param $name String Name of requirement
 	 * @return mixed
 	 **/
-	protected static function createRequirement($name)
+	protected static function createRequirement($name, $options = null)
 	{
 		// Match requirement name against regex's
 		foreach (self::$_requirementCreators as $regex => $function) {
@@ -138,7 +135,7 @@ class Shanty_Mongo
 			preg_match($regex, $name, $matches);
 				
 			if (!empty($matches)) {
-				return $function($matches);
+				return $function($matches, $options);
 			}
 		}
 		

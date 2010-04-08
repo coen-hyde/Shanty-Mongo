@@ -52,22 +52,29 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	
 	protected function mergeRequirements()
 	{
-		$forceArray = function($requirements) {
-			foreach ($requirements as $property => $requirement) {
-				if (!is_array($requirement)) {
-					$requirements[$property] = array($requirement);
+		$makeTidy = function($requirements) {
+			foreach ($requirements as $property => $requirementList) {
+				if (!is_array($requirementList)) {
+					$requirements[$property] = array($requirementList);
 				}
+				
+				$newRequirementList = array();
+				foreach ($requirements[$property] as $key => $requirement) {
+					if (is_numeric($key)) $newRequirementList[$requirement] = null;
+					else $newRequirementList[$key] = $requirement;
+				}
+				
+				$requirements[$property] = $newRequirementList;
 			}
 			
 			return $requirements;
 		};
 		
 		// Force all property values to be an array
-		$this->_requirements = $forceArray($this->_requirements);
-		$requirementModifiers = $forceArray($this->_config['requirementModifiers']);
+		$this->_requirements = $makeTidy($this->_requirements);
 		
 		// Merge requirement modifiers with existing requirements
-		$this->_requirements = array_merge_recursive($this->_requirements, $requirementModifiers);
+		$this->_requirements = array_merge_recursive($this->_requirements, $this->_config['requirementModifiers']);
 	}
 	
 	/**
@@ -268,7 +275,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		switch($requirement) {
 			case 'Document':
 			case 'DocumentSet':
-				foreach ($this->_requirements[$property] as $requirementSearch) {
+				foreach ($this->_requirements[$property] as $requirementSearch => $params) {
 					// Return basic document or document set class if requirement matches
 					if ($requirementSearch == $requirement) {
 						return 'Shanty_Mongo_'.$requirement;
@@ -292,7 +299,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 				break;
 		}
 		
-		return in_array($requirement, $this->_requirements[$property]);
+		return array_key_exists($requirement, $this->_requirements[$property]);
 	}
 	
 	/**
@@ -328,16 +335,16 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	 * @param string $property
 	 * @param string $requirement
 	 */
-	public function addRequirement($property, $requirement)
+	public function addRequirement($property, $requirement, $options = null)
 	{
 		if (!array_key_exists($property, $this->_requirements)) {
 			$this->_requirements[$property] = array();
 		}
 		
 		// Return if requirement has already been added to property
-		elseif (in_array($requirement, $this->_requirements[$property])) return;
+		elseif (array_key_exists($requirement, $this->_requirements[$property])) return;
 		
-		$this->_requirements[$property][] = $requirement;
+		$this->_requirements[$property][$requirement] = $options;
 	}
 	
 	/**
@@ -350,9 +357,9 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	{
 		if (!array_key_exists($property, $this->_requirements)) return;
 		
-		foreach ($this->_requirements[$property] as $index => $requirementItem) {
-			if ($requirement === $requirement) {
-				unset($this->_requirements[$property][$index]);
+		foreach ($this->_requirements[$property] as $requirementItem => $options) {
+			if ($requirement === $requirementItem) {
+				unset($this->_requirements[$property][$requirementItem]);
 			}
 		}
 	}
@@ -369,7 +376,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		foreach ($this->_requirements as $property => $requirementList) {
 			if (strpos($property, '.') > 0) continue;
 			
-			if (in_array($requirement, $requirementList)) {
+			if (array_key_exists($requirement, $requirementList)) {
 				$properties[] = $property;
 			}
 		}
@@ -390,9 +397,9 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		// Return if no requirements are set for this property
 		if (!array_key_exists($property, $this->_requirements)) return $validators;
 
-		foreach ($this->_requirements[$property] as $requirement) {
+		foreach ($this->_requirements[$property] as $requirement => $options) {
 			// continue if requirement does not exist or is not a validator requirement
-			$validator = Shanty_Mongo::getRequirement($requirement);
+			$validator = Shanty_Mongo::getRequirement($requirement, $options);
 			if (!$validator || !($validator instanceof Zend_Validate_Interface)) continue;
 			
 			$validators->addValidator($validator);
@@ -414,9 +421,9 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		// Return if no requirements are set for this property
 		if (!array_key_exists($property, $this->_requirements)) return $filters;
 		
-		foreach ($this->_requirements[$property] as $requirement) {
+		foreach ($this->_requirements[$property] as $requirement => $options) {
 			// continue if requirement does not exist or is not a filter requirement
-			$filter = Shanty_Mongo::getRequirement($requirement);
+			$filter = Shanty_Mongo::getRequirement($requirement, $options);
 			if (!$filter || !($filter instanceof Zend_Filter_Interface)) continue;
 			
 			$filters->addFilter($filter);

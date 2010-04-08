@@ -129,6 +129,7 @@ There are 3 types of requirements. Validators, filters and special.
 
 	class User extends Shanty_Mongo_Document 
 	{
+		protected static $_dbName = 'forum';
 		protected static $_collectionName = 'user';
 		
 		protected $_requirements = array(
