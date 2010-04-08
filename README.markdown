@@ -34,8 +34,11 @@ How to Use
 	
 ### Define a document/collection
 
+To define a document and the collection that the document will be saved to, extend Shanty_Mongo_Document and set the static properties $\_dbName and $\_collectionName.
+
 	class User extends Shanty_Mongo_Document 
 	{
+		protected static $_dbName = 'forum';
 		protected static $_collectionName = 'user';
 	}
 	
@@ -55,61 +58,15 @@ There are 3 types of requirements. Validators, filters and special.
 
 #### Validators
 
-- Alnum
+To use a validator add a requirement with the prefix 'Validator:' followed by the name of the validator. Please see the Zend reference guide for the list of Zend validators. I addition to the validators supported by Zend, Shanty Mongo supports the following validators:
 
-- Alpha
+- Validator:Array
 
-- Array
-
-- CreditCard
-
-- Digits
-
-- Document
-
-- DocumentSet
-
-- EmailAddress
-
-- Float
-
-- GreaterThan:{Number}  
-  Validate that a property is greater than the number provided. eg GreaterThan:13
-  
-- Hex
-
-- Hostname
-
-- Int
-
-- Ip
-
-- LessThan:{Number}  
-  Validate that a property is less than the number provided. eg LessThan:44
-  
-- NotEmpty
-
-- MongoId
+- Validator:MongoId
 
 #### Filters
 
-- AsAlnum
-
-- AsAlpha
-
-- AsDigits
-
-- AsHtmlEntities
-
-- AsInt
-
-- StripNewlines
-
-- StringToLower
-
-- StringToUpper
-
-- StripTags
+To use a filter add a requirement with the prefix 'Filter:' followed by the name of the filter. Please see the Zend reference guide for the list of Zend filters. 
 
 #### Requirements with special meaning or behaviour
 
@@ -134,7 +91,7 @@ There are 3 types of requirements. Validators, filters and special.
 		
 		protected $_requirements = array(
 			'name' => 'Required',
-			'email' => array('Required', 'EmailAddress'),
+			'email' => array('Required', 'Validator:EmailAddress'),
 			'friends' => 'DocumentSet',
 			'friends.$' => array('Document:User', 'AsReference')
 		);
@@ -148,9 +105,27 @@ We have enforced that both the properties 'name' and 'email' are required while 
 
 The property 'friends' is a document set and all it's elements are documents of type 'User'. When this document set is saved all the 'User' documents will be saved as references. More on document sets later.
 
+#### Validators and Filters with options
+
+Some validators and filters have additional options that need to be passed to it's constructor. This can be achieve by setting the requirement as the key and the options as the value. As a demonstration we'll add a sex property on the user object and use the InArray validator. 
+
+	class User extends Shanty_Mongo_Document 
+	{
+		protected static $_dbName = 'forum';
+		protected static $_collectionName = 'user';
+		
+		protected $_requirements = array(
+			'name' => 'Required',
+			'email' => array('Required', 'Validator:EmailAddress'),
+			'friends' => 'DocumentSet',
+			'friends.$' => array('Document:User', 'AsReference'),
+			'sex' => array('Validator:InArray' => array('female', 'male');
+		);
+	}
+
 ### Creating embedded documents
 
-Say we wanted to also store the users last name. We could have nameFirst and nameLast properties on the document but in the spirit of documents databases we'll make the property 'name' an embedded document with the properties first and last.
+Say we wanted to also store the users last name. We could have nameFirst and nameLast properties on the document but in the spirit of document databases we'll make the property 'name' an embedded document with the properties first and last.
 
 	$user = new User();
 	$user->name = new Shanty_Mongo_Document();
@@ -162,13 +137,14 @@ Since we know all users must have a first and last name lets enforce it
 
 	class User extends Shanty_Mongo_Document 
 	{
+		protected static $_dbName = 'forum';
 		protected static $_collectionName = 'user';
 		
 		protected $_requirements = array(
 			'name' => array('Document', 'Required'),
 			'name.first' => 'Required',
 			'name.last' => 'Required',
-			'email' => array('Required', 'EmailAddress'),
+			'email' => array('Required', 'Validator:EmailAddress'),
 		);
 	}
 
@@ -214,11 +190,12 @@ Next we'll tell the user document to use our new document
 
 	class User extends Shanty_Mongo_Document 
 	{
+		protected static $_dbName = 'forum';
 		protected static $_collectionName = 'user';
 		
 		protected $_requirements = array(
 			'name' => array('Document:Name', 'Required'),
-			'email' => array('Required', 'EmailAddress'),
+			'email' => array('Required', 'Validator:EmailAddress'),
 		);
 	}
 
@@ -240,11 +217,12 @@ Lets store a list of addresses against a user. First we must inform the User doc
 	
 	class User extends Shanty_Mongo_Document 
 	{
+		protected static $_dbName = 'forum';
 		protected static $_collectionName = 'user';
 		
 		protected $_requirements = array(
 			'name' => array('Document:Name', 'Required'),
-			'email' => array('Required', 'EmailAddress'),
+			'email' => array('Required', 'Validator:EmailAddress'),
 			'addresses' => 'DocumentSet',
 			'addresses.$.street' => 'Required',
 			'addresses.$.suburb' => 'Required',
