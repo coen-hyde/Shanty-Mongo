@@ -91,28 +91,33 @@ abstract class Shanty_Mongo_Collection
 	 * Get an instance of MongoDb
 	 * 
 	 * @return MongoDb
+	 * @param boolean $useSlave
 	 */
-	protected static function getMongoDb()
+	protected static function getMongoDb($useSlave = false)
 	{
 		if (!static::hasDbName()) {
 			throw new Shanty_Mongo_Exception(get_called_class().'::$_dbName is null');
 		}
 		
-		return Shanty_Mongo::getDefaultConnection()->selectDB(static::getDbName());
+		if ($useSlave) $connection = Shanty_Mongo::getReadConnection();
+		else $connection = Shanty_Mongo::getWriteConnection();
+		
+		return $connection->selectDB(static::getDbName());
 	}
 	
 	/**
 	 * Get an instance of MongoCollection
 	 * 
 	 * @return MongoCollection
+	 * @param boolean $useSlave
 	 */
-	protected static function getMongoCollection()
+	protected static function getMongoCollection($useSlave = false)
 	{
 		if (!static::hasCollectionName()) {
 			throw new Shanty_Mongo_Exception(get_called_class().'::$_collectionName is null');
 		}
 		
-		return static::getMongoDb()->selectCollection(static::getCollectionName());
+		return static::getMongoDb($useSlave)->selectCollection(static::getCollectionName());
 	}
 	
 	/**
@@ -157,7 +162,7 @@ abstract class Shanty_Mongo_Collection
 			throw new Shanty_Mongo_Exception("Query must ben an instance of Shanty_Mongo_Query or an array");
 		}	
 		
-		$data = static::getMongoCollection()->findOne($query);
+		$data = static::getMongoCollection(true)->findOne($query);
 		
 		if (is_null($data)) return null;
 		
@@ -175,7 +180,7 @@ abstract class Shanty_Mongo_Collection
 			throw new Shanty_Mongo_Exception("Query must be an instance of Shanty_Mongo_Query or an array");
 		}
 		
-		$cursor = static::getMongoCollection()->find($query);
+		$cursor = static::getMongoCollection(true)->find($query);
 
 		$config = array();
 		$config['collection'] = static::getCollectionName();

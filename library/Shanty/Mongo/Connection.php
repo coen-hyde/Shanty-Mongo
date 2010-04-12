@@ -8,10 +8,15 @@
  */
 class Shanty_Mongo_Connection extends Mongo
 {
-	public function __construct()
+	public function __construct($server = null, array $options = array())
 	{
 		Shanty_Mongo::init();
 		
-		return parent::__construct();
+		// Set the server to local host if one was not provided
+		if (is_null($server)) $server = '127.0.0.1';
+		
+		$options['connect'] = false;
+		
+		return parent::__construct($server, $options);
 	}
 }
