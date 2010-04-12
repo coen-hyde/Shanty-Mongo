@@ -27,11 +27,48 @@ Features
 How to Use
 ----------
 
-### Initialise a connection and set it as a default connection
+### Initialisation
 
-	$connection = new Shanty_Mongo_Connection('localhost');
-	Shanty_Mongo::setDefaultConnection($connection);
+Use Zend's autoloader and add the library folder to your include path
+
+### Connections
+
+If you are connecting to localhost without any authentication then no need to worry about connections any further. Shanty Mongo will connect automatically on the first request
+
+#### Advanced connections
+
+To create a new connection initialise an instance of Shanty_Mongo_Connection and pass the connection string to the constructor. For more information about connection strings see pecl's mongo [documentation](http://au2.php.net/manual/en/mongo.construct.php). We'll create a typical master slave setup.
+
+	$master = new Shanty_Mongo_Connection('mongodb://user:password@mongo-master.domain.local:port'); // see pecl's mongo documentation
+	$slave1 = new Shanty_Mongo_Connection('mongo-slave1.domain.local');
+	$slave2 = new Shanty_Mongo_Connection('mongo-slave2.domain.local');
 	
+	Shanty_Mongo::addMaster($master);
+	Shanty_Mongo::addSlave($slave1);
+	Shanty_Mongo::addSlave($slave2);
+
+Connections are lazy loaded. Shanty_Mongo_Connection's will only connect to the server the first time they are used. This is to prevent all connections connecting even if they are never used
+
+By the way master-master setups are also possible but not recommended.
+
+If no slaves are provided then reads will go to the masters.
+
+#### Weighted connections
+
+Say for example you have a supa dupa server that can process 3x the requests of the other servers. You can weight that connection. eg
+
+	Shanty_Mongo::addSlave($supaDupaServer, 3);
+
+By default connections are given a weight of 1.
+
+#### Internal connection selection
+
+The first time a read request is made, a connection will be selected from the pool of slaves and cached. The same connection will then be used in subsequent requests. The same applies to write requests.
+
+If you would like a new connection selected for every request call
+
+	Shanty_Mongo::selectNewConnectionEachRequest(true);
+
 ### Define a document/collection
 
 To define a document and the collection that the document will be saved to, extend Shanty_Mongo_Document and set the static properties $\_dbName and $\_collectionName.
