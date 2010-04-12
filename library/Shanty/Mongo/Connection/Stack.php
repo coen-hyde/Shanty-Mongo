@@ -1,17 +1,35 @@
 <?php
 
+/**
+ * @category   Shanty
+ * @package    Shanty_Mongo
+ * @copyright  Shanty Tech Pty Ltd
+ * @license    New BSD License
+ * @author     Coen Hyde
+ */
 class Shanty_Mongo_Connection_Stack implements SeekableIterator, Countable
 {
 	protected $_position = 0;
 	protected $_nodes = array();
 	protected $_weights = array();
 	
+	/**
+	 * Add node to connection stack
+	 * 
+	 * @param Shanty_Mongo_Connection $connection
+	 * @param int $weight
+	 */
 	public function addNode(Shanty_Mongo_Connection $connection, $weight = 1)
 	{
 		$this->_nodes[] = $connection;
 		$this->_weights[] = (int) $weight;
 	}
 	
+	/**
+	 * Select a node from the connection stack. 
+	 * 
+	 * @return Shanty_Mongo_Connection
+	 */
 	public function selectNode()
 	{
 		$r = mt_rand(1,array_sum($this->_weights));
