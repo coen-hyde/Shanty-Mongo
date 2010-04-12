@@ -246,4 +246,14 @@ class Shanty_Mongo
 		return $read;
 	}
 	
+	/**
+	 * Set a flag to select a new connection every request
+	 * 
+	 * @param boolean $value
+	 */
+	public static function selectNewConnectionEachRequest($value = true)
+	{
+		static::$_reselectConnectionEachRequest = $value;
+	}
+	
 }
