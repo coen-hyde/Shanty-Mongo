@@ -2,7 +2,6 @@
 - Figure out how best to handle broken references
 - Make export more efficient. At the moment export is an iterator that initialises all child documents before exporting them. This is inefficient if those child documents were never initialised by the developer.
 - Add pre and post hooks for save, delete, insert, update
-- Possible connection groups
 - finding subdocuments
 - Implement index enforcement
 - Implement partial documents. These are basically cached references with the ability of only storing part of the referenced document

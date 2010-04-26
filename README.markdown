@@ -33,7 +33,7 @@ Use Zend's autoloader and add the library folder to your include path
 
 ### Connections
 
-If you are connecting to localhost without any authentication then no need to worry about connections any further. Shanty Mongo will connect automatically on the first request
+If you are connecting to localhost without any authentication then no need to worry about connections any further. Shanty Mongo will connect automatically on the first request if no connections have previously been added.
 
 #### Advanced connections
 
@@ -61,11 +61,30 @@ Say for example you have a supa dupa server that can process 3x the requests of 
 
 By default connections are given a weight of 1.
 
+#### Connection Groups
+
+*This feature is only available in HEAD. It will be in Shanty Mongo 0.2.*
+
+Sometimes you may wish to connect to multiple mongodb servers that are not in a cluster, most likely because they store different data to one and other. To do this you can use connection groups. 
+
+By default all connections get added to the 'default' group. We can easily add connections to other groups by providing the group name as the third parameter. 
+
+	Shanty_Mongo::addMaster($connection, 1, 'users');
+	
+Here we added a connection to the 'users' connection group. Next we'll have to tell our documents to use that connection group instead of the default connection group. This is done by specifying the static property $_connectionGroup in the document.
+
+	class User extends Shanty_Mongo_Document 
+	{
+		protected static $_connectionGroup = 'users';
+	}
+
 #### Internal connection selection
 
 The first time a read request is made, a connection will be selected from the pool of slaves and cached. The same connection will then be used in subsequent requests. The same applies to write requests.
 
 If you would like a new connection selected for every request call
+
+*This feature is currently out of action in HEAD. It will return before Shanty Mongo 0.2.*
 
 	Shanty_Mongo::selectNewConnectionEachRequest(true);
 
