@@ -1,5 +1,10 @@
 <?php
 
+require_once 'Shanty/Mongo/Validate/Array.php';
+require_once 'Shanty/Mongo/Validate/Class.php';
+require_once 'Shanty/Mongo/Validate/StubTrue.php';
+require_once 'Shanty/Mongo/Connection/Group.php';
+
 /**
  * @category   Shanty
  * @package    Shanty_Mongo
@@ -9,14 +14,9 @@
  */
 class Shanty_Mongo
 {
-	protected static $_defaultConnection = null;
-	
-	protected static $_masters = null;
-	protected static $_slaves = null;
+	protected static $_connectionGroups = array();
 	
 	protected static $_reselectConnectionEachRequest = false;
-	protected static $_cachedWrite = null;
-	protected static $_cachedRead = null;
 	
 	protected static $_requirements = array();
 	protected static $_requirementCreators = array();
@@ -71,6 +71,11 @@ class Shanty_Mongo
 		
 		static::addRequirementCreator('/^Document:([A-Za-z]+[\w\-]*)$/', $classValidator);
 		static::addRequirementCreator('/^DocumentSet:([A-Za-z]+[\w\-]*)$/', $classValidator);
+	}
+	
+	public static function configure($options)
+	{
+		// Will implement ability to configure servers with an array of options
 	}
 	
 	/**
@@ -161,18 +166,49 @@ class Shanty_Mongo
 	}
 	
 	/**
+	 * Determine if a connection group exists
+	 * 
+	 * @param string $connectionGroup The name of the connection group
+	 */
+	public static function hasConnectionGroup($connectionGroup)
+	{
+		return array_key_exists($connectionGroup, static::$_connectionGroups);
+	}
+	
+	/**
+	 * Get a connection group. If it doesn't already exist, create it
+	 * 
+	 * @param string $connectionGroup The name of the connection group
+	 * @return Shanty_Mongo_Connection_Group
+	 */
+	public static function getConnectionGroup($connectionGroup)
+	{
+		if (!static::hasConnectionGroup($connectionGroup)) {
+			static::$_connectionGroups[$connectionGroup] = new Shanty_Mongo_Connection_Group();
+		}
+		
+		return static::$_connectionGroups[$connectionGroup];
+	}
+	
+	/**
+	 * Get a list of all connection groups
+	 * 
+	 * @return array
+	 */
+	public static function getConnectionGroups()
+	{
+		return static::$_connectionGroups;
+	}
+	
+	/**
 	 * Add a connection to a master server
 	 * 
 	 * @param Shanty_Mongo_Connection $connection
 	 * @param int $weight
 	 */
-	public static function addMaster(Shanty_Mongo_Connection $connection, $weight = 1)
+	public static function addMaster(Shanty_Mongo_Connection $connection, $weight = 1, $connectionGroup = 'default')
 	{
-		if (is_null(static::$_masters)) {
-			static::$_masters = new Shanty_Mongo_Connection_Stack();
-		}
-		
-		static::$_masters->addNode($connection, $weight);
+		static::getConnectionGroup($connectionGroup)->addMaster($connection, $weight);
 	}
 	
 	/**
@@ -181,69 +217,9 @@ class Shanty_Mongo
 	 * @param $connection
 	 * @param $weight
 	 */
-	public static function addSlave(Shanty_Mongo_Connection $connection, $weight = 1)
+	public static function addSlave(Shanty_Mongo_Connection $connection, $weight = 1, $connectionGroup = 'default')
 	{
-		if (is_null(static::$_slaves)) {
-			static::$_slaves = new Shanty_Mongo_Connection_Stack();
-		}
-		
-		static::$_slaves->addNode($connection, $weight);
-	}
-	
-	/**
-	 * Get a write connection
-	 * 
-	 * @return Shanty_Mongo_Connection
-	 */
-	public static function getWriteConnection()
-	{
-		// If a connection is cached then return it
-		if (!is_null(static::$_cachedWrite)) {
-			return static::$_cachedWrite;
-		}
-		
-		// If no master connections have been added assume localhost
-		if (is_null(static::$_masters)) {
-			static::addMaster(new Shanty_Mongo_Connection());
-		}
-		
-		$write = static::$_masters->selectNode();
-		
-		// Should we remember this connection?
-		if (!static::$_reselectConnectionEachRequest) {
-			static::$_cachedWrite = $write;
-		}
-		
-		$write->connect();
-		
-		return $write;
-	}
-	
-	/**
-	 * Get a read connection
-	 * 
-	 * @return Shanty_Mongo_Connection
-	 */
-	public static function getReadConnection()
-	{
-		// If a connection is cached then return it
-		if (!is_null(static::$_cachedRead)) {
-			return static::$_cachedRead;
-		}
-		
-		if (is_null(static::$_slaves)) {
-			$read = static::getWriteConnection();
-		}
-		else $read = static::$_slaves->selectNode();
-
-		// Should we remember this connection?
-		if (!static::$_reselectConnectionEachRequest) {
-			static::$_cachedRead = $read;
-		}
-		
-		$read->connect();
-		
-		return $read;
+		static::getConnectionGroup($connectionGroup)->addSlave($connection, $weight);
 	}
 	
 	/**

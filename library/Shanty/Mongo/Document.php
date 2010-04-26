@@ -474,7 +474,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		// If property is a reference to another document then fetch the reference document
 		if (MongoDBRef::isRef($data)) {
 			$collection = $data['$ref'];
-			$data = MongoDBRef::get(static::getMongoDB(), $data);
+			$data = MongoDBRef::get(static::getMongoDB(false), $data);
 			$reference = true;
 		}
 		else {
@@ -718,7 +718,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 			throw new Shanty_Mongo_Exception('Can not save documet. Document does not belong to a collection');
 		}
 		
-		$mongoCollection = static::getMongoDb()->selectCollection($this->getCollection());
+		$mongoCollection = static::getMongoDb(true)->selectCollection($this->getCollection());
 		$exportData = $this->export();
 		
 		// make sure required properties are not empty
@@ -774,7 +774,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 			throw new Shanty_Mongo_Exception('Can not delete documet. Document does not belong to a collection');
 		}
 		
-		$mongoCollection = static::getMongoDb()->selectCollection($this->getCollection());
+		$mongoCollection = static::getMongoDb(true)->selectCollection($this->getCollection());
 		
 		if (!$this->isRootDocument()) {
 			$result = $mongoCollection->update($this->getCriteria(), array('$unset' => array($this->getPathToDocument() => 1)));

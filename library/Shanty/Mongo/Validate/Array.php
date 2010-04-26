@@ -1,5 +1,7 @@
 <?php
 
+require_once 'Zend/Validate/Abstract.php';
+
 class Shanty_Mongo_Validate_Array extends Zend_Validate_Abstract
 {
 	protected $_messageTemplates = array(

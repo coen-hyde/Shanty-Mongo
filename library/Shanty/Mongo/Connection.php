@@ -1,4 +1,7 @@
 <?php
+
+require_once 'Shanty/Mongo.php';
+
 /**
  * @category   Shanty
  * @package    Shanty_Mongo
@@ -8,15 +11,25 @@
  */
 class Shanty_Mongo_Connection extends Mongo
 {
-	public function __construct($server = null, array $options = array())
+	protected $_connectionInfo = array();
+	
+	public function __construct($connectionString = null, array $options = array())
 	{
 		Shanty_Mongo::init();
 		
 		// Set the server to local host if one was not provided
-		if (is_null($server)) $server = '127.0.0.1';
+		if (is_null($connectionString)) $connectionString = '127.0.0.1';
 		
 		$options['connect'] = false;
 		
-		return parent::__construct($server, $options);
+		$this->_connectionInfo = $options;
+		$this->_connectionInfo['connectionString'] = $connectionString;
+		
+		return parent::__construct($connectionString, $options);
+	}
+	
+	public function getConnectionInfo()
+	{
+		return $this->_connectionInfo;
 	}
 }

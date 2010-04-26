@@ -1,5 +1,7 @@
 <?php
 
+require_once 'Shanty/Mongo/Connection.php';
+
 /**
  * @category   Shanty
  * @package    Shanty_Mongo
@@ -11,10 +13,6 @@ class Shanty_Mongo_Connection_Group
 {
 	protected $_masters = null;
 	protected $_slaves = null;
-	protected $_reselectWrite = false;
-	protected $_reselectRead = false;
-	protected $_cachedWrite = null;
-	protected $_cachedRead = null;
 	
 	public function __construct(array $connectionOptions = null)
 	{
@@ -38,29 +36,25 @@ class Shanty_Mongo_Connection_Group
 		$slaves = array();
 		
 		// Lets add our masters
-		if (array_key_exists('master', $connectionOptions)) {
-			if (array_key_exists('host', $connectionOptions['master'])) $masters[] = $connectionOptions['master']; // single master
-			else $masters = $connectionOptions['master']; // multiple masters
-		}
+		if (array_key_exists('master', $connectionOptions)) $masters[] = $connectionOptions['master']; // single master
+		elseif (array_key_exists('masters', $connectionOptions)) $masters = $connectionOptions['masters']; // multiple masters
 		else $masters[] = $connectionOptions; // one server
 		
-		foreach ($masters as $connectionOptions) {
-			$connection = new Shanty_Mongo_Connection($this->formatConnectionString($connectionOptions));
-			if (array_key_exists('weight', $connectionOptions)) $weight = (int) $connectionOptions['weight'];
+		foreach ($masters as $masterConnectionOptions) {
+			$connection = new Shanty_Mongo_Connection($this->formatConnectionString($masterConnectionOptions));
+			if (array_key_exists('weight', $masterConnectionOptions)) $weight = (int) $masterConnectionOptions['weight'];
 			else $weight = 1;
 			
 			$this->addMaster($connection, $weight);
 		}
 		
 		// Lets add our slaves
-		if (array_key_exists('slave', $connectionOptions)) {
-			if (array_key_exists('host', $connectionOptions['slave'])) $slaves[] = $connectionOptions['slave']; // single slave
-			else $masters = $connectionOptions['slave']; // multiple slaves
-		}
+		if (array_key_exists('slave', $connectionOptions)) $slaves[] = $connectionOptions['slave']; // single slave
+		elseif (array_key_exists('slaves', $connectionOptions)) $slaves = $connectionOptions['slaves']; // multiple slaves
 		
-		foreach ($slaves as $connectionOptions) {
-			$connection = new Shanty_Mongo_Connection($this->formatConnectionString($connectionOptions));
-			if (array_key_exists('weight', $connectionOptions)) $weight = (int) $connectionOptions['weight'];
+		foreach ($slaves as $slaveConnectionOptions) {
+			$connection = new Shanty_Mongo_Connection($this->formatConnectionString($slaveConnectionOptions));
+			if (array_key_exists('weight', $slaveConnectionOptions)) $weight = (int) $slaveConnectionOptions['weight'];
 			else $weight = 1;
 			
 			$this->addSlave($connection, $weight);
@@ -116,24 +110,10 @@ class Shanty_Mongo_Connection_Group
 	 */
 	public function getWriteConnection($connectionGroup = 'default')
 	{
-		// If a connection is cached then return it
-		if (!is_null($this->_cachedWrite)) {
-			return $this->_cachedWrite;
-		}
-		
-		// If no master connections throw an exception
-		if (count($this->_masters) === 0) {
-			require_once 'Shanty/Mongo/Exception.php';
-			throw new Shanty_Mongo_Exception("No master connections available for selection");
-		}
-		
+		// Select master
 		$write = $this->_masters->selectNode();
 		
-		// Should we remember this connection?
-		if ($this->_reselectWrite) {
-			$this->_cachedWrite = $write;
-		}
-		
+		// Connect to db
 		$write->connect();
 		
 		return $write;
@@ -146,23 +126,17 @@ class Shanty_Mongo_Connection_Group
 	 */
 	public function getReadConnection($connectionGroup = 'default')
 	{
-		// If a connection is cached then return it
-		if (!is_null($this->_cachedRead)) {
-			return $this->_cachedRead;
-		}
-		
-		// If no slaves then get a master connection
 		if (count($this->_slaves) === 0) {
+			// If no slaves then get a master connection
 			$read = $this->getWriteConnection();
 		}
-		else $read = $this->_slaves->selectNode();
-
-		// Should we remember this connection?
-		if (!$this->_reselectRead) {
-			$this->_cachedRead = $read;
+		else {
+			// Select slave
+			$read = $this->_slaves->selectNode();
+			
+			// Connect to db
+			$read->connect();
 		}
-		
-		$read->connect();
 		
 		return $read;
 	}
