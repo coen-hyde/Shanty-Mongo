@@ -100,8 +100,8 @@ abstract class Shanty_Mongo_Collection
 			throw new Shanty_Mongo_Exception(get_called_class().'::$_dbName is null');
 		}
 
-		if ($writable) $connection = Shanty_Mongo::getConnectionGroup(static::$_connectionGroup)->getWriteConnection();
-		else $connection = Shanty_Mongo::getConnectionGroup(static::$_connectionGroup)->getReadConnection();
+		if ($writable) $connection = Shanty_Mongo::getWriteConnection(static::$_connectionGroup);
+		else $connection = Shanty_Mongo::getReadConnection(static::$_connectionGroup);
 		
 		return $connection->selectDB(static::getDbName());
 	}

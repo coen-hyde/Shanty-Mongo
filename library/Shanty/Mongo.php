@@ -15,9 +15,6 @@ require_once 'Shanty/Mongo/Connection/Group.php';
 class Shanty_Mongo
 {
 	protected static $_connectionGroups = array();
-	
-	protected static $_reselectConnectionEachRequest = false;
-	
 	protected static $_requirements = array();
 	protected static $_requirementCreators = array();
 	protected static $_validOperations = array('$set', '$unset', '$push', '$pushAll', '$pull', '$pullAll', '$inc');
@@ -73,9 +70,27 @@ class Shanty_Mongo
 		static::addRequirementCreator('/^DocumentSet:([A-Za-z]+[\w\-]*)$/', $classValidator);
 	}
 	
-	public static function configure($options)
+	/**
+	 * Add connections Shanty Mongo
+	 * 
+	 * @param array $options
+	 */
+	public static function addConnections($options)
 	{
-		// Will implement ability to configure servers with an array of options
+		if ($options instanceof Zend_Config) {
+			$options = $options->toArray();
+		}
+		
+		$blurbs = array('host', 'master', 'masters', 'slaves', 'slave');
+		$intersection = array_intersect(array_keys($options), $blurbs);
+
+		$connectionGroups = array();
+		if (!empty($intersection)) $connectionGroups['default'] = $options;
+		else $connectionGroups = $options;
+		
+		foreach ($connectionGroups as $connectionGroupName => $connectionGroupOptions) {
+			static::getConnectionGroup($connectionGroupName)->addConnections($connectionGroupOptions);
+		}
 	}
 	
 	/**
@@ -168,26 +183,37 @@ class Shanty_Mongo
 	/**
 	 * Determine if a connection group exists
 	 * 
-	 * @param string $connectionGroup The name of the connection group
+	 * @param string $name The name of the connection group
 	 */
-	public static function hasConnectionGroup($connectionGroup)
+	public static function hasConnectionGroup($name)
 	{
-		return array_key_exists($connectionGroup, static::$_connectionGroups);
+		return array_key_exists($name, static::$_connectionGroups);
+	}
+
+	/**
+	 * Set a connection group
+	 * 
+	 * @param string $name
+	 * @param Shanty_Mongo_Connection_Group $connectionGroup
+	 */
+	public static function setConnectionGroup($name, Shanty_Mongo_Connection_Group $connectionGroup)
+	{
+		static::$_connectionGroups[$name] = $connectionGroup;
 	}
 	
 	/**
 	 * Get a connection group. If it doesn't already exist, create it
 	 * 
-	 * @param string $connectionGroup The name of the connection group
+	 * @param string $name The name of the connection group
 	 * @return Shanty_Mongo_Connection_Group
 	 */
-	public static function getConnectionGroup($connectionGroup)
+	public static function getConnectionGroup($name)
 	{
-		if (!static::hasConnectionGroup($connectionGroup)) {
-			static::$_connectionGroups[$connectionGroup] = new Shanty_Mongo_Connection_Group();
+		if (!static::hasConnectionGroup($name)) {
+			static::setConnectionGroup($name, new Shanty_Mongo_Connection_Group());
 		}
 		
-		return static::$_connectionGroups[$connectionGroup];
+		return static::$_connectionGroups[$name];
 	}
 	
 	/**
@@ -198,6 +224,14 @@ class Shanty_Mongo
 	public static function getConnectionGroups()
 	{
 		return static::$_connectionGroups;
+	}
+	
+	/**
+	 * Remove all connection groups
+	 */
+	public static function removeConnectionGroups()
+	{
+		static::$_connectionGroups = array();
 	}
 	
 	/**
@@ -223,13 +257,57 @@ class Shanty_Mongo
 	}
 	
 	/**
-	 * Set a flag to select a new connection every request
+	 * Get a write connection
 	 * 
-	 * @param boolean $value
+	 * @param string $connectionGroupName The connection group name
+	 * @return Shanty_Mongo_Connection
 	 */
-	public static function selectNewConnectionEachRequest($value = true)
+	public static function getWriteConnection($connectionGroupName = 'default')
 	{
-		static::$_reselectConnectionEachRequest = $value;
+		$connectionGroup = static::getConnectionGroup($connectionGroupName);
+		
+		if ($connectionGroupName == 'default' && count($connectionGroup->getMasters()) === 0) {
+			// Add a connection to localhost if no connections currently exist for the default connection group
+			$connectionGroup->addMaster(new Shanty_Mongo_Connection('127.0.0.1'));
+		}
+		
+		if (!$connection = $connectionGroup->getWriteConnection($connectionGroupName)) {
+			require_once 'Shanty/Mongo/Exception.php';
+			throw new Shanty_Mongo_Exception("No write connection available for the '{$connectionGroupName}' connection group");
+		}
+		
+		return $connection;
 	}
 	
+	/**
+	 * Get a read connection
+	 * 
+	 * @param string $connectionGroupName The connection group name
+	 * @return Shanty_Mongo_Connection
+	 */
+	public static function getReadConnection($connectionGroupName = 'default')
+	{
+		$connectionGroup = static::getConnectionGroup($connectionGroupName);
+		
+		if ($connectionGroupName == 'default' && count($connectionGroup->getSlaves()) === 0 && count($connectionGroup->getMasters()) === 0) {
+			// Add a connection to localhost if no connections currently exist for the default connection group
+			$connectionGroup->addMaster(new Shanty_Mongo_Connection('127.0.0.1'));
+		}
+		
+		if (!$connection = $connectionGroup->getReadConnection($connectionGroupName)) {
+			require_once 'Shanty/Mongo/Exception.php';
+			throw new Shanty_Mongo_Exception("No read connection available for the '{$connectionGroupName}' connection group");
+		}
+		
+		return $connection;
+	}
+	
+	/**
+	 * Return Shanty_Mongo to pre-init status
+	 */
+	public static function makeClean()
+	{
+		static::removeConnectionGroups();
+		
+	}
 }

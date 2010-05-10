@@ -12,8 +12,46 @@ class Shanty_Mongo_Connection_Stack implements SeekableIterator, Countable, Arra
 	protected $_position = 0;
 	protected $_nodes = array();
 	protected $_weights = array();
+	protected $_options = array(
+		'cacheConnectionSelection' => true
+	);
 	protected $_cacheConnectionSelection = true;
 	protected $_cachedConnection = null;
+	
+	/**
+	 * Get an option
+	 * 
+	 * @param string $option
+	 */
+	public function getOption($option)
+	{
+		if (!array_key_exists($option, $this->_options)) {
+			return null;
+		}
+		
+		return $this->_options[$option];
+	}
+	
+	/**
+	 * Set an option
+	 * 
+	 * @param string $option
+	 * @param mixed $value
+	 */
+	public function setOption($option, $value)
+	{
+		$this->_options[$option] = $value;
+	}
+	
+	/**
+	 * Set Options
+	 * 
+	 * @param array $options
+	 */
+	public function setOptions(array $options)
+	{
+		$this->_options = array_merge($this->_options, $options);
+	}
 	
 	/**
 	 * Add node to connection stack
@@ -35,8 +73,8 @@ class Shanty_Mongo_Connection_Stack implements SeekableIterator, Countable, Arra
 	public function selectNode()
 	{
 		if (count($this) == 0) {
-			require_once 'Shanty/Mongo/Exception.php';
-			throw new Shanty_Mongo_Exception("No nodes available for selection");
+			// no nodes to select from
+			return null;
 		}
 		
 		// Return the cached connection if available
@@ -91,10 +129,10 @@ class Shanty_Mongo_Connection_Stack implements SeekableIterator, Countable, Arra
 	public function cacheConnectionSelection($value = null)
 	{
 		if (!is_null($value)) {
-			$this->_cacheConnectionSelection = (boolean) $value;
+			$this->_options['cacheConnectionSelection'] = (boolean) $value;
 		}
 		
-		return $this->_cacheConnectionSelection;
+		return $this->_options['cacheConnectionSelection'];
 	}
 	
 	/**

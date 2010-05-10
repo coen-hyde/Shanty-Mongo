@@ -1,15 +1,31 @@
 <?php
-require_once dirname(dirname(dirname(dirname(__FILE__)))) . DIRECTORY_SEPARATOR . 'TestHelper.php';
+require_once dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR . 'TestSetup.php';
 
-require_once 'PHPUnit/Framework.php';
- 
-class Shanty_Mongo_Connection_StackTest extends PHPUnit_Framework_TestCase
+class Shanty_Mongo_Connection_StackTest extends Shanty_Mongo_TestSetup
 {
 	protected $_stack;
 	
 	public function setUp()
 	{
+		parent::setUp();
+		
 		$this->_stack = new Shanty_Mongo_Connection_Stack();
+	}
+	
+	public function testOptionGetAndSet()
+	{
+		$this->assertTrue($this->_stack->getOption('cacheConnectionSelection'));
+		$this->assertNull($this->_stack->getOption('option does not exist'));
+		
+		$this->_stack->setOption('cacheConnectionSelection', false);
+		$this->assertFalse($this->_stack->getOption('cacheConnectionSelection'));
+		
+		$options = array(
+			'cacheConnectionSelection' => true
+		);
+		
+		$this->_stack->setOptions($options);
+		$this->assertTrue($this->_stack->getOption('cacheConnectionSelection'));
 	}
 	
 	public function testCacheConnectionSelection()
@@ -30,13 +46,10 @@ class Shanty_Mongo_Connection_StackTest extends PHPUnit_Framework_TestCase
 		$this->assertEquals(2, count($this->_stack));
 	}
 	
-	/**
-	 * @expectedException Shanty_Mongo_Exception
-	 */
 	public function testNoNodes()
 	{
 		$this->assertEquals(0, count($this->_stack));
-		$this->_stack->selectNode();
+		$this->assertNull($this->_stack->selectNode());
 	}
 	
 	/**
@@ -143,9 +156,17 @@ class Shanty_Mongo_Connection_StackTest extends PHPUnit_Framework_TestCase
 	}
 	
 	/**
+	 * @expectedException Shanty_Mongo_Exception
+	 */
+	public function testSeekNonNumericException()
+	{
+		$this->_stack->seek('asdfasdf');
+	}
+	
+	/**
 	 * @expectedException OutOfBoundsException
 	 */
-	public function testSeekException()
+	public function testSeekOutOfBoundsException()
 	{
 		$this->_stack->seek(100);
 	}
@@ -156,17 +177,25 @@ class Shanty_Mongo_Connection_StackTest extends PHPUnit_Framework_TestCase
 		
 		$connection1 = $this->getMock('Shanty_Mongo_Connection');
 		$connection2 = $this->getMock('Shanty_Mongo_Connection');
-		$this->_stack->offsetSet(0, $connection1);
-		$this->_stack->offsetSet(1, $connection2);
+		$this->_stack[0] = $connection1;
+		$this->_stack[1] = $connection2;
 		
 		$this->assertEquals(2, count($this->_stack));
 		
-		$this->assertEquals($connection1, $this->_stack->offsetGet(0));
-		$this->assertEquals($connection2, $this->_stack->offsetGet(1));
-		$this->assertNull($this->_stack->offsetGet(2));
+		$this->assertEquals($connection1, $this->_stack[0]);
+		$this->assertEquals($connection2, $this->_stack[1]);
+		$this->assertNull($this->_stack[2]);
 		
-		$this->_stack->offsetUnset(0);
-		$this->assertNull($this->_stack->offsetGet(0));
+		unset($this->_stack[0]);
+		$this->assertNull($this->_stack[0]);
 		$this->assertEquals(1, count($this->_stack));
+	}
+	
+	/**
+	 * @expectedException Shanty_Mongo_Exception
+	 */
+	public function testOffsetSetNonNumericException()
+	{
+		$this->_stack['asdfasdf'] = $this->getMock('Shanty_Mongo_Connection');
 	}
 }

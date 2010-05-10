@@ -55,7 +55,7 @@ if (defined('TESTS_GENERATE_REPORT') && TESTS_GENERATE_REPORT === true &&
     version_compare(PHPUnit_Runner_Version::id(), '3.1.6', '>=')) {
 
     /*
-     * Add Zend Framework library/ directory to the PHPUnit code coverage
+     * Add library/ directory to the PHPUnit code coverage
      * whitelist. This has the effect that only production code source files
      * appear in the code coverage report and that all production code source
      * files, even those that are not covered by a test yet, are processed.
@@ -70,6 +70,8 @@ if (defined('TESTS_GENERATE_REPORT') && TESTS_GENERATE_REPORT === true &&
     }
     PHPUnit_Util_Filter::addDirectoryToFilter(PEAR_INSTALL_DIR);
     PHPUnit_Util_Filter::addDirectoryToFilter(PHP_LIBDIR);
+    PHPUnit_Util_Filter::addDirectoryToFilter(ZEND_FRAMEWORK_PATH);
+    PHPUnit_Util_Filter::addDirectoryToFilter($coreTests);
 }
 
 /*

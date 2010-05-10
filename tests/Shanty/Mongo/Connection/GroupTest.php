@@ -1,17 +1,39 @@
 <?php
-require_once dirname(dirname(dirname(dirname(__FILE__)))) . DIRECTORY_SEPARATOR . 'TestHelper.php';
+require_once dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR . 'TestSetup.php';
 
-require_once 'PHPUnit/Framework.php';
 require_once 'Shanty/Mongo/Connection/Group.php';
 require_once 'Shanty/Mongo/Connection/Stack.php';
  
-class Shanty_Mongo_Connection_GroupTest extends PHPUnit_Framework_TestCase
+class Shanty_Mongo_Connection_GroupTest extends Shanty_Mongo_TestSetup
 {
 	protected $_group;
 	
 	public function setUp()
 	{
+		parent::setUp();
+		
 		$this->_group = new Shanty_Mongo_Connection_Group();
+	}
+	
+	public function testAddConnectionsNewGroupWithConnections()
+	{
+		$connections = array(
+			'master' => array('host' => 'localhost'),
+			'slave' => array('host' => '127.0.0.1'),
+		);
+		
+		$group = new Shanty_Mongo_Connection_Group($connections);
+		$this->assertEquals(1, count($group->getMasters()));
+		$this->assertEquals(1, count($group->getSlaves()));
+		
+		$masters = $group->getMasters();
+		$slaves = $group->getSlaves();
+		
+		$masterInfo = $masters[0]->getConnectionInfo();
+		$this->assertEquals('mongodb://localhost:27017', $masterInfo['connectionString']);
+		
+		$slave1Info = $slaves[0]->getConnectionInfo();
+		$this->assertEquals('mongodb://127.0.0.1:27017', $slave1Info['connectionString']);
 	}
 	
 	public function testAddConnectionsSingleServer()
@@ -57,10 +79,12 @@ class Shanty_Mongo_Connection_GroupTest extends PHPUnit_Framework_TestCase
 		$connections = array(
 			'masters' => array(
 				0 => array('host' => '127.0.0.1'),
-				1 => array('host' => 'localhost')
+				'cacheConnectionSelection' => true,
+				1 => array('host' => 'localhost'),
 			),
 			'slaves' => array(
 				0 => array('host' => '127.0.0.1'),
+				'cacheConnectionSelection' => true,
 				1 => array('host' => 'localhost')
 			)
 		);
@@ -83,6 +107,27 @@ class Shanty_Mongo_Connection_GroupTest extends PHPUnit_Framework_TestCase
 		
 		$slave2Info = $slaves[1]->getConnectionInfo();
 		$this->assertEquals('mongodb://localhost:27017', $slave2Info['connectionString']);
+	}
+	
+	public function testAddConnectionsZendConfig()
+	{
+		$connections = array(
+			'master' => array('host' => 'localhost'),
+			'slave' => array('host' => '127.0.0.1'),
+		);
+		
+		$this->_group->addConnections(new Zend_Config($connections));
+		$this->assertEquals(1, count($this->_group->getMasters()));
+		$this->assertEquals(1, count($this->_group->getSlaves()));
+		
+		$masters = $this->_group->getMasters();
+		$slaves = $this->_group->getSlaves();
+		
+		$masterInfo = $masters[0]->getConnectionInfo();
+		$this->assertEquals('mongodb://localhost:27017', $masterInfo['connectionString']);
+		
+		$slave1Info = $slaves[0]->getConnectionInfo();
+		$this->assertEquals('mongodb://127.0.0.1:27017', $slave1Info['connectionString']);
 	}
 	
 	public function testAddAndGetMasters()

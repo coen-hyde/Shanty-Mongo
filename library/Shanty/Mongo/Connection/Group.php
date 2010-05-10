@@ -30,35 +30,50 @@ class Shanty_Mongo_Connection_Group
 	 * 
 	 * @param array $connectionOptions
 	 */
-	public function addConnections(array $connectionOptions)
+	public function addConnections($connectionOptions)
 	{
+		if ($connectionOptions instanceof Zend_Config) {
+			$connectionOptions = $connectionOptions->toArray();
+		}
+		
 		$masters = array();
+		$masterStackOptions = array();
 		$slaves = array();
+		$slaveStackOptions = array();
+		
+		$group = $this;
+		$addConnections = function(Shanty_Mongo_Connection_Stack $stack, array $connections) use ($group) {
+			foreach ($connections as $connectionData) {
+				$connection = new Shanty_Mongo_Connection($group->formatConnectionString($connectionData));
+				if (array_key_exists('weight', $connectionData)) $weight = (int) $connectionData['weight'];
+				else $weight = 1;
+				
+				$stack->addNode($connection, $weight);
+			}
+		};
 		
 		// Lets add our masters
 		if (array_key_exists('master', $connectionOptions)) $masters[] = $connectionOptions['master']; // single master
-		elseif (array_key_exists('masters', $connectionOptions)) $masters = $connectionOptions['masters']; // multiple masters
+		elseif (array_key_exists('masters', $connectionOptions)) {
+			$connectionKeys = array_filter(array_keys($connectionOptions['masters']), 'is_numeric');
+			$masters = array_intersect_key($connectionOptions['masters'], array_flip($connectionKeys)); // only connections
+			$masterStackOptions = array_diff_key($connectionOptions['masters'], array_flip($connectionKeys)); // only options
+		}
 		else $masters[] = $connectionOptions; // one server
 		
-		foreach ($masters as $masterConnectionOptions) {
-			$connection = new Shanty_Mongo_Connection($this->formatConnectionString($masterConnectionOptions));
-			if (array_key_exists('weight', $masterConnectionOptions)) $weight = (int) $masterConnectionOptions['weight'];
-			else $weight = 1;
-			
-			$this->addMaster($connection, $weight);
-		}
+		$addConnections($this->getMasters(), $masters); // Add master connections
+		$this->getMasters()->setOptions($masterStackOptions); // Set master stack options
 		
 		// Lets add our slaves
 		if (array_key_exists('slave', $connectionOptions)) $slaves[] = $connectionOptions['slave']; // single slave
-		elseif (array_key_exists('slaves', $connectionOptions)) $slaves = $connectionOptions['slaves']; // multiple slaves
+		elseif (array_key_exists('slaves', $connectionOptions)) {
+			$connectionKeys = array_filter(array_keys($connectionOptions['slaves']), 'is_numeric');
+			$slaves = array_intersect_key($connectionOptions['slaves'], array_flip($connectionKeys)); // only connections
+			$slaveStackOptions = array_diff_key($connectionOptions['slaves'], array_flip($connectionKeys)); // only options
+		}; 
 		
-		foreach ($slaves as $slaveConnectionOptions) {
-			$connection = new Shanty_Mongo_Connection($this->formatConnectionString($slaveConnectionOptions));
-			if (array_key_exists('weight', $slaveConnectionOptions)) $weight = (int) $slaveConnectionOptions['weight'];
-			else $weight = 1;
-			
-			$this->addSlave($connection, $weight);
-		}
+		$addConnections($this->getSlaves(), $slaves); // Add slave connections
+		$this->getSlaves()->setOptions($slaveStackOptions); // Set slave stack options
 	}
 	
 	/**
@@ -108,13 +123,11 @@ class Shanty_Mongo_Connection_Group
 	 * 
 	 * @return Shanty_Mongo_Connection
 	 */
-	public function getWriteConnection($connectionGroup = 'default')
+	public function getWriteConnection()
 	{
 		// Select master
 		$write = $this->_masters->selectNode();
-		
-		// Connect to db
-		$write->connect();
+		if ($write) $write->connect();
 		
 		return $write;
 	}
@@ -124,7 +137,7 @@ class Shanty_Mongo_Connection_Group
 	 * 
 	 * @return Shanty_Mongo_Connection
 	 */
-	public function getReadConnection($connectionGroup = 'default')
+	public function getReadConnection()
 	{
 		if (count($this->_slaves) === 0) {
 			// If no slaves then get a master connection
@@ -133,9 +146,7 @@ class Shanty_Mongo_Connection_Group
 		else {
 			// Select slave
 			$read = $this->_slaves->selectNode();
-			
-			// Connect to db
-			$read->connect();
+			if ($read) $read->connect();
 		}
 		
 		return $read;
