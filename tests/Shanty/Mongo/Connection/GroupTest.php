@@ -199,6 +199,9 @@ class Shanty_Mongo_Connection_GroupTest extends Shanty_Mongo_TestSetup
 		 
 		 $options = array('username' => 'jerry', 'password' => 'springer');
 		 $this->assertEquals("{$options['username']}:{$options['password']}@127.0.0.1:27017", $this->_group->formatHostString($options));
+		 
+		 $options = array('database' => 'test');
+		 $this->assertEquals("127.0.0.1:27017/{$options['database']}", $this->_group->formatHostString($options));
 	}
 	
 	
