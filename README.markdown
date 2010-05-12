@@ -37,56 +37,7 @@ If you are connecting to localhost without any authentication then no need to wo
 
 #### Advanced connections
 
-To create a new connection initialise an instance of Shanty_Mongo_Connection and pass the connection string to the constructor. For more information about connection strings see pecl's mongo [documentation](http://au2.php.net/manual/en/mongo.construct.php). We'll create a typical master slave setup.
-
-	$master = new Shanty_Mongo_Connection('mongodb://user:password@mongo-master.domain.local:port'); // see pecl's mongo documentation
-	$slave1 = new Shanty_Mongo_Connection('mongo-slave1.domain.local');
-	$slave2 = new Shanty_Mongo_Connection('mongo-slave2.domain.local');
-	
-	Shanty_Mongo::addMaster($master);
-	Shanty_Mongo::addSlave($slave1);
-	Shanty_Mongo::addSlave($slave2);
-
-Connections are lazy loaded. Shanty_Mongo_Connection's will only connect to the server the first time they are used. This is to prevent all connections connecting even if they are never used
-
-By the way master-master setups are also possible but not recommended.
-
-If no slaves are provided then reads will go to the masters.
-
-#### Weighted connections
-
-Say for example you have a supa dupa server that can process 3x the requests of the other servers. You can weight that connection. eg
-
-	Shanty_Mongo::addSlave($supaDupaServer, 3);
-
-By default connections are given a weight of 1.
-
-#### Connection Groups
-
-*This feature is only available in HEAD. It will be in Shanty Mongo 0.2.*
-
-Sometimes you may wish to connect to multiple mongodb servers that are not in a cluster, most likely because they store different data to one and other. To do this you can use connection groups. 
-
-By default all connections get added to the 'default' group. We can easily add connections to other groups by providing the group name as the third parameter. 
-
-	Shanty_Mongo::addMaster($connection, 1, 'users');
-	
-Here we added a connection to the 'users' connection group. Next we'll have to tell our documents to use that connection group instead of the default connection group. This is done by specifying the static property $_connectionGroup in the document.
-
-	class User extends Shanty_Mongo_Document 
-	{
-		protected static $_connectionGroup = 'users';
-	}
-
-#### Internal connection selection
-
-The first time a read request is made, a connection will be selected from the pool of slaves and cached. The same connection will then be used in subsequent requests. The same applies to write requests.
-
-If you would like a new connection selected for every request call
-
-*This feature is currently out of action in HEAD. It will return before Shanty Mongo 0.2.*
-
-	Shanty_Mongo::selectNewConnectionEachRequest(true);
+For information on how to configure master/slave setups, weighted connections and multiple connection goups see the [wiki](http://wiki.github.com/coen-hyde/Shanty-Mongo/connections)
 
 ### Define a document/collection
 
