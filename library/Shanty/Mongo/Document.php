@@ -475,6 +475,13 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		if (MongoDBRef::isRef($data)) {
 			$collection = $data['$ref'];
 			$data = MongoDBRef::get(static::getMongoDB(false), $data);
+			
+			// If this is a broken reference then no point keeping it for later
+			if (!$data) {
+				$this->_data[$property] = null;
+				return $this->_data[$property];
+			}
+			
 			$reference = true;
 		}
 		else {

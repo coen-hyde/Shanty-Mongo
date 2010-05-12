@@ -33,6 +33,13 @@ class Shanty_Mongo_DocumentSet extends Shanty_Mongo_Document
 		if (MongoDBRef::isRef($data)) {
 			$collection = $data['$ref'];
 			$data = MongoDBRef::get(static::getMongoDB(), $data);
+			
+			// If this is a broken reference then no point keeping it for later
+			if (!$data) {
+				$this->_data[$index] = null;
+				return $this->_data[$index];
+			}
+			
 			$reference = true;
 		}
 		else {
