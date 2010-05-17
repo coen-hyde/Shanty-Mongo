@@ -28,6 +28,9 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		$this->_config = array_merge($this->_config, $config);
 		$this->_references = new SplObjectStorage();
 		
+		// Make sure mongo is initialised
+		Shanty_Mongo::init();
+		
 		// If no collection set then set it to the called class
 		if (!isset($config['collection'])) {
 			$this->setCollection(static::getCollectionName());
