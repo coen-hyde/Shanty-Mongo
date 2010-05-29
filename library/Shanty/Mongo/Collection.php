@@ -12,6 +12,8 @@ abstract class Shanty_Mongo_Collection
 	protected static $_connectionGroup = 'default';
 	protected static $_dbName = null;
 	protected static $_collectionName = null;
+	protected static $_collectionRequirements = array();
+	protected static $_cachedCollectionRequirements = null;
 	protected static $_documentSetClass = 'Shanty_Mongo_DocumentSet';
 	
 	/**
@@ -88,6 +90,80 @@ abstract class Shanty_Mongo_Collection
 		return static::$_documentSetClass;
 	}
 	
+	/**
+	 * Get requirements
+	 * 
+	 * @return array
+	 */
+	public static function getCollectionRequirements()
+	{
+		$calledClass = get_called_class();
+		
+		if (!isset($calledClass::$_collectionRequirements)) return array();
+
+		return static::makeRequirementsTidy($calledClass::$_collectionRequirements);
+	}
+	
+	/**
+	 * Get all inherited requirements
+	 * 
+	 * @return array
+	 */
+	public static function getInheritedCollectionRequirements()
+	{
+		$calledClass = get_called_class();
+
+		if ($calledClass === __CLASS__) return array();
+		
+		if (!is_null($calledClass::$_cachedCollectionRequirements)) {
+			return $calledClass::$_cachedCollectionRequirements;
+		}
+		
+		$parentClass = get_parent_class($calledClass);
+		$parentRequirements = $parentClass::getInheritedCollectionRequirements();
+		
+		$requirements = static::mergeRequirements($parentRequirements, $calledClass::getCollectionRequirements());
+		$calledClass::$_cachedCollectionRequirements = $requirements;
+		
+		return $requirements;
+	}
+	
+	/**
+	 * Process requirements to make sure they are in the correct format
+	 * 
+	 * @param array $requirements
+	 * @return array
+	 */
+	public static function makeRequirementsTidy(array $requirements) {
+		foreach ($requirements as $property => $requirementList) {
+			if (!is_array($requirementList)) {
+				$requirements[$property] = array($requirementList);
+			}
+				
+			$newRequirementList = array();
+			foreach ($requirements[$property] as $key => $requirement) {
+				if (is_numeric($key)) $newRequirementList[$requirement] = null;
+				else $newRequirementList[$key] = $requirement;
+			}
+			
+			$requirements[$property] = $newRequirementList;
+		}
+			
+		return $requirements;
+	}
+	
+	/**
+	 * Merge a two sets of requirements together
+	 * 
+	 * @param array $requirements
+	 * @return array
+	 */
+	public static function mergeRequirements($requirements1, $requirements2)
+	{
+		// Merge requirement modifiers with existing requirements
+		return array_merge_recursive($requirements1, $requirements2);
+	}
+
 	/**
 	 * Get an instance of MongoDb
 	 * 

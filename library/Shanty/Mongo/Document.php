@@ -36,8 +36,9 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 			$this->setCollection(static::getCollectionName());
 		}
 		
-		// Update requirements with requirement modifiers passed in config
-		$this->mergeRequirements();
+		// Update requirements with requirement modifiers inherited and passed in config
+		$this->applyRequirements(self::getInheritedCollectionRequirements());
+		$this->applyRequirements($this->_config['requirementModifiers']);
 		
 		// Force _id property to be of type MongoId
 		$this->addRequirement('_id', 'Validator:MongoId');
@@ -53,31 +54,14 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		}
 	}
 	
-	protected function mergeRequirements()
+	/**
+	 * Apply a set of requirements
+	 * 
+	 * @param array $requirements
+	 */
+	public function applyRequirements($requirements)
 	{
-		$makeTidy = function($requirements) {
-			foreach ($requirements as $property => $requirementList) {
-				if (!is_array($requirementList)) {
-					$requirements[$property] = array($requirementList);
-				}
-				
-				$newRequirementList = array();
-				foreach ($requirements[$property] as $key => $requirement) {
-					if (is_numeric($key)) $newRequirementList[$requirement] = null;
-					else $newRequirementList[$key] = $requirement;
-				}
-				
-				$requirements[$property] = $newRequirementList;
-			}
-			
-			return $requirements;
-		};
-		
-		// Force all property values to be an array
-		$this->_requirements = $makeTidy($this->_requirements);
-		
-		// Merge requirement modifiers with existing requirements
-		$this->_requirements = array_merge_recursive($this->_requirements, $this->_config['requirementModifiers']);
+		$this->_requirements = $this->mergeRequirements($this->_requirements, $requirements);
 	}
 	
 	/**
@@ -402,7 +386,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 
 		foreach ($this->_requirements[$property] as $requirement => $options) {
 			// continue if requirement does not exist or is not a validator requirement
-			$validator = Shanty_Mongo::getRequirement($requirement, $options);
+			$validator = Shanty_Mongo::retrieveRequirement($requirement, $options);
 			if (!$validator || !($validator instanceof Zend_Validate_Interface)) continue;
 			
 			$validators->addValidator($validator);
@@ -426,7 +410,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		
 		foreach ($this->_requirements[$property] as $requirement => $options) {
 			// continue if requirement does not exist or is not a filter requirement
-			$filter = Shanty_Mongo::getRequirement($requirement, $options);
+			$filter = Shanty_Mongo::retrieveRequirement($requirement, $options);
 			if (!$filter || !($filter instanceof Zend_Filter_Interface)) continue;
 			
 			$filters->addFilter($filter);

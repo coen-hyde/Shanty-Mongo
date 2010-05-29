@@ -16,6 +16,8 @@ class Shanty_Mongo_TestSetup extends PHPUnit_Framework_TestCase
 	public function tearDown()
 	{
 		$this->_restoreIncludePath();
+		$mongo = new Mongo(TESTS_SHANTY_MONGO_CONNECTIONSTRING);
+		$mongo->selectDb(TESTS_SHANTY_MONGO_DB)->drop();
 		
 		parent::tearDown();
 	}
