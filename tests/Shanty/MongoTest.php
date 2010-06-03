@@ -4,7 +4,11 @@ require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'Mongo' . DIRECTORY_SEPAR
 require_once 'PHPUnit/Framework.php';
 require_once 'Shanty/Mongo.php';
 require_once 'Zend/Config.php';
- 
+require_once 'Zend/Validate/EmailAddress.php';
+require_once 'Zend/Validate/InArray.php';
+require_once 'Zend/Validate/Hostname.php';
+require_once 'Zend/Filter/Alpha.php';
+
 class Shanty_MongoTest extends Shanty_Mongo_TestSetup
 {
 	public function setUp()
@@ -12,6 +16,7 @@ class Shanty_MongoTest extends Shanty_Mongo_TestSetup
 		parent::setUp();
 		
 		Shanty_Mongo::makeClean();
+		Shanty_Mongo::init();
 	}
 	
 	public function testMakeClean()
@@ -66,13 +71,13 @@ class Shanty_MongoTest extends Shanty_Mongo_TestSetup
 
 		Shanty_Mongo::removeConnectionGroups();
 		
-		$connection = new Shanty_Mongo_Connection('localhost');
+		$connection = $this->getMock('Shanty_Mongo_Connection');
 		Shanty_Mongo::addMaster($connection);
 		$this->assertEquals($connection, Shanty_Mongo::getWriteConnection());
 		
 		Shanty_Mongo::removeConnectionGroups();
 		
-		$connection = new Shanty_Mongo_Connection('localhost');
+		$connection = $this->getMock('Shanty_Mongo_Connection');
 		Shanty_Mongo::addMaster($connection, 1, 'users');
 		$this->assertEquals($connection, Shanty_Mongo::getWriteConnection('users'));
 	}
@@ -99,13 +104,13 @@ class Shanty_MongoTest extends Shanty_Mongo_TestSetup
 
 		Shanty_Mongo::removeConnectionGroups();
 		
-		$connection = new Shanty_Mongo_Connection('localhost');
+		$connection = $this->getMock('Shanty_Mongo_Connection');
 		Shanty_Mongo::addSlave($connection);
 		$this->assertEquals($connection, Shanty_Mongo::getReadConnection());
 		
 		Shanty_Mongo::removeConnectionGroups();
 		
-		$connection = new Shanty_Mongo_Connection('localhost');
+		$connection = $this->getMock('Shanty_Mongo_Connection');
 		Shanty_Mongo::addSlave($connection, 1, 'users');
 		$this->assertEquals($connection, Shanty_Mongo::getReadConnection('users'));
 	}
@@ -172,5 +177,115 @@ class Shanty_MongoTest extends Shanty_Mongo_TestSetup
 		$this->assertEquals(0, count(Shanty_Mongo::getConnectionGroup('users')->getSlaves()));
 		$this->assertEquals(2, count(Shanty_Mongo::getConnectionGroup('accounts')->getMasters()));
 		$this->assertEquals(2, count(Shanty_Mongo::getConnectionGroup('accounts')->getSlaves()));
+	}
+	
+	public function testCreateRequirement()
+	{
+		$requirement = Shanty_Mongo::createRequirement('Validator:EmailAddress');
+		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $requirement);
+		$this->assertEquals('Zend_Validate_EmailAddress', get_class($requirement));
+		
+		$requirement = Shanty_Mongo::createRequirement('Filter:Alpha');
+		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $requirement);
+		$this->assertEquals('Zend_Filter_Alpha', get_class($requirement));
+		
+		$requirement = Shanty_Mongo::createRequirement('Validator:InArray', array('one', 'two'));
+		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $requirement);
+		$this->assertEquals('Zend_Validate_InArray', get_class($requirement));
+		$this->assertTrue($requirement->isValid('one'));
+		$this->assertFalse($requirement->isValid('three'));
+		
+		// Make sure we get a fresh requirement with different options
+		$requirement = Shanty_Mongo::createRequirement('Validator:InArray', array('three', 'four'));
+		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $requirement);
+		$this->assertEquals('Zend_Validate_InArray', get_class($requirement));
+		$this->assertTrue($requirement->isValid('three'));
+		$this->assertFalse($requirement->isValid('one'));
+		
+		$this->assertNull(Shanty_Mongo::createRequirement('Non existing requirement'));
+	}
+	
+	/*
+	 * @depends testCreateRequirement
+	 */
+	public function testRetrieveRequirements()
+	{
+		$requirement = Shanty_Mongo::retrieveRequirement('Validator:MongoId');
+		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $requirement);
+		$this->assertEquals('Shanty_Mongo_Validate_Class', get_class($requirement));
+		
+		$requirement = Shanty_Mongo::retrieveRequirement('Validator:Hostname');
+		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $requirement);
+		$this->assertEquals('Zend_Validate_Hostname', get_class($requirement));
+		$this->assertTrue($requirement->isValid('google.com'));
+		
+		$requirement = Shanty_Mongo::retrieveRequirement('Validator:Hostname', Zend_Validate_Hostname::ALLOW_IP);
+		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $requirement);
+		$this->assertEquals('Zend_Validate_Hostname', get_class($requirement));
+		$this->assertFalse($requirement->isValid('shantymongo.org'));
+
+		$requirement = Shanty_Mongo::retrieveRequirement('Document:My_ShantyMongo_User');
+		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $requirement);
+		$this->assertEquals('Shanty_Mongo_Validate_Class', get_class($requirement));
+		$user = $this->getMock('My_ShantyMongo_User');
+		$this->assertTrue($requirement->isValid($user));
+		
+		$this->assertNull(Shanty_Mongo::createRequirement('Document:Class does not exist'));
+		
+		// even though we tested this with testCreateRequirement, we need to make sure the vars were passed through correctly
+		$requirement = Shanty_Mongo::retrieveRequirement('Validator:InArray', array('one', 'two'));
+		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $requirement);
+		$this->assertEquals('Zend_Validate_InArray', get_class($requirement));
+		$this->assertTrue($requirement->isValid('one'));
+		$this->assertFalse($requirement->isValid('three'));
+	}
+	
+	/**
+	 * @expectedException Shanty_Mongo_Exception
+	 */
+	public function testRetrieveRequirementsException()
+	{
+		Shanty_Mongo::retrieveRequirement('Non existant requirement');
+	}
+	
+	/**
+	 * @depends testRetrieveRequirements
+	 */
+	public function testStoreRequirement()
+	{
+		$requirement = new Zend_Validate_Hostname();
+		Shanty_Mongo::storeRequirement('Validator:Hostname', $requirement);
+		
+		$requirement = Shanty_Mongo::retrieveRequirement('Validator:Hostname');
+		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $requirement);
+		$this->assertEquals('Zend_Validate_Hostname', get_class($requirement));
+		
+		// test requirements with options after the same requirement has been stored without options
+		$requirement = Shanty_Mongo::retrieveRequirement('Validator:Hostname', Zend_Validate_Hostname::ALLOW_IP);
+		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $requirement);
+		$this->assertEquals('Zend_Validate_Hostname', get_class($requirement));
+		$this->assertFalse($requirement->isValid('shantymongo.org'));
+	}
+	
+	public static function validOperations()
+	{
+		return array(
+			array('$set'), 
+			array('$unset'), 
+			array('$push'), 
+			array('$pushAll'), 
+			array('$pull'), 
+			array('$pullAll'), 
+			array('$inc')
+		);
+	}
+	
+	/**
+	 * @dataProvider validOperations
+	 */
+	public function testValidOperation($operation)
+	{
+		$this->assertTrue(Shanty_Mongo::isValidOperation($operation));
+		$this->assertFalse(Shanty_Mongo::isValidOperation('non valid op'));
 	}
 }

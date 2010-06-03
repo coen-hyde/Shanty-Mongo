@@ -4,7 +4,7 @@ require_once 'Shanty/Mongo/Document.php';
 
 class My_ShantyMongo_Name extends Shanty_Mongo_Document
 {
-	protected static $_collectionRequirements = array(
+	protected static $_requirements = array(
 		'first' => 'Required',
 		'last' => 'Required'
 	);
