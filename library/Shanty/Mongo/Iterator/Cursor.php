@@ -105,6 +105,12 @@ class Shanty_Mongo_Iterator_Cursor implements OuterIterator
 		return new $documentClass($data, $config);
 	}
 	
+	public function getNext()
+	{
+		$this->next();
+		return $this->current();
+	}
+	
 	public function key()
 	{
 		return $this->getInnerIterator()->key();
