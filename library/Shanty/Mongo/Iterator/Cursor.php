@@ -77,6 +77,7 @@ class Shanty_Mongo_Iterator_Cursor implements OuterIterator
 	public function makeDocumentSet()
 	{
 		$config = array();
+		$config['new'] = false;
 		$config['hasId'] = false;
 		$config['collection'] = $this->getCollection();
 		$config['requirementModifiers'] = array(
@@ -123,6 +124,12 @@ class Shanty_Mongo_Iterator_Cursor implements OuterIterator
 	public function valid()
 	{
 		return $this->getInnerIterator()->valid();
+	}
+	
+	public function getNext()
+	{
+		$this->next();
+		return $this->current();
 	}
 	
 	public function __call($method, $arguments)
