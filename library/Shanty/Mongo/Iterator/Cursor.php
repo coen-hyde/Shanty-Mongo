@@ -98,6 +98,7 @@ class Shanty_Mongo_Iterator_Cursor implements OuterIterator
 		$data = $this->getInnerIterator()->current();
 		
 		$config = array();
+		$config['new'] = false;
 		$config['hasKey'] = true;
 		$config['collection'] = $this->getCollection();
 		
@@ -132,8 +133,28 @@ class Shanty_Mongo_Iterator_Cursor implements OuterIterator
 		return $this->current();
 	}
 	
+	public function count($all = false)
+	{
+		return $this->getInnerIterator()->count($all);
+	}
+	
+	public function info()
+	{
+		return $this->getInnerIterator()->info();
+	}
+	
+	public function skip()
+	{
+		return $this->getInnerIterator()->skip((int) $num);
+	}
+	
 	public function __call($method, $arguments)
 	{
-		return $this->getInnerIterator()->$method($arguments);
+		$res = $this->getInnerIterator()->$method($arguments);
+		
+		// Allow chaining
+		if ($res instanceof MongoCursor) return $this;
+		
+		return $res;
 	}
 }
