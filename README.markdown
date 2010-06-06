@@ -321,6 +321,11 @@ Lets increment a users post count by one
 	//$user->addOperation('$inc', 'posts', 1);
 	//$user->save();
 
+Special thanks to
+-----------------
+
+[stunti](http://github.com/stunti) 
+
 Contact
 -------
 

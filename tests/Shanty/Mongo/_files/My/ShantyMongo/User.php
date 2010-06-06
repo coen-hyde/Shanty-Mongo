@@ -17,6 +17,6 @@ class My_ShantyMongo_User extends Shanty_Mongo_Document
 		'friends' => 'DocumentSet:My_ShantyMongo_Users',
 		'friends.$' => array('Document:My_ShantyMongo_User', 'AsReference'),
 		'sex' => array('Required', 'Validator:InArray' => array('female', 'male')),
-		'partner' => array('Document:User', 'AsReference')
+		'partner' => array('Document:My_ShantyMongo_User', 'AsReference')
 	);
 }

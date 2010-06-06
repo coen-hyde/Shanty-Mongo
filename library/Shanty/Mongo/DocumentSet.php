@@ -25,8 +25,11 @@ class Shanty_Mongo_DocumentSet extends Shanty_Mongo_Document
 			return $this->_data[$index];
 		}
 			
-		// Fetch clean data for this property
-		if (!$new && array_key_exists($index, $this->_cleanData)) $data = $this->_cleanData[$index];
+		if (!$new) {
+			// Fetch clean data for this property if it exists
+			if (array_key_exists($index, $this->_cleanData)) $data = $this->_cleanData[$index];
+			else return null;
+		}
 		else $data = array();
 		
 		// If property is a reference to another document then fetch the reference document
@@ -48,9 +51,10 @@ class Shanty_Mongo_DocumentSet extends Shanty_Mongo_Document
 		}
 		
 		$config = array ();
+		$config['new'] = $new;
 		$config['collection'] = $collection;
 		$config['requirementModifiers'] = $this->getRequirements(self::DYNAMIC_INDEX.'.');
-		$config['parentIsArray'] = true;
+		$config['parentIsDocumentSet'] = true;
 		$config['hasId'] = $this->hasRequirement(self::DYNAMIC_INDEX, 'hasId');
 		
 		if (!$reference) {
@@ -111,7 +115,7 @@ class Shanty_Mongo_DocumentSet extends Shanty_Mongo_Document
 		}
 		
 		// Unset element
-		if (!$new && is_null($value)) {
+		if (!$new && is_null($document)) {
 			$this->_data[$index] = null;
 			return;
 		}
@@ -145,7 +149,7 @@ class Shanty_Mongo_DocumentSet extends Shanty_Mongo_Document
 		
 		if ($new) {
 			$keys = $this->getPropertyKeys();
-			$index = max($keys)+1;
+			$index = empty($keys) ? 0 : max($keys)+1;
 			$this->_data[$index] = $document;
 		}
 		else $this->_data[$index] = $document;

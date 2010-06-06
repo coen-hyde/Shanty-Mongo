@@ -133,12 +133,6 @@ class Shanty_Mongo_Iterator_Cursor implements OuterIterator
 		return $this->getInnerIterator()->valid();
 	}
 	
-	public function getNext()
-	{
-		$this->next();
-		return $this->current();
-	}
-	
 	public function count($all = false)
 	{
 		return $this->getInnerIterator()->count($all);
@@ -147,11 +141,6 @@ class Shanty_Mongo_Iterator_Cursor implements OuterIterator
 	public function info()
 	{
 		return $this->getInnerIterator()->info();
-	}
-	
-	public function skip()
-	{
-		return $this->getInnerIterator()->skip((int) $num);
 	}
 	
 	public function __call($method, $arguments)

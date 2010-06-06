@@ -4,14 +4,16 @@ require_once 'Zend/Validate/Abstract.php';
 
 class Shanty_Mongo_Validate_Array extends Zend_Validate_Abstract
 {
+	const NOT_ARRAY = 'notArray';
+	
 	protected $_messageTemplates = array(
-		'array' => "Value is not an Array"
-		);
+		self::NOT_ARRAY => "Value is not an Array"
+	);
 
 	public function isValid($value)
 	{
 		if (!is_array($value)) {
-			$this->_error();
+			$this->_error(self::NOT_ARRAY);
 			return false;
 		}
 		

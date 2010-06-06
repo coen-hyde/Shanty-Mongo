@@ -4,7 +4,7 @@ require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'TestSetup.php';
 require_once 'PHPUnit/Framework.php';
 require_once 'Shanty/Mongo/Collection.php';
  
-class Shanty_Mongo_TestCollection extends Shanty_Mongo_TestSetup
+class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 {
 	public function setUp()
 	{
@@ -68,14 +68,14 @@ class Shanty_Mongo_TestCollection extends Shanty_Mongo_TestSetup
 		$dirty = array(
 			'name' => array('Document:My_ShantyMongo_Name', 'Required'),
 			'friends' => 'DocumentSet',
-			'friends.$' => array('Document:User', 'AsReference'),
+			'friends.$' => array('Document:My_ShantyMongo_User', 'AsReference'),
 			'sex' => array('Required', 'Validator:InArray' => array('female', 'male')),
 		);
 		
 		$clean = array(
 			'name' => array('Document:My_ShantyMongo_Name' => null, 'Required' => null),
 			'friends' => array('DocumentSet' => null),
-			'friends.$' => array('Document:User' => null, 'AsReference' => null),
+			'friends.$' => array('Document:My_ShantyMongo_User' => null, 'AsReference' => null),
 			'sex' => array('Required' => null, 'Validator:InArray' => array('female', 'male')),
 		);
 		
@@ -88,7 +88,7 @@ class Shanty_Mongo_TestCollection extends Shanty_Mongo_TestSetup
 			'name' => array('Document:My_ShantyMongo_Name' => null, 'Required' => null),
 			'email' => array('Validator:EmailAddress' => null),
 			'friends' => array('DocumentSet' => null),
-			'friends.$' => array('Document:User' => null, 'AsReference' => null),
+			'friends.$' => array('Document:My_ShantyMongo_User' => null, 'AsReference' => null),
 		);
 		
 		$requirements2 = array(
@@ -100,7 +100,7 @@ class Shanty_Mongo_TestCollection extends Shanty_Mongo_TestSetup
 			'name' => array('Document:My_ShantyMongo_Name' => null, 'Required' => null),
 			'email' => array('Required' => null, 'Validator:EmailAddress' => null),
 			'friends' => array('DocumentSet' => null),
-			'friends.$' => array('Document:User' => null, 'AsReference' => null),
+			'friends.$' => array('Document:My_ShantyMongo_User' => null, 'AsReference' => null),
 			'concession' => array('Required' => null),
 		);
 		
@@ -129,7 +129,7 @@ class Shanty_Mongo_TestCollection extends Shanty_Mongo_TestSetup
 			'friends' => array('DocumentSet:My_ShantyMongo_Users' => null),
 			'friends.$' => array('Document:My_ShantyMongo_User' => null, 'AsReference' => null),
 			'sex' => array('Required' => null, 'Validator:InArray' => array('female', 'male')),
-			'partner' => array('Document:User' => null, 'AsReference' => null),
+			'partner' => array('Document:My_ShantyMongo_User' => null, 'AsReference' => null),
 			'concession' => array('Required' => null)
 		);
 		
@@ -146,7 +146,7 @@ class Shanty_Mongo_TestCollection extends Shanty_Mongo_TestSetup
 			'friends' => array('DocumentSet:My_ShantyMongo_Users' => null),
 			'friends.$' => array('Document:My_ShantyMongo_User' => null, 'AsReference' => null),
 			'sex' => array('Required' => null, 'Validator:InArray' => array('female', 'male')),
-			'partner' => array('Document:User' => null, 'AsReference' => null)
+			'partner' => array('Document:My_ShantyMongo_User' => null, 'AsReference' => null)
 		);
 		
 		// This assertion is needed to ensure parent requirements have not been contaminated by child requirements
@@ -209,6 +209,8 @@ class Shanty_Mongo_TestCollection extends Shanty_Mongo_TestSetup
 		$this->assertEquals('My_ShantyMongo_User', get_class($cherry));
 		$this->assertEquals('Cherry', $cherry->name->first);
 		$this->assertEquals($this->_users['cherry'], $cherry->export());
+		$this->assertFalse($cherry->isNewDocument());
+		$this->assertEquals('user', $cherry->getCollection());
 		
 		$cherry = My_ShantyMongo_User::find(new MongoId('4c04516f1f5f5e21361e3ab1'));
 

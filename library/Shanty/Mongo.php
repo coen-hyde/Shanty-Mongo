@@ -17,7 +17,7 @@ class Shanty_Mongo
 	protected static $_connectionGroups = array();
 	protected static $_requirements = array();
 	protected static $_requirementCreators = array();
-	protected static $_validOperations = array('$set', '$unset', '$push', '$pushAll', '$pull', '$pullAll', '$inc');
+	protected static $_validOperations = array('$set', '$unset', '$push', '$pushAll', '$pull', '$pullAll', '$addToSet', '$pop', '$inc');
 	
 	/**
 	 * Initialise Shanty_Mongo. In particular all the requirements.
@@ -42,7 +42,9 @@ class Shanty_Mongo
 			$instanceClass = 'Zend_Validate_'.$data[1];
 			if (!class_exists($instanceClass)) return null;
 			
-			$validator = new $instanceClass($options);
+			if (!is_null($options)) $validator = new $instanceClass($options);
+			else $validator = new $instanceClass();
+			
 			if (!($validator instanceof Zend_Validate_Interface)) return null;
 			
 			return $validator;
@@ -53,7 +55,9 @@ class Shanty_Mongo
 			$instanceClass = 'Zend_Filter_'.$data[1];
 			if (!class_exists($instanceClass)) return null;
 			
-			$validator = new $instanceClass($options);
+			if (!is_null($options)) $validator = new $instanceClass($options);
+			else $validator = new $instanceClass();
+			
 			if (!($validator instanceof Zend_Filter_Interface)) return null;
 			
 			return $validator;
@@ -155,7 +159,7 @@ class Shanty_Mongo
 	 * @param $name String Name of requirement
 	 * @return mixed
 	 **/
-	protected static function createRequirement($name, $options = null)
+	public static function createRequirement($name, $options = null)
 	{
 		// Match requirement name against regex's
 		foreach (static::$_requirementCreators as $regex => $function) {
@@ -168,6 +172,23 @@ class Shanty_Mongo
 		}
 		
 		return null;
+	}
+	
+
+	/**
+	 * Remove all requirements
+	 */
+	public static function removeRequirements()
+	{
+		static::$_requirements = array();
+	}
+	
+	/**
+	 * Remove all requirement creators
+	 */
+	public static function removeRequirementCreators()
+	{
+		static::$_requirementCreators = array();
 	}
 	
 	/**
@@ -234,21 +255,6 @@ class Shanty_Mongo
 		static::$_connectionGroups = array();
 	}
 	
-	/**
-	 * Remove all requirements
-	 */
-	public static function removeRequirements()
-	{
-		static::$_requirementCreators = array();
-	}
-	
-	/**
-	 * Remove all requirement creators
-	 */
-	public static function removeRequirementCreators()
-	{
-		static::$_requirementCreators = array();
-	}
 	
 	/**
 	 * Add a connection to a master server
@@ -326,6 +332,5 @@ class Shanty_Mongo
 		static::removeConnectionGroups();
 		static::removeRequirements();
 		static::removeRequirementCreators();
-		
 	}
 }

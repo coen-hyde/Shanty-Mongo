@@ -1,12 +1,16 @@
 <?php
 
+require_once 'Zend/Validate/Abstract.php';
+
 class Shanty_Mongo_Validate_Class extends Zend_Validate_Abstract
 {
+	const CLASS_NOT_VALID = 'classNotValid';
+	
 	/**
      * @var array
      */
 	protected $_messageTemplates = array(
-		'class' => "'%value%' is not a %class%"
+		self::CLASS_NOT_VALID => "'%value%' is not a %class%"
 	);
 	
     /**
@@ -39,7 +43,7 @@ class Shanty_Mongo_Validate_Class extends Zend_Validate_Abstract
 		$class = $this->getClass();
 		
 		if (!($value instanceof $class)) {
-			$this->_error();
+			$this->_error(self::CLASS_NOT_VALID);
 			return false;
 		}
 		
