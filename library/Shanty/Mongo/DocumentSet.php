@@ -47,11 +47,13 @@ class Shanty_Mongo_DocumentSet extends Shanty_Mongo_Document
 		}
 		else {
 			$reference = false;
-			$collection = $this->getCollection();
+			$collection = $this->getConfigAttribute('collection');
 		}
 		
 		$config = array ();
 		$config['new'] = $new;
+		$config['connectionGroup'] = $this->getConfigAttribute('connectionGroup');
+		$config['db'] = $this->getConfigAttribute('db');
 		$config['collection'] = $collection;
 		$config['requirementModifiers'] = $this->getRequirements(self::DYNAMIC_INDEX.'.');
 		$config['parentIsDocumentSet'] = true;
@@ -123,7 +125,7 @@ class Shanty_Mongo_DocumentSet extends Shanty_Mongo_Document
 		// Make sure this document is a Shanty_Mongo_Document
 		if (!($document instanceof Shanty_Mongo_Document)) {
 			require_once 'Shanty/Mongo/Exception.php';
-			throw new Shanty_Mongo_Exception("Index must be numeric '{$index}' given");
+			throw new Shanty_Mongo_Exception("Document must be an instance of Shanty_Mongo_Document");
 		}
 		
 		// Make sure we are not keeping a copy of the old document in reference memory
@@ -139,10 +141,15 @@ class Shanty_Mongo_DocumentSet extends Shanty_Mongo_Document
 			throw new Shanty_Mongo_Exception(implode($validators->getMessages(), "\n"));
 		}
 		
-		// Clone document if it has been saved somewhere else
+		// Make a new document if it has been saved somewhere else
 		if (!$document->isNewDocument()) {
-			$document = clone $document;
+			$documentClass = get_class($document);
+			$document = new $documentClass($document->export(), array('pathToDocument' => $this->getPathToProperty($index)));
 		}
+		else {
+			$document->setPathToDocument($this->getPathToProperty($index));
+		}
+			
 			
 		// Filter value
 //		$value = $this->getFilters(self::DYNAMIC_INDEX)->filter($document);
@@ -155,8 +162,9 @@ class Shanty_Mongo_DocumentSet extends Shanty_Mongo_Document
 		else $this->_data[$index] = $document;
 
 		// Inform the document of it's surroundings
-		$document->setCollection($this->getCollection());
-		$document->setPathToDocument($this->getPathToProperty($index));
+		$document->setConfigAttribute('connectionGroup', $this->getConfigAttribute('connectionGroup'));
+		$document->setConfigAttribute('db', $this->getConfigAttribute('db'));
+		$document->setConfigAttribute('collection', $this->getConfigAttribute('collection'));
 		$document->setConfigAttribute('criteria', $this->getCriteria());
 	}
 	

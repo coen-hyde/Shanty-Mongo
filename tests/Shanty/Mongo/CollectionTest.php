@@ -69,14 +69,14 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 			'name' => array('Document:My_ShantyMongo_Name', 'Required'),
 			'friends' => 'DocumentSet',
 			'friends.$' => array('Document:My_ShantyMongo_User', 'AsReference'),
-			'sex' => array('Required', 'Validator:InArray' => array('female', 'male')),
+			'sex' => array('Required', 'Validator:InArray' => array('F', 'M')),
 		);
 		
 		$clean = array(
 			'name' => array('Document:My_ShantyMongo_Name' => null, 'Required' => null),
 			'friends' => array('DocumentSet' => null),
 			'friends.$' => array('Document:My_ShantyMongo_User' => null, 'AsReference' => null),
-			'sex' => array('Required' => null, 'Validator:InArray' => array('female', 'male')),
+			'sex' => array('Required' => null, 'Validator:InArray' => array('F', 'M')),
 		);
 		
 		$this->assertEquals($clean, Shanty_Mongo_Collection::makeRequirementsTidy($dirty));
@@ -125,10 +125,10 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 			'addresses' => array('DocumentSet' => null),
 			'addresses.$.state' => array('Required' => null),
 			'addresses.$.suburb' => array('Required' => null),
-			'addresses.$.postCode' => array('Required' => null),
+			'addresses.$.postcode' => array('Required' => null),
 			'friends' => array('DocumentSet:My_ShantyMongo_Users' => null),
 			'friends.$' => array('Document:My_ShantyMongo_User' => null, 'AsReference' => null),
-			'sex' => array('Required' => null, 'Validator:InArray' => array('female', 'male')),
+			'sex' => array('Required' => null, 'Validator:InArray' => array('F', 'M')),
 			'partner' => array('Document:My_ShantyMongo_User' => null, 'AsReference' => null),
 			'concession' => array('Required' => null)
 		);
@@ -142,10 +142,10 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 			'addresses' => array('DocumentSet' => null),
 			'addresses.$.state' => array('Required' => null),
 			'addresses.$.suburb' => array('Required' => null),
-			'addresses.$.postCode' => array('Required' => null),
+			'addresses.$.postcode' => array('Required' => null),
 			'friends' => array('DocumentSet:My_ShantyMongo_Users' => null),
 			'friends.$' => array('Document:My_ShantyMongo_User' => null, 'AsReference' => null),
-			'sex' => array('Required' => null, 'Validator:InArray' => array('female', 'male')),
+			'sex' => array('Required' => null, 'Validator:InArray' => array('F', 'M')),
 			'partner' => array('Document:My_ShantyMongo_User' => null, 'AsReference' => null)
 		);
 		
@@ -193,7 +193,7 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 		
 		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $document);
 		$this->assertEquals('My_ShantyMongo_User', get_class($document));
-		$this->assertEquals('user', $document->getCollection());
+		$this->assertEquals('user', $document->getConfigAttribute('collection'));
 		$this->assertTrue($document->isNewDocument());
 		
 		$document = My_ShantyMongo_User::create(array('email' => 'address@domain.com'), false);
@@ -210,7 +210,7 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 		$this->assertEquals('Cherry', $cherry->name->first);
 		$this->assertEquals($this->_users['cherry'], $cherry->export());
 		$this->assertFalse($cherry->isNewDocument());
-		$this->assertEquals('user', $cherry->getCollection());
+		$this->assertEquals('user', $cherry->getConfigAttribute('collection'));
 		
 		$cherry = My_ShantyMongo_User::find(new MongoId('4c04516f1f5f5e21361e3ab1'));
 

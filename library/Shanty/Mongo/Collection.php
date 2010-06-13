@@ -187,6 +187,7 @@ abstract class Shanty_Mongo_Collection
 	public static function getMongoDb($writable = true)
 	{
 		if (!static::hasDbName()) {
+			require_once 'Shanty/Mongo/Exception.php';
 			throw new Shanty_Mongo_Exception(get_called_class().'::$_db is null');
 		}
 
@@ -222,6 +223,8 @@ abstract class Shanty_Mongo_Collection
 		$config = array();
 		$config['new'] = ($new);
 		$config['hasId'] = true;
+		$config['connectionGroup'] = static::getConnectionGroupName();
+		$config['db'] = static::getDbName();
 		$config['collection'] = static::getCollectionName();
 		return new $documentClass($data, $config);
 	}
@@ -269,6 +272,8 @@ abstract class Shanty_Mongo_Collection
 		$cursor = static::getMongoCollection(false)->find($query);
 
 		$config = array();
+		$config['connectionGroup'] = static::getConnectionGroupName();
+		$config['db'] = static::getDbName();
 		$config['collection'] = static::getCollectionName();
 		$config['documentClass'] = static::getDocumentClass();
 		$config['documentSetClass'] = static::getDocumentSetClass();

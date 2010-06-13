@@ -29,16 +29,6 @@ class Shanty_Mongo_Iterator_Cursor implements OuterIterator
 	}
 	
 	/**
-	 * Get the collection name
-	 * 
-	 * @return string
-	 */
-	public function getCollection()
-	{
-		return $this->_config['collection'];
-	}
-	
-	/**
 	 * Get the document class
 	 * 
 	 * @return string
@@ -79,7 +69,9 @@ class Shanty_Mongo_Iterator_Cursor implements OuterIterator
 		$config = array();
 		$config['new'] = false;
 		$config['hasId'] = false;
-		$config['collection'] = $this->getCollection();
+		$config['connectionGroup'] = $this->_config['connectionGroup'];
+		$config['db'] = $this->_config['db'];
+		$config['collection'] = $this->_config['collection'];
 		$config['requirementModifiers'] = array(
 			Shanty_Mongo_DocumentSet::DYNAMIC_INDEX => array("Document:".$this->getDocumentClass())
 		);
@@ -100,7 +92,9 @@ class Shanty_Mongo_Iterator_Cursor implements OuterIterator
 		$config = array();
 		$config['new'] = false;
 		$config['hasKey'] = true;
-		$config['collection'] = $this->getCollection();
+		$config['connectionGroup'] = $this->_config['connectionGroup'];
+		$config['db'] = $this->_config['db'];
+		$config['collection'] = $this->_config['collection'];
 		
 		$documentClass = $this->getDocumentClass();
 		

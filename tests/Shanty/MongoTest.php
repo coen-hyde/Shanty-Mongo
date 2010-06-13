@@ -4,10 +4,6 @@ require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'Mongo' . DIRECTORY_SEPAR
 require_once 'PHPUnit/Framework.php';
 require_once 'Shanty/Mongo.php';
 require_once 'Zend/Config.php';
-require_once 'Zend/Validate/EmailAddress.php';
-require_once 'Zend/Validate/InArray.php';
-require_once 'Zend/Validate/Hostname.php';
-require_once 'Zend/Filter/Alpha.php';
 
 class Shanty_MongoTest extends Shanty_Mongo_TestSetup
 {

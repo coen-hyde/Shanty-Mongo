@@ -1,11 +1,4 @@
 <?php
-
-require_once 'Zend/Validate.php';
-require_once 'Zend/Validate/EmailAddress.php';
-
-require_once 'Zend/Filter.php';
-require_once 'Zend/Filter/StringToUpper.php';
-
 require_once 'Shanty/Mongo/Exception.php';
 require_once 'Shanty/Mongo/Iterator/Export.php';
 require_once 'Shanty/Mongo/Iterator/Default.php';
@@ -24,6 +17,8 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	protected $_cleanData = array();
 	protected $_config = array(
 		'new' => true,
+		'connectionGroup' => null,
+		'db' => null,
 		'collection' => null,
 		'pathToDocument' => null,
 		'criteria' => array(),
@@ -45,9 +40,11 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		if ($this->isNewDocument()) $this->_data = $data;
 		else $this->_cleanData = $data;
 		
-		// If no collection set then set it to the called class
-		if (!$this->hasCollection()) {
-			$this->setCollection(static::getCollectionName());
+		// If not connected and this is a new root document, figure out the db and collection
+		if ($this->isNewDocument() && $this->isRootDocument() && !$this->isConnected()) {
+			$this->setConfigAttribute('connectionGroup', static::getConnectionGroupName());
+			$this->setConfigAttribute('db', static::getDbName());
+			$this->setConfigAttribute('collection', static::getCollectionName());
 		}
 		
 		// apply requirements from collection and requirement modifiers
@@ -119,33 +116,11 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	}
 	
 	/**
-	 * Set the collection associated with this document
-	 * 
-	 * @param string $collection
+	 * Is this document connected to a db and collection
 	 */
-	public function setCollection($collection)
+	public function isConnected()
 	{
-		$this->setConfigAttribute('collection', $collection);
-	}
-	
-	/**
-	 * Get the collection class associated with this document
-	 * 
-	 * @return string
-	 */
-	public function getCollection()
-	{
-		return $this->getConfigAttribute('collection');
-	}
-	
-	/**
-	 * Determine if this document belongs to a collection
-	 * 
-	 * @return boolean
-	 */
-	public function hasCollection()
-	{
-		return !is_null($this->getCollection());
+		return (!is_null($this->getConfigAttribute('connectionGroup')) && !is_null($this->getConfigAttribute('db')) && !is_null($this->getConfigAttribute('collection')));
 	}
 	
 	/**
@@ -197,7 +172,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	 */
 	public function hasKey()
 	{
-		return ($this->isRootDocument() && !is_null(static::getCollectionName()));
+		return ($this->isRootDocument() && !is_null($this->getConfigAttribute('collection')));
 	}
 	
 	/**
@@ -246,6 +221,40 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		return $this->_config['criteria'][$property];
 	}
 	
+	/**
+	 * Fetch an instance of MongoDb
+	 * 
+	 * @param boolean $writable
+	 * @return MongoDb
+	 */
+	public function _getMongoDb($writable = true)
+	{
+		if (is_null($this->getConfigAttribute('db'))) {
+			require_once 'Shanty/Mongo/Exception.php';
+			throw new Shanty_Mongo_Exception('Can not fetch instance of MongoDb. Document is not connected to a db.');
+		}
+		
+		if ($writable) $connection = Shanty_Mongo::getWriteConnection($this->getConfigAttribute('connectionGroup'));
+		else $connection = Shanty_Mongo::getReadConnection($this->getConfigAttribute('connectionGroup'));
+		
+		return $connection->selectDB($this->getConfigAttribute('db'));
+	}
+	
+	/**
+	 * Fetch an instance of MongoCollection
+	 * 
+	 * @param boolean $writable
+	 * @return MongoCollection
+	 */
+	public function _getMongoCollection($writable = true)
+	{
+		if (is_null($this->getConfigAttribute('collection'))) {
+			require_once 'Shanty/Mongo/Exception.php';
+			throw new Shanty_Mongo_Exception('Can not fetch instance of MongoCollection. Document is not connected to a collection.');
+		}
+		
+		return $this->_getMongoDb($writable)->selectCollection($this->getConfigAttribute('collection'));
+	}
 
 	/**
 	 * Apply a set of requirements
@@ -275,9 +284,11 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 			case 'Document':
 			case 'DocumentSet':
 				foreach ($this->_docRequirements[$property] as $requirementSearch => $params) {
+					$standardClass = 'Shanty_Mongo_'.$requirement;
+					
 					// Return basic document or document set class if requirement matches
 					if ($requirementSearch == $requirement) {
-						return 'Shanty_Mongo_'.$requirement;
+						return $standardClass;
 					}
 					
 					// Find the document class
@@ -288,6 +299,11 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 						if (!class_exists($matches[1])) {
 							require_once 'Shanty/Mongo/Exception.php';
 							throw new Shanty_Mongo_Exception("$requirement class of '{$matches[1]}' does not exist");
+						}
+						
+						if (!is_subclass_of($matches[1], $standardClass)) {
+							require_once 'Shanty/Mongo/Exception.php';
+							throw new Shanty_Mongo_Exception("$requirement of '{$matches[1]}' sub is not a class of $standardClass does not exist");
 						}
 						
 						return $matches[1];
@@ -473,9 +489,10 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		}
 		
 		// If property is a reference to another document then fetch the reference document
+		$db = $this->getConfigAttribute('db');
 		if (MongoDBRef::isRef($data)) {
 			$collection = $data['$ref'];
-			$data = MongoDBRef::get(static::getMongoDB(false), $data);
+			$data = MongoDBRef::get($this->_getMongoDB(false), $data);
 			
 			// If this is a broken reference then no point keeping it for later
 			if (!$data) {
@@ -486,7 +503,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 			$reference = true;
 		}
 		else {
-			$collection = $this->getCollection();
+			$collection = $this->getConfigAttribute('collection');
 			$reference = false;
 		}
 		
@@ -511,6 +528,8 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		// Configure property for document/documentSet usage
 		$config = array();
 		$config['new'] = empty($data);
+		$config['connectionGroup'] = $this->getConfigAttribute('connectionGroup');
+		$config['db'] = $this->getConfigAttribute('db');
 		$config['collection'] = $collection;
 		$config['requirementModifiers'] = $this->getRequirements($property.'.');
 		$config['hasId'] = $this->hasRequirement($property, 'hasId');
@@ -518,12 +537,6 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		if (!$reference) {
 			$config['pathToDocument'] = $this->getPathToProperty($property);
 			$config['criteria'] = $this->getCriteria();
-		}
-		
-		// Make sure document class is a document or document set
-		if ($className !== $docType && !is_subclass_of($className, $docType)) {
-			require_once 'Shanty/Mongo/Exception.php';
-			throw new Shanty_Mongo_Exception("{$className} is not a {$docType}");
 		}
 		
 		// Initialise document
@@ -560,11 +573,19 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 			return;
 		}
 		
-		if ($value instanceof Shanty_Mongo_Document) {
-			$document = clone $value;
-			$document->setCollection($this->getCollection());
-			$document->setPathToDocument($this->getPathToProperty($property));
-			$document->setConfigAttribute('criteria', $this->getCriteria());
+		if ($value instanceof Shanty_Mongo_Document && !$this->hasRequirement($property, 'AsReference')) {
+			if (!$value->isNewDocument()) {
+				$documentClass = get_class($value);
+				$value = new $documentClass($value->export(), array('new' => false, 'pathToDocument' => $this->getPathToProperty($property)));
+			}
+			else {
+				$value->setPathToDocument($this->getPathToProperty($property));
+			}
+			
+			$value->setConfigAttribute('connectionGroup', $this->getConfigAttribute('connectionGroup'));
+			$value->setConfigAttribute('db', $this->getConfigAttribute('db'));
+			$value->setConfigAttribute('collection', $this->getConfigAttribute('collection'));
+			$value->setConfigAttribute('criteria', $this->getCriteria());
 		}
 		
 		// Filter value
@@ -633,12 +654,12 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 			throw new Shanty_Mongo_Exception('Can not create reference. Document is not a root document');
 		}
 		
-		if (!$this->hasCollection()) {
+		if (!$this->isConnected()) {
 			require_once 'Shanty/Mongo/Exception.php';
-			throw new Shanty_Mongo_Exception('Can not create reference. Document does not belong to a collection');
+			throw new Shanty_Mongo_Exception('Can not create reference. Document does not connected to a db and collection');
 		}
 		
-		return MongoDBRef::create($this->getCollection(), $this->getId());
+		return MongoDBRef::create($this->getConfigAttribute('collection'), $this->getId());
 	}
 	
 	/**
@@ -659,7 +680,42 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	 */
 	public function export()
 	{
-		return iterator_to_array(new Shanty_Mongo_Iterator_Export($this->getIterator()));
+		$exportData = $this->_cleanData;
+		
+		foreach ($this->_data as $property => $value) {
+			// If property has been deleted
+			if (is_null($value)) {
+				unset($exportData[$property]);
+				continue;
+			}
+			
+			// If property is a document
+			if ($value instanceof Shanty_Mongo_Document) {
+				if ($this->hasRequirement($property, 'AsReference') || $this->isReference($value)) {
+					$exportData[$property] = $value->createReference();
+					continue;
+				}
+				
+				$data = $value->export();
+				if (!empty($data)) {
+					$exportData[$property] = $data;
+				}
+				continue;
+			}
+			
+			$exportData[$property] = $value;
+		}
+		
+		// make sure required properties are not empty
+		$requiredProperties = $this->getPropertiesWithRequirement('Required');
+		foreach ($requiredProperties as $property) {
+			if (!isset($exportData[$property]) || empty($exportData[$property])) {
+				require_once 'Shanty/Mongo/Exception.php';
+				throw new Shanty_Mongo_Exception("Property '{$property}' must not be null.");
+			}
+		}
+		
+		return $exportData;
 	}
 	
 	/**
@@ -710,7 +766,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	 * 
 	 * @param array $data
 	 */
-	protected function processChanges(array $data = array())
+	public function processChanges(array $data = array())
 	{
 		foreach ($data as $property => $value) {
 			if ($property === '_id') continue;
@@ -735,22 +791,12 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	 */
 	public function save($entierDocument = false)
 	{
-		if (!$this->hasCollection()) {
+		if (!$this->isConnected()) {
 			require_once 'Shanty/Mongo/Exception.php';
-			throw new Shanty_Mongo_Exception('Can not save documet. Document does not belong to a collection');
+			throw new Shanty_Mongo_Exception('Can not save documet. Document is not connected to a db and collection');
 		}
 		
-		$mongoCollection = static::getMongoDb(true)->selectCollection($this->getCollection());
 		$exportData = $this->export();
-		
-		// make sure required properties are not empty
-		$requiredProperties = $this->getPropertiesWithRequirement('Required');
-		foreach ($requiredProperties as $property) {
-			if (!isset($exportData[$property]) || empty($exportData[$property])) {
-				require_once 'Shanty/Mongo/Exception.php';
-				throw new Shanty_Mongo_Exception("Property '{$property}' must not be null.");
-			}
-		}
 		
 		if ($this->isRootDocument() && ($this->isNewDocument() || $entierDocument)) {
 			// Save the entier document
@@ -770,14 +816,15 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 			$this->processChanges($exportData);
 			
 			$operations = $this->getOperations(true);
-			
+
 			// There are no changes, return so we don't blank the object
 			if (empty($operations)) {
 				return true;
 			}
 		}
 		
-		$result = $mongoCollection->update($this->getCriteria(), $operations, array('upsert' => true));
+		$result = $this->_getMongoCollection(true)->update($this->getCriteria(), $operations, array('upsert' => true));
+		$this->_data = array();
 		$this->_cleanData = $exportData;
 		$this->purgeOperations(true);
 		
@@ -791,12 +838,12 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	 */
 	public function delete()
 	{
-		if (!$this->hasCollection()) {
+		if (!$this->isConnected()) {
 			require_once 'Shanty/Mongo/Exception.php';
-			throw new Shanty_Mongo_Exception('Can not delete documet. Document does not belong to a collection');
+			throw new Shanty_Mongo_Exception('Can not delete document. Document is not connected to a db and collection');
 		}
 		
-		$mongoCollection = static::getMongoDb(true)->selectCollection($this->getCollection());
+		$mongoCollection = $this->_getMongoCollection(true);
 		
 		if (!$this->isRootDocument()) {
 			$result = $mongoCollection->update($this->getCriteria(), array('$unset' => array($this->getPathToDocument() => 1)));
