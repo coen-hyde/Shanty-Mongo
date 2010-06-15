@@ -139,10 +139,13 @@ class Shanty_Mongo_Iterator_Cursor implements OuterIterator
 	
 	public function __call($method, $arguments)
 	{
-		$res = $this->getInnerIterator()->$method($arguments);
+		// Forward the call to the MongoCursor
+		$res = call_user_func_array(array($this->getInnerIterator(), $method), $arguments);
 		
 		// Allow chaining
-		if ($res instanceof MongoCursor) return $this;
+		if ($res instanceof MongoCursor) {
+			return $this;
+		}
 		
 		return $res;
 	}

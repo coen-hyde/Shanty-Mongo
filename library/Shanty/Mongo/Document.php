@@ -1,6 +1,5 @@
 <?php
 require_once 'Shanty/Mongo/Exception.php';
-require_once 'Shanty/Mongo/Iterator/Export.php';
 require_once 'Shanty/Mongo/Iterator/Default.php';
 
 /**

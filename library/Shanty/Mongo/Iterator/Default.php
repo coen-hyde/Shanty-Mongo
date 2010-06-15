@@ -7,7 +7,7 @@
  * @license    New BSD License
  * @author     Coen Hyde
  */
-class Shanty_Mongo_Iterator_Default implements SeekableIterator, RecursiveIterator
+class Shanty_Mongo_Iterator_Default implements SeekableIterator, RecursiveIterator, Countable
 {
 	protected $_document = null;
 	protected $_position = null;
@@ -34,6 +34,21 @@ class Shanty_Mongo_Iterator_Default implements SeekableIterator, RecursiveIterat
 		return $this->_document;
 	}
 	
+	/**
+	 * Get the properties
+	 * 
+	 * @return array
+	 */
+	public function getDocumentProperties()
+	{
+		return $this->_properties;
+	}
+	
+	/**
+	 * Seek to a position
+	 * 
+	 * @param unknown_type $position
+	 */
 	public function seek($position)
 	{
 		$this->_position = $position;
@@ -90,6 +105,16 @@ class Shanty_Mongo_Iterator_Default implements SeekableIterator, RecursiveIterat
 	public function valid()
 	{
 		return in_array($this->key(), $this->_properties, true);
+	}
+
+	/**
+	 * Count all properties
+	 * 
+	 * @return int
+	 */
+	public function count()
+	{
+		return count($this->getDocumentProperties());
 	}
 	
 	/**
