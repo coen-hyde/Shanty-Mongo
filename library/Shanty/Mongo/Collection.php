@@ -17,10 +17,7 @@ abstract class Shanty_Mongo_Collection
 	protected static $_connectionGroup = 'default';
 	protected static $_db = null;
 	protected static $_collection = null;
-	protected static $_requirements = array(
-		'_id' => 'Validator:MongoId'
-	);
-	
+	protected static $_requirements = array();
 	protected static $_cachedCollectionRequirements = array();
 	protected static $_documentSetClass = 'Shanty_Mongo_DocumentSet';
 	
@@ -174,8 +171,42 @@ abstract class Shanty_Mongo_Collection
 	 */
 	public static function mergeRequirements($requirements1, $requirements2)
 	{
-		// Merge requirement modifiers with existing requirements
-		return array_merge_recursive($requirements1, $requirements2);
+		$requirements = $requirements1; 
+		
+		foreach ($requirements2 as $property => $requirementList) {
+			if (!array_key_exists($property, $requirements)) {
+				$requirements[$property] = $requirementList;
+				continue;
+			}
+			
+			foreach ($requirementList as $requirement => $options) {
+				// Find out if this is a Document or DocumentSet requirement
+				$matches = array();
+				preg_match("/^(Document|DocumentSet)(?::[A-Za-z][\w\-]*)?$/", $requirement, $matches);
+				
+				if (empty($matches)) {
+					$requirements[$property][$requirement] = $options;
+					continue;
+				}
+
+				// If requirement exists in existing requirements then unset it and replace it with the new requirements
+				foreach ($requirements[$property] as $innerRequirement => $innerOptions) {
+					$innerMatches = array();
+					
+					preg_match("/^{$matches[1]}(:[A-Za-z][\w\-]*)?/", $innerRequirement, $innerMatches);
+					
+					if (empty($innerMatches)) {
+						continue;
+					}
+					
+					unset($requirements[$property][$innerRequirement]);
+					$requirements[$property][$requirement] = $options;
+					break;
+				}
+			}
+		}
+		
+		return $requirements;
 	}
 
 	/**

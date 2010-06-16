@@ -11,6 +11,10 @@ class Shanty_Mongo_DocumentSet extends Shanty_Mongo_Document
 {
 	const DYNAMIC_INDEX = '$';
 	
+	protected static $_requirements = array(
+		self::DYNAMIC_INDEX => 'Document'
+	);
+	
 	/**
 	 * Get a property
 	 * 
@@ -24,7 +28,13 @@ class Shanty_Mongo_DocumentSet extends Shanty_Mongo_Document
 		if (!$new && array_key_exists($index, $this->_data)) {
 			return $this->_data[$index];
 		}
-			
+		
+		// Make sure we are not trying to create a document that is supposed to be saved as a reference
+		if ($new && $this->hasRequirement(static::DYNAMIC_INDEX, 'AsReference')) {
+			require_once 'Shanty/Mongo/Exception.php';
+			throw new Shanty_Mongo_Exception("Can not create a new document from documentset where document must be saved as a reference");
+		}
+
 		if (!$new) {
 			// Fetch clean data for this property if it exists
 			if (array_key_exists($index, $this->_cleanData)) $data = $this->_cleanData[$index];
@@ -35,7 +45,7 @@ class Shanty_Mongo_DocumentSet extends Shanty_Mongo_Document
 		// If property is a reference to another document then fetch the reference document
 		if (MongoDBRef::isRef($data)) {
 			$collection = $data['$ref'];
-			$data = MongoDBRef::get(static::getMongoDB(), $data);
+			$data = MongoDBRef::get($this->_getMongoDB(false), $data);
 			
 			// If this is a broken reference then no point keeping it for later
 			if (!$data) {
@@ -52,12 +62,11 @@ class Shanty_Mongo_DocumentSet extends Shanty_Mongo_Document
 		
 		$config = array ();
 		$config['new'] = $new;
+		$config['requirementModifiers'] = $this->getRequirements(self::DYNAMIC_INDEX.'.');
+		$config['parentIsDocumentSet'] = true;
 		$config['connectionGroup'] = $this->getConfigAttribute('connectionGroup');
 		$config['db'] = $this->getConfigAttribute('db');
 		$config['collection'] = $collection;
-		$config['requirementModifiers'] = $this->getRequirements(self::DYNAMIC_INDEX.'.');
-		$config['parentIsDocumentSet'] = true;
-		$config['hasId'] = $this->hasRequirement(self::DYNAMIC_INDEX, 'hasId');
 		
 		if (!$reference) {
 			// If this is a new array element. We will $push to the array when saving
@@ -66,24 +75,17 @@ class Shanty_Mongo_DocumentSet extends Shanty_Mongo_Document
 			
 			$config['pathToDocument'] = $path;
 			$config['criteria'] = $this->getCriteria();
+			$config['hasId'] = $this->hasRequirement(self::DYNAMIC_INDEX, 'hasId');
 		}
 		
 		// get the document class
-		if (!$className = $this->hasRequirement(self::DYNAMIC_INDEX, 'Document')) {
-			$className = 'Shanty_Mongo_Document';
-		}
+		$className = $this->hasRequirement(self::DYNAMIC_INDEX, 'Document');
 		
-		// Make sure document class is a document
-		if ($className !== 'Shanty_Mongo_Document' && !is_subclass_of($className, 'Shanty_Mongo_Document')) {
-			require_once 'Shanty/Mongo/Exception.php';
-			throw new Shanty_Mongo_Exception("{$className} is not a Shanty_Mongo_Document");
-		}
-		
-		// If this is a new document and document will be saved as a reference, make sure it has a collection to be saved to
-		if ($new && $this->hasRequirement(static::DYNAMIC_INDEX, 'AsReference') && !$className::hasCollectionName()) {
-			require_once 'Shanty/Mongo/Exception.php';
-			throw new Shanty_Mongo_Exception("Document class of '{$className}' is not associated with a collection");
-		}
+//		// If this is a new document and document will be saved as a reference, make sure it has a collection to be saved to
+//		if ($new && $this->hasRequirement(static::DYNAMIC_INDEX, 'AsReference') && !$className::hasCollectionName()) {
+//			require_once 'Shanty/Mongo/Exception.php';
+//			throw new Shanty_Mongo_Exception("Document class of '{$className}' is not associated with a collection");
+//		}
 		
 		$document = new $className($data, $config);
 		
@@ -122,12 +124,12 @@ class Shanty_Mongo_DocumentSet extends Shanty_Mongo_Document
 			return;
 		}
 		
-		// Make sure this document is a Shanty_Mongo_Document
-		if (!($document instanceof Shanty_Mongo_Document)) {
-			require_once 'Shanty/Mongo/Exception.php';
-			throw new Shanty_Mongo_Exception("Document must be an instance of Shanty_Mongo_Document");
-		}
-		
+//		// Make sure this document is a Shanty_Mongo_Document
+//		if (!($document instanceof Shanty_Mongo_Document)) {
+//			require_once 'Shanty/Mongo/Exception.php';
+//			throw new Shanty_Mongo_Exception("Document must be an instance of Shanty_Mongo_Document");
+//		}
+//		
 		// Make sure we are not keeping a copy of the old document in reference memory
 		if (!$new && isset($this->_data[$index]) && !is_null($this->_data[$index])) {
 			$this->_references->detach($this->_data[$index]);

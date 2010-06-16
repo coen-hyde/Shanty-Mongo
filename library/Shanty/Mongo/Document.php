@@ -11,6 +11,10 @@ require_once 'Shanty/Mongo/Iterator/Default.php';
  */
 class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAccess, Countable, IteratorAggregate
 {
+	protected static $_requirements = array(
+		'_id' => 'Validator:MongoId'
+	);
+	
 	protected $_docRequirements = array();
 	protected $_data = array();
 	protected $_cleanData = array();
