@@ -782,14 +782,23 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 		
 		$this->assertEquals(array(), $this->_bob->name->getOperations());
 		$this->_bob->name->addOperation('$set', 'first', 'Bobster');
+		$this->_bob->addOperation('$set', 'email', 'email@domain.com');
 		
 		$operations = array(
 			'$set' => array(
-				'name.first' => 'Bobster'
+				'name.first' => 'Bobster',
 			)
 		);
 		
 		$this->assertEquals($operations, $this->_bob->name->getOperations());
+		
+		$operations = array(
+			'$set' => array(
+				'name.first' => 'Bobster',
+				'email' => 'email@domain.com'
+			)
+		);
+		
 		$this->assertEquals($operations, $this->_bob->getOperations(true));
 		
 		$this->_bob->addOperation('$inc', 'count', 3);
@@ -813,13 +822,32 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 				'addresses' => $address
 			),
 			'$set' => array(
-				'name.first' => 'Bobster'
+				'name.first' => 'Bobster',
+				'email' => 'email@domain.com'
 			)
 		);
 		
 		$this->assertEquals($operations, $this->_bob->getOperations(true));
 		$this->_bob->purgeOperations(true);
 		$this->assertEquals(array(), $this->_bob->getOperations(true));
+		
+		// Test operations of the document it's self.
+		$address = array(
+			'street' => '2352 Long St',
+			'suburb' => 'Brisbane',
+			'state' => 'QLD',
+			'postcode' => '4000',
+			'country' => 'Australia'
+		);
+		
+		$this->_bob->addresses->addOperation('$push', null, $address);
+		
+		$operations = array(
+			'$push' => array(
+				'addresses' => $address
+			)
+		);
+		$this->assertEquals($operations, $this->_bob->getOperations(true));
 	}
 	
 	/**

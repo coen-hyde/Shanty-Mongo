@@ -12,6 +12,8 @@ class My_ShantyMongo_Article extends Shanty_Mongo_Document
 		'author' => array('Document:My_ShantyMongo_User', 'AsReference'),
 		'contributors' => 'DocumentSet:My_ShantyMongo_Users',
 		'contributors.$' => array('Document:My_ShantyMongo_User', 'AsReference'),
+		'relatedArticles' => 'DocumentSet',
+		'relatedArticles.$' => 'Document:My_ShantyMongo_Article',
 		'tags' => 'Array'
 	);
 }

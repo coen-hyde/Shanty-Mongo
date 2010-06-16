@@ -16,6 +16,19 @@ class Shanty_Mongo_DocumentSet extends Shanty_Mongo_Document
 	);
 	
 	/**
+	 * Get the property keys for this Document Set
+	 * 
+	 * @return array
+	 */
+	public function getPropertyKeys()
+	{
+		$keys = parent::getPropertyKeys();
+		sort($keys, SORT_NUMERIC);
+		
+		return $keys;
+	}
+	
+	/**
 	 * Get a property
 	 * 
 	 * @param mixed $property
@@ -80,13 +93,6 @@ class Shanty_Mongo_DocumentSet extends Shanty_Mongo_Document
 		
 		// get the document class
 		$className = $this->hasRequirement(self::DYNAMIC_INDEX, 'Document');
-		
-//		// If this is a new document and document will be saved as a reference, make sure it has a collection to be saved to
-//		if ($new && $this->hasRequirement(static::DYNAMIC_INDEX, 'AsReference') && !$className::hasCollectionName()) {
-//			require_once 'Shanty/Mongo/Exception.php';
-//			throw new Shanty_Mongo_Exception("Document class of '{$className}' is not associated with a collection");
-//		}
-		
 		$document = new $className($data, $config);
 		
 		// if this document was a reference then remember that
@@ -124,12 +130,6 @@ class Shanty_Mongo_DocumentSet extends Shanty_Mongo_Document
 			return;
 		}
 		
-//		// Make sure this document is a Shanty_Mongo_Document
-//		if (!($document instanceof Shanty_Mongo_Document)) {
-//			require_once 'Shanty/Mongo/Exception.php';
-//			throw new Shanty_Mongo_Exception("Document must be an instance of Shanty_Mongo_Document");
-//		}
-//		
 		// Make sure we are not keeping a copy of the old document in reference memory
 		if (!$new && isset($this->_data[$index]) && !is_null($this->_data[$index])) {
 			$this->_references->detach($this->_data[$index]);
@@ -143,31 +143,32 @@ class Shanty_Mongo_DocumentSet extends Shanty_Mongo_Document
 			throw new Shanty_Mongo_Exception(implode($validators->getMessages(), "\n"));
 		}
 		
-		// Make a new document if it has been saved somewhere else
-		if (!$document->isNewDocument()) {
-			$documentClass = get_class($document);
-			$document = new $documentClass($document->export(), array('pathToDocument' => $this->getPathToProperty($index)));
-		}
-		else {
-			$document->setPathToDocument($this->getPathToProperty($index));
-		}
-			
-			
-		// Filter value
-//		$value = $this->getFilters(self::DYNAMIC_INDEX)->filter($document);
-		
 		if ($new) {
 			$keys = $this->getPropertyKeys();
 			$index = empty($keys) ? 0 : max($keys)+1;
-			$this->_data[$index] = $document;
 		}
-		else $this->_data[$index] = $document;
 
-		// Inform the document of it's surroundings
-		$document->setConfigAttribute('connectionGroup', $this->getConfigAttribute('connectionGroup'));
-		$document->setConfigAttribute('db', $this->getConfigAttribute('db'));
-		$document->setConfigAttribute('collection', $this->getConfigAttribute('collection'));
-		$document->setConfigAttribute('criteria', $this->getCriteria());
+		// Filter value
+//		$value = $this->getFilters(self::DYNAMIC_INDEX)->filter($document);
+
+		if (!$this->hasRequirement(self::DYNAMIC_INDEX, 'AsReference')) {
+			// Make a new document if it has been saved somewhere else
+			if (!$document->isNewDocument()) {
+				$documentClass = get_class($document);
+				$document = new $documentClass($document->export(), array('new' => false, 'pathToDocument' => $this->getPathToProperty($index)));
+			}
+			else {
+				$document->setPathToDocument($this->getPathToProperty($index));
+			}
+			
+			// Inform the document of it's surroundings
+			$document->setConfigAttribute('connectionGroup', $this->getConfigAttribute('connectionGroup'));
+			$document->setConfigAttribute('db', $this->getConfigAttribute('db'));
+			$document->setConfigAttribute('collection', $this->getConfigAttribute('collection'));
+			$document->setConfigAttribute('criteria', $this->getCriteria());
+		}
+		
+		$this->_data[$index] = $document;
 	}
 	
 	/**
@@ -182,7 +183,9 @@ class Shanty_Mongo_DocumentSet extends Shanty_Mongo_Document
 		$maxKey = max(array_keys($exportData));
 		
 		for ($i = 0; $i<$maxKey; $i++) {
-			if (array_key_exists($i, $exportData)) continue;
+			if (array_key_exists($i, $exportData)) {
+				continue;
+			}
 			
 			$exportData[$i] = null;
 		}
@@ -209,7 +212,7 @@ class Shanty_Mongo_DocumentSet extends Shanty_Mongo_Document
 	 */
 	public function pushDocument(Shanty_Mongo_Document $document)
 	{
-		$this->push($this->pathToDocument(), $document);
+		$this->push(null, $document);
 	}
 	
 	/**

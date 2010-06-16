@@ -637,7 +637,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		}
 		
 		foreach ($this->_cleanData as $property => $value) {
-			if (in_array($property, $keyList) || in_array($property, $doNoCount)) continue;
+			if (in_array($property, $keyList, true) || in_array($property, $doNoCount, true)) continue;
 			
 			if (!is_null($value)) $keyList[] = $property;
 		}
@@ -969,18 +969,18 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	 */
 	public function getOperations($includingChildren = false)
 	{
-		$operations = array();
+		$operations = $this->_operations;
 		if ($includingChildren) {
 			foreach ($this->_data as $property => $document) {
 				if (!($document instanceof Shanty_Mongo_Document)) continue;
 				
 				if (!$this->isReference($document) && !$this->hasRequirement($property, 'AsReference')) {
-					$operations = array_merge($operations, $document->getOperations(true));
+					$operations = array_merge_recursive($operations, $document->getOperations(true));
 				}
 			}
 		}
 		
-		return array_merge($operations, $this->_operations);
+		return $operations;
 	}
 	
 	/**
@@ -1009,7 +1009,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	 * @param string $operation
 	 * @param array $data
 	 */
-	public function addOperation($operation, $property, $value = null)
+	public function addOperation($operation, $property = null, $value = null)
 	{
 		// Make sure the operation is valid
 		if (!Shanty_Mongo::isValidOperation($operation)) {
@@ -1023,7 +1023,26 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		}
 		
 		// Save the operation
-		$this->_operations[$operation][$this->getPathToProperty($property)] = $value;
+		if (is_null($property)) {
+			$path = $this->getPathToDocument();
+		}
+		else {
+			$path = $this->getPathToProperty($property);
+		}
+		
+		// Mix operation with existing operations if needed
+		switch($operation) {
+			case '$pushAll':
+			case '$pullAll':
+				if (!array_key_exists($path, $this->_operations[$operation])) {
+					break;
+				}
+				
+				$value = array_merge($this->_operations[$operation][$path], $value);
+				break;
+		}
+		
+		$this->_operations[$operation][$path] = $value;
 	}
 	
 	/**
@@ -1032,7 +1051,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	 * @param string $property
 	 * @param int $value
 	 */
-	public function inc($property, $value)
+	public function inc($property, $value = 1)
 	{
 		return $this->addOperation('$inc', $property, $value);
 	}
@@ -1043,7 +1062,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	 * @param string $property
 	 * @param mixed $value
 	 */
-	public function push($property, $value)
+	public function push($property = null, $value = null)
 	{
 		// Export value if needed
 		if ($value instanceof Shanty_Mongo_Document) {

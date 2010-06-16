@@ -115,6 +115,9 @@ class Shanty_Mongo_TestSetup extends PHPUnit_Framework_TestCase
 					MongoDBRef::create('user', new MongoId('4c04516f1f5f5e21361e3ab1')),
 					MongoDBRef::create('user', new MongoId('4c0451791f5f5e21361e3ab2')),
 				),
+				'relatedArticles' => array(
+					MongoDBRef::create('article', new MongoId('4c04516f1f5f5e21361e3ac2')),
+				),
 				'tags' => array('awesome', 'howto', 'mongodb')
 			),
 			'broken' => array(
