@@ -10,6 +10,8 @@ class My_ShantyMongo_Article extends Shanty_Mongo_Document
 	protected static $_requirements = array(
 		'title' => array('Required', 'Filter:StringTrim'),
 		'author' => array('Document:My_ShantyMongo_User', 'AsReference'),
+		'contributors' => 'DocumentSet:My_ShantyMongo_Users',
+		'contributors.$' => array('Document:My_ShantyMongo_User', 'AsReference'),
 		'tags' => 'Array'
 	);
 }

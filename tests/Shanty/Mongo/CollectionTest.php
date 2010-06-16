@@ -85,20 +85,22 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 	public function testMergeRequirements()
 	{
 		$requirements1 = array(
-			'name' => array('Document:My_ShantyMongo_Name' => null, 'Required' => null),
+			'name' => array('Validator:Magic' => null, 'Document' => null, 'Required' => null),
 			'email' => array('Validator:EmailAddress' => null),
-			'friends' => array('DocumentSet' => null),
+			'friends' => array('DocumentSet:My_ShantyMongo_Users' => null),
 			'friends.$' => array('Document:My_ShantyMongo_User' => null, 'AsReference' => null),
 		);
 		
 		$requirements2 = array(
+			'name' => array('Document:My_ShantyMongo_Name' => null),
 			'email' => array('Required' => null),
-			'concession' => array('Required' => null)
+			'concession' => array('Required' => null),
+			'friends' => array('DocumentSet' => null)
 		);
 		
 		$result = array(
-			'name' => array('Document:My_ShantyMongo_Name' => null, 'Required' => null),
-			'email' => array('Required' => null, 'Validator:EmailAddress' => null),
+			'name' => array('Validator:Magic' => null, 'Document:My_ShantyMongo_Name' => null, 'Required' => null),
+			'email' => array('Validator:EmailAddress' => null, 'Required' => null),
 			'friends' => array('DocumentSet' => null),
 			'friends.$' => array('Document:My_ShantyMongo_User' => null, 'AsReference' => null),
 			'concession' => array('Required' => null),
@@ -123,6 +125,7 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 			'name' => array('Document:My_ShantyMongo_Name' => null, 'Required' => null),
 			'email' => array('Required' => null, 'Validator:EmailAddress' => null),
 			'addresses' => array('DocumentSet' => null),
+			'addresses.$.street' => array('Required' => null),
 			'addresses.$.state' => array('Required' => null),
 			'addresses.$.suburb' => array('Required' => null),
 			'addresses.$.postcode' => array('Required' => null),
@@ -140,6 +143,7 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 			'name' => array('Document:My_ShantyMongo_Name' => null, 'Required' => null),
 			'email' => array('Required' => null, 'Validator:EmailAddress' => null),
 			'addresses' => array('DocumentSet' => null),
+			'addresses.$.street' => array('Required' => null),
 			'addresses.$.state' => array('Required' => null),
 			'addresses.$.suburb' => array('Required' => null),
 			'addresses.$.postcode' => array('Required' => null),

@@ -4,6 +4,7 @@ require_once dirname(dirname(dirname(__FILE__))) . DIRECTORY_SEPARATOR . 'TestHe
 
 require_once 'Shanty/Mongo/CollectionTest.php';
 require_once 'Shanty/Mongo/DocumentTest.php';
+require_once 'Shanty/Mongo/DocumentSetTest.php';
 require_once 'Shanty/Mongo/Iterator/CursorTest.php';
 require_once 'Shanty/Mongo/Iterator/DefaultTest.php';
 require_once 'Shanty/Mongo/Validate/ArrayTest.php';
@@ -20,6 +21,7 @@ class Shanty_Mongo_AllTests
  
 		$suite->addTestSuite('Shanty_Mongo_CollectionTest');
 		$suite->addTestSuite('Shanty_Mongo_DocumentTest');
+		$suite->addTestSuite('Shanty_Mongo_DocumentSetTest');
 		$suite->addTestSuite('Shanty_Mongo_Iterator_CursorTest');
 		$suite->addTestSuite('Shanty_Mongo_Iterator_DefaultTest');
 		$suite->addTestSuite('Shanty_Mongo_Validate_ArrayTest');

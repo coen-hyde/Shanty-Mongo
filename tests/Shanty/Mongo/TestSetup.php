@@ -39,8 +39,9 @@ class Shanty_Mongo_TestSetup extends PHPUnit_Framework_TestCase
 		$this->_connection->connect();
 		Shanty_Mongo::addMaster($this->_connection);
 		
+		$this->_connection->selectDb(TESTS_SHANTY_MONGO_DB)->selectCollection('user')->drop();
+		$this->_connection->selectDb(TESTS_SHANTY_MONGO_DB)->selectCollection('article')->drop();
 		$this->populateDb();
-		usleep(50000);
 	}
 	
 	public function populateDb()
@@ -67,6 +68,11 @@ class Shanty_Mongo_TestSetup extends PHPUnit_Framework_TestCase
 						'postcode' => '89002',
 						'country' => 'USA'
 					)
+				),
+				'friends' => array(
+					MongoDBRef::create('user', new MongoId('4c04516f1f5f5e21361e3ab1')),
+					MongoDBRef::create('user', new MongoId('4c0451791f5f5e21361e3ab2')),
+					MongoDBRef::create('user', new MongoId('broken reference'))
 				),
 				'email' => 'bob.jones@domain.com',
 				'sex' => 'M',
@@ -96,7 +102,7 @@ class Shanty_Mongo_TestSetup extends PHPUnit_Framework_TestCase
 		$this->_userCollection = $this->_connection->selectDb(TESTS_SHANTY_MONGO_DB)->selectCollection('user');
 		
 		foreach ($this->_users as $user) {
-			$this->_userCollection->insert($user);
+			$this->_userCollection->insert($user, true);
 		}
 		
 		$this->_articles = array(
@@ -105,6 +111,10 @@ class Shanty_Mongo_TestSetup extends PHPUnit_Framework_TestCase
 				'title' => 'How to use Shanty Mongo',
 				'author' => MongoDBRef::create('user', new MongoId('4c04516a1f5f5e21361e3ab0')),
 				'editor' => MongoDBRef::create('user', new MongoId('4c04516f1f5f5e21361e3ab1')),
+				'contributors' => array(
+					MongoDBRef::create('user', new MongoId('4c04516f1f5f5e21361e3ab1')),
+					MongoDBRef::create('user', new MongoId('4c0451791f5f5e21361e3ab2')),
+				),
 				'tags' => array('awesome', 'howto', 'mongodb')
 			),
 			'broken' => array(
@@ -118,7 +128,7 @@ class Shanty_Mongo_TestSetup extends PHPUnit_Framework_TestCase
 		$this->_articleCollection = $this->_connection->selectDb(TESTS_SHANTY_MONGO_DB)->selectCollection('article');
 		
 		foreach ($this->_articles as $article) {
-			$this->_articleCollection->insert($article);
+			$this->_articleCollection->insert($article, true);
 		}
 	}
 	
@@ -127,6 +137,7 @@ class Shanty_Mongo_TestSetup extends PHPUnit_Framework_TestCase
 		$this->_restoreIncludePath();
 
 		$this->_connection->selectDb(TESTS_SHANTY_MONGO_DB)->selectCollection('user')->drop();
+		$this->_connection->selectDb(TESTS_SHANTY_MONGO_DB)->selectCollection('article')->drop();
 		
 		Shanty_Mongo::makeClean();
 		

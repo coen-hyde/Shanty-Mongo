@@ -11,6 +11,7 @@ class My_ShantyMongo_User extends Shanty_Mongo_Document
 		'name' => array('Document:My_ShantyMongo_Name', 'Required'),
 		'email' => array('Required', 'Validator:EmailAddress'),
 		'addresses' => 'DocumentSet',
+		'addresses.$.street' => 'Required',
 		'addresses.$.state' => 'Required',
 		'addresses.$.suburb' => 'Required',
 		'addresses.$.postcode' => 'Required',
