@@ -166,6 +166,7 @@ class Shanty_Mongo_DocumentSet extends Shanty_Mongo_Document
 			$document->setConfigAttribute('db', $this->getConfigAttribute('db'));
 			$document->setConfigAttribute('collection', $this->getConfigAttribute('collection'));
 			$document->setConfigAttribute('criteria', $this->getCriteria());
+			$document->applyRequirements($this->getRequirements(self::DYNAMIC_INDEX.'.'));
 		}
 		
 		$this->_data[$index] = $document;
@@ -246,6 +247,7 @@ class Shanty_Mongo_DocumentSet extends Shanty_Mongo_Document
 				return $this->getProperty();
 		}
 		
-		return call_user_func_array(array($this, $name), $arguments);
+		require_once 'Shanty/Mongo/Exception.php';
+		throw new Shanty_Mongo_Exception("Captured in __call. Method $name does not exist.");
 	}
 }

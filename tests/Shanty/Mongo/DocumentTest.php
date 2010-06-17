@@ -391,6 +391,18 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 		$this->assertEquals('user', $this->_roger->favouriteArticle->getConfigAttribute('collection'));
 		$this->assertEquals('favouriteArticle', $this->_roger->favouriteArticle->getPathToDocument());
 		
+		$this->_bob->addRequirement('config', 'Document');
+		$this->_bob->addRequirement('config.date', 'Required');
+		
+		$this->_bob->config = new Shanty_Mongo_Document();
+		
+		$requirements = array(
+			'_id' => array('Validator:MongoId' => null),
+			'date' => array('Required' => null)
+		);
+		
+		$this->assertEquals($requirements, $this->_bob->config->getRequirements());
+		
 	}
 	
 	/**
@@ -617,11 +629,11 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 		$this->assertEquals($bobRaw, $this->_userCollection->findOne(array('_id' => new MongoId('4c04516a1f5f5e21361e3ab0'))));
 	}
 	
-//	public function testSaveUnchangedDocument()
-//	{
-//		$this->_bob->save();
-//		$this->assertEquals($this->_users['bob'], $this->_userCollection->findOne(array('_id' => new MongoId('4c04516a1f5f5e21361e3ab0'))));
-//	}
+	public function testSaveUnchangedDocument()
+	{
+		$this->_bob->save();
+		$this->assertEquals($this->_users['bob'], $this->_userCollection->findOne(array('_id' => new MongoId('4c04516a1f5f5e21361e3ab0'))));
+	}
 	
 	/**
 	 * Test newly added documents to a document set
@@ -1003,15 +1015,13 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 	 */
 	public function testProcessChangesNoChangesDataInit()
 	{
-		$this->markTestSkipped('Bug');
+		// Initialise all properties
+		foreach ($this->_bob as $property => $value) {
+			
+		}
 		
-//		// Initialise all properties
-//		foreach ($this->_bob as $property => $value) {
-//			
-//		}
-//		
-//		$this->_bob->processChanges($this->_bob->export());
-//		$this->assertEquals(array(), $this->_bob->getOperations(true));
+		$this->_bob->processChanges($this->_bob->export());
+		$this->assertEquals(array(), $this->_bob->getOperations(true));
 		
 	}
 }

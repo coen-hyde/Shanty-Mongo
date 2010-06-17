@@ -1,6 +1,5 @@
-- Write tests
 - Add pre and post hooks for init, save, delete, insert, update
-- Put some smarts into the merging of requirements
+- Put some more smarts into the merging of requirements
 - finding subdocuments
 - Implement partial documents. These are basically cached references with the ability of only storing part of the referenced document
 - Implement filtering on document sets

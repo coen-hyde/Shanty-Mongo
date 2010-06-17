@@ -577,7 +577,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		}
 		
 		if ($value instanceof Shanty_Mongo_Document && !$this->hasRequirement($property, 'AsReference')) {
-			if (!$value->isNewDocument()) {
+			if (!$value->isNewDocument() || !$value->isRootDocument()) {
 				$documentClass = get_class($value);
 				$value = new $documentClass($value->export(), array('new' => false, 'pathToDocument' => $this->getPathToProperty($property)));
 			}
@@ -589,6 +589,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 			$value->setConfigAttribute('db', $this->getConfigAttribute('db'));
 			$value->setConfigAttribute('collection', $this->getConfigAttribute('collection'));
 			$value->setConfigAttribute('criteria', $this->getCriteria());
+			$value->applyRequirements($this->getRequirements($property.'.'));
 		}
 		
 		// Filter value
@@ -774,7 +775,20 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		foreach ($data as $property => $value) {
 			if ($property === '_id') continue;
 			
-			if (!array_key_exists($property, $this->_cleanData) || $this->_cleanData[$property] !== $value) {
+			if (!array_key_exists($property, $this->_cleanData)) {
+				$this->addOperation('$set', $property, $value);
+				continue;
+			}
+			
+			$newValue = $value;
+			$oldValue = $this->_cleanData[$property];
+			
+			if (MongoDBRef::isRef($newValue) && MongoDBRef::isRef($oldValue)) {
+				$newValue['$id'] = $newValue['$id']->__toString();
+				$oldValue['$id'] = $oldValue['$id']->__toString();
+			}
+			
+			if ($newValue !== $oldValue) {
 				$this->addOperation('$set', $property, $value);
 			}
 		}

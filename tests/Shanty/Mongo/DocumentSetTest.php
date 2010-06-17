@@ -142,6 +142,16 @@ class Shanty_Mongo_DocumentSetTest extends Shanty_Mongo_TestSetup
 		$this->assertEquals('user', $this->_bob->addresses[2]->getConfigAttribute('collection'));
 		$this->assertEquals('addresses.2', $this->_bob->addresses[2]->getPathToDocument());
 		
+		$requirements = array(
+			'_id' => array('Validator:MongoId' => null),
+			'street' => array('Required' => null),
+			'state' => array('Required' => null),
+			'suburb' => array('Required' => null),
+			'postcode' => array('Required' => null),
+		);
+		
+		$this->assertEquals($requirements, $this->_bob->addresses[2]->getRequirements());
+		
 		$this->assertEquals(array(1, 2), $this->_bob->addresses->getPropertyKeys());
 		
 		// Test adding documents into an unknown index
@@ -182,6 +192,23 @@ class Shanty_Mongo_DocumentSetTest extends Shanty_Mongo_TestSetup
 		$this->assertEquals('user', $this->_article->contributors[5]->getConfigAttribute('collection'));
 		$this->assertEquals('', $this->_article->contributors[5]->getPathToDocument());
 		
+		$requirements = array(
+			'_id' => array('Validator:MongoId' => null),
+			'name' => array('Document:My_ShantyMongo_Name' => null, 'Required' => null),
+			'email' => array('Required' => null, 'Validator:EmailAddress' => null),
+			'addresses' => array('DocumentSet' => null),
+			'addresses.$.street' => array('Required' => null),
+			'addresses.$.state' => array('Required' => null),
+			'addresses.$.suburb' => array('Required' => null),
+			'addresses.$.postcode' => array('Required' => null),
+			'friends' => array('DocumentSet:My_ShantyMongo_Users' => null),
+			'friends.$' => array('Document:My_ShantyMongo_User' => null, 'AsReference' => null),
+			'sex' => array('Required' => null, 'Validator:InArray' => array('F', 'M')),
+			'partner' => array('Document:My_ShantyMongo_User' => null, 'AsReference' => null)
+		);
+		
+		$this->assertEquals($requirements, $this->_article->contributors[5]->getRequirements());
+		
 		$criteria = $this->_article->contributors[5]->getCriteria();
 		$this->assertTrue(isset($criteria['_id']));
 		$this->assertEquals('4c04516f1f5f5e21361e3ab1', $criteria['_id']->__toString());
@@ -210,6 +237,17 @@ class Shanty_Mongo_DocumentSetTest extends Shanty_Mongo_TestSetup
 	public function testSetPropertyNonDocumentException()
 	{
 		$this->_bob->addresses[5] = 'Not a document';
+	}
+	
+	/**
+     * @expectedException Shanty_Mongo_Exception
+     */
+	public function testSetPropertyRequirementsException()
+	{
+		$address = new Shanty_Mongo_Document();
+		$address->street = '234 ';
+		$this->_bob->addresses[] = $address;
+		$address->export();
 	}
 	
 	public function testExport()
@@ -315,5 +353,42 @@ class Shanty_Mongo_DocumentSetTest extends Shanty_Mongo_TestSetup
 		// Test references
 		$this->_article->contributors[0]->addOperation('$set', 'email', 'blabla@domain.com');
 		$this->assertEquals(array(), $this->_article->contributors->getOperations(true));
+	}
+	
+	public function testPurgeOperations()
+	{
+		$this->_bob->addresses[0]->addOperation('$set', 'street', '43 Hole St');
+		$this->_bob->addresses[0]->addOperation('$set', 'suburb', 'Ipswich');
+		$this->_bob->addresses[1]->addOperation('$set', 'street', '745 Evergreen Terrace');
+		$this->_bob->addresses->purgeOperations(true);
+		$this->assertEquals(array(), $this->_bob->addresses->getOperations(true));
+		
+		// Test references
+		$this->_article->contributors[0]->addOperation('$set', 'email', 'blabla@domain.com');
+		$this->_article->contributors->purgeOperations(true);
+		
+		$operations = array(
+			'$set' => array(
+				'email' => 'blabla@domain.com',
+			)
+		);
+		
+		$this->assertEquals($operations, $this->_article->contributors[0]->getOperations(true));
+	}
+	
+	public function testMagicCall()
+	{
+		// Test get new document
+		$newAddress = $this->_bob->addresses->new();
+		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $newAddress);
+		$this->assertEquals('Shanty_Mongo_Document', get_class($newAddress));
+	}
+	
+	/**
+	 * @expectedException Shanty_Mongo_Exception
+	 */
+	public function testMagicCallException()
+	{
+		$this->_bob->addresses->noMethod();
 	}
 }
