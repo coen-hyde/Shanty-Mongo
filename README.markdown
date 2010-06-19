@@ -21,6 +21,7 @@ Features
 - Simple and flexible
 - Partial updates. Only changed data is sent back to the server. Also you can save or delete embeded documents individually.
 - Support for references (lazy loaded)
+- Support for inheritance
 - Optional schema enforcement: Validation and Filtering on properties
 - Embeded documents/documentsets can have custom document classes like the root document
 
@@ -41,24 +42,24 @@ For information on how to configure master/slave setups, weighted connections an
 
 ### Define a document/collection
 
-To define a document and the collection that the document will be saved to, extend Shanty_Mongo_Document and set the static properties $\_dbName and $\_collectionName.
+To define a document and the collection that the document will be saved to, extend Shanty_Mongo_Document and set the static properties $\_db and $\_collection.
 
 	class User extends Shanty_Mongo_Document 
 	{
-		protected static $_dbName = 'forum';
-		protected static $_collectionName = 'user';
+		protected static $_db = 'forum';
+		protected static $_collection = 'user';
 	}
-	
-### Find a document
 
-	$user = User::find($id);
-	
 ### Create a new document
 
 	$user = new User();
 	$user->name = 'Bob';
 	$user->save();
 
+### Find a document
+
+	$user = User::find($id);
+	
 ### Adding requirements
 
 There are 3 types of requirements. Validators, filters and special. 
@@ -93,10 +94,10 @@ To use a filter add a requirement with the prefix 'Filter:' followed by the name
 
 	class User extends Shanty_Mongo_Document 
 	{
-		protected static $_dbName = 'forum';
-		protected static $_collectionName = 'user';
+		protected static $_db = 'forum';
+		protected static $_collection = 'user';
 		
-		protected $_requirements = array(
+		protected static $_requirements = array(
 			'name' => 'Required',
 			'email' => array('Required', 'Validator:EmailAddress'),
 			'friends' => 'DocumentSet',
@@ -118,10 +119,10 @@ Some validators and filters have additional options that need to be passed to it
 
 	class User extends Shanty_Mongo_Document 
 	{
-		protected static $_dbName = 'forum';
-		protected static $_collectionName = 'user';
+		protected static $_db = 'forum';
+		protected static $_collection = 'user';
 		
-		protected $_requirements = array(
+		protected static $_requirements = array(
 			'name' => 'Required',
 			'email' => array('Required', 'Validator:EmailAddress'),
 			'friends' => 'DocumentSet',
@@ -144,10 +145,10 @@ Since we know all users must have a first and last name lets enforce it
 
 	class User extends Shanty_Mongo_Document 
 	{
-		protected static $_dbName = 'forum';
-		protected static $_collectionName = 'user';
+		protected static $_db = 'forum';
+		protected static $_collection = 'user';
 		
-		protected $_requirements = array(
+		protected static $_requirements = array(
 			'name' => array('Document', 'Required'),
 			'name.first' => 'Required',
 			'name.last' => 'Required',
@@ -182,7 +183,7 @@ First we'll define the name document
 
 	class Name extends Shanty_Mongo_Document
 	{
-		protected $_requirements = array(
+		protected static $_requirements = array(
 			'first' => 'Required',
 			'last' => 'Required',
 		);
@@ -197,10 +198,10 @@ Next we'll tell the user document to use our new document
 
 	class User extends Shanty_Mongo_Document 
 	{
-		protected static $_dbName = 'forum';
-		protected static $_collectionName = 'user';
+		protected static $_db = 'forum';
+		protected static $_collection = 'user';
 		
-		protected $_requirements = array(
+		protected static $_requirements = array(
 			'name' => array('Document:Name', 'Required'),
 			'email' => array('Required', 'Validator:EmailAddress'),
 		);
@@ -224,10 +225,10 @@ Lets store a list of addresses against a user. First we must inform the User doc
 	
 	class User extends Shanty_Mongo_Document 
 	{
-		protected static $_dbName = 'forum';
-		protected static $_collectionName = 'user';
+		protected static $_db = 'forum';
+		protected static $_collection = 'user';
 		
-		protected $_requirements = array(
+		protected static $_requirements = array(
 			'name' => array('Document:Name', 'Required'),
 			'email' => array('Required', 'Validator:EmailAddress'),
 			'addresses' => 'DocumentSet',
@@ -282,7 +283,7 @@ We can fetch multiple documents by calling fetchAll. FetchAll will return a Shan
 
 Find all users and print their names
 
-	$users = User::fetchAll();
+	$users = User::all();
 	
 	foreach ($users as $user) {
 		print($user->name->full()."<br />\n");
@@ -292,7 +293,7 @@ fetchAll also accepts queries.
 
 Find all users with the first name Bob
 
-	$users = User::fetchAll(array('name.first' => 'Bob'));
+	$users = User::all(array('name.first' => 'Bob'));
 	
 ### Deleting documents
 
@@ -318,14 +319,77 @@ Lets increment a users post count by one
 	$user->save();
 	
 	// Is the same as
-	//$user->addOperation('$inc', 'posts', 1);
-	//$user->save();
+	$user->addOperation('$inc', 'posts', 1);
+	$user->save();
+	
+Operations also work fine on subdocuments 
+
+	$user->name->addOperation('$set', 'first', 'Bob);
+	$user->name->save();
+	
+	// This would also work
+	$user->save();
+
+### Inheritance
+
+As of 0.3 Shanty Mongo supports inheritance
+
+	Class User extends Shanty_Mongo_Document
+	{
+		protected static $_db = 'lms';
+		protected static $_collection = 'user';
+		protected static $_requirements = array(
+			'name' => array('Document:Name', 'Required'),
+			'email' => 'Validator:EmailAddress'
+		);
+	}
+	
+	Class Student extends User
+	{
+		protected static $_requirements = array(
+			'email' => 'Required',
+			'classes' => 'DocumentSet'
+		);
+	}
+	
+	Class Teacher extends User
+	{
+		protected static $_requirements = array(
+			'faculty' => 'Required'
+		);
+	}
+	
+In the above User, Student and Teacher will be saved in the user collection. Even though it looks like the requirements in User are being over-ridden by the requirements in Student and Teacher but they are not. Using some static magic they are actually merged. 
+
+So the effective requirements for Student would be:
+
+	array(
+		'name' => array('Document:Name', 'Required'),
+		'email' => array('Required', 'Validator:EmailAddress'),
+		'classes' => 'DocumentSet'
+	);
+
+#### Querying for subclasses is easy
+
+	$users = User::all(); // Returns all Users including Students and Teachers
+	
+	foreach ($users as $user) {
+		print(get_class($user)); // Will print either User, Student or Teacher
+	}
+	
+	Student::all(array('name.first' => 'Bob')); // Returns only Students with the first name of 'Bob'
+	
+Before you jump in and use inheritance all over the place just be aware that searching subclasses will use query the attribute '_type' so be sure to index it for use in production.
+
+	$users = User::all(); // No lookup on '_type'
+	$students = Student::all(); // A lookup on '_type' is used
 
 Special thanks to
 -----------------
 
-[stunti](http://github.com/stunti) 
-
+[stunti](http://github.com/stunti) for bug fixes
+Mongoid for inspiration
+ 
 Contact
 -------
 
