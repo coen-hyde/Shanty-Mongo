@@ -388,6 +388,7 @@ Special thanks to
 -----------------
 
 [stunti](http://github.com/stunti) for bug fixes
+
 Mongoid for inspiration
  
 Contact
