@@ -18,6 +18,7 @@ abstract class Shanty_Mongo_Collection
 	protected static $_db = null;
 	protected static $_collection = null;
 	protected static $_requirements = array();
+	protected static $_cachedCollectionInheritance = array();
 	protected static $_cachedCollectionRequirements = array();
 	protected static $_documentSetClass = 'Shanty_Mongo_DocumentSet';
 	
@@ -106,6 +107,32 @@ abstract class Shanty_Mongo_Collection
 	}
 	
 	/**
+	 * Get the inheritance of this collection
+	 */
+	public static function getCollectionInheritance()
+	{
+		$calledClass = get_called_class();
+		
+		// Have we already computed this collections inheritance?
+		if (array_key_exists($calledClass, static::$_cachedCollectionInheritance)) {
+			return static::$_cachedCollectionInheritance[$calledClass];
+		}
+		
+		$parentClass = get_parent_class($calledClass);
+		
+		if (is_null($parentClass::getCollectionName())) {
+			$inheritance = array($calledClass);
+		}
+		else {
+			$inheritance = $parentClass::getCollectionInheritance();
+			array_unshift($inheritance, $calledClass);
+		}
+		
+		static::$_cachedCollectionInheritance[$calledClass] = $inheritance;
+		return $inheritance;
+	}
+	
+	/**
 	 * Get requirements
 	 * 
 	 * @param bolean $inherited Include inherited requirements
@@ -124,8 +151,8 @@ abstract class Shanty_Mongo_Collection
 		}
 		
 		// Have we already computed this collections requirements?
-		if (array_key_exists($calledClass, static::$_cachedCollectionRequirements)) {
-			return static::$_cachedCollectionRequirements[$calledClass];
+		if (array_key_exists($calledClass, self::$_cachedCollectionRequirements)) {
+			return self::$_cachedCollectionRequirements[$calledClass];
 		}
 		
 		// Get parent collections requirements
@@ -134,7 +161,7 @@ abstract class Shanty_Mongo_Collection
 		
 		// Merge those requirements with this collections requirements
 		$requirements = static::mergeRequirements($parentRequirements, $calledClass::getCollectionRequirements(false));
-		static::$_cachedCollectionRequirements[$calledClass] = $requirements;
+		self::$_cachedCollectionRequirements[$calledClass] = $requirements;
 		
 		return $requirements;
 	}
@@ -250,7 +277,13 @@ abstract class Shanty_Mongo_Collection
 	 */
 	public static function create(array $data = array(), $new = true)
 	{
-		$documentClass = static::getDocumentClass();
+		if (isset($data['_type']) && is_array($data['_type']) && class_exists($data['_type'][0]) && is_subclass_of($data['_type'][0], 'Shanty_Mongo_Document')) {
+			$documentClass = $data['_type'][0];
+		}
+		else {
+			$documentClass = static::getDocumentClass();
+		}
+		
 		$config = array();
 		$config['new'] = ($new);
 		$config['hasId'] = true;
@@ -274,7 +307,7 @@ abstract class Shanty_Mongo_Collection
 		
 		$query = array('_id' => $id);
 		
-		return static::fetchOne($query);
+		return static::one($query);
 	}
 	
 	/**
@@ -285,6 +318,11 @@ abstract class Shanty_Mongo_Collection
 	 */
 	public static function one(array $query = array())
 	{
+		$inheritance = static::getCollectionInheritance();
+		if (count($inheritance) > 1) {
+			$query['_type'] = $inheritance[0];
+		}
+		
 		$data = static::getMongoCollection(false)->findOne($query);
 		
 		if (is_null($data)) return null;
@@ -300,6 +338,11 @@ abstract class Shanty_Mongo_Collection
 	 */
 	public static function all(array $query = array())
 	{
+		$inheritance = static::getCollectionInheritance();
+		if (count($inheritance) > 1) {
+			$query['_type'] = $inheritance[0];
+		}
+		
 		$cursor = static::getMongoCollection(false)->find($query);
 
 		$config = array();

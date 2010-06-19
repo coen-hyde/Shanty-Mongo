@@ -144,6 +144,7 @@ class Shanty_Mongo_DocumentSetTest extends Shanty_Mongo_TestSetup
 		
 		$requirements = array(
 			'_id' => array('Validator:MongoId' => null),
+			'_type' => array('Array' => null),
 			'street' => array('Required' => null),
 			'state' => array('Required' => null),
 			'suburb' => array('Required' => null),
@@ -194,6 +195,7 @@ class Shanty_Mongo_DocumentSetTest extends Shanty_Mongo_TestSetup
 		
 		$requirements = array(
 			'_id' => array('Validator:MongoId' => null),
+			'_type' => array('Array' => null),
 			'name' => array('Document:My_ShantyMongo_Name' => null, 'Required' => null),
 			'email' => array('Required' => null, 'Validator:EmailAddress' => null),
 			'addresses' => array('DocumentSet' => null),

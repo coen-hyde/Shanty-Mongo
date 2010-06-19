@@ -1,8 +1,8 @@
 <?php
 
-require_once 'Shanty/Mongo/Document.php';
+require_once 'My/ShantyMongo/Abstract.php';
 
-class My_ShantyMongo_Article extends Shanty_Mongo_Document
+class My_ShantyMongo_Article extends My_ShantyMongo_Abstract
 {
 	protected static $_db = TESTS_SHANTY_MONGO_DB;
 	protected static $_collection = 'article';

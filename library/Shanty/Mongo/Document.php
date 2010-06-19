@@ -12,7 +12,8 @@ require_once 'Shanty/Mongo/Iterator/Default.php';
 class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAccess, Countable, IteratorAggregate
 {
 	protected static $_requirements = array(
-		'_id' => 'Validator:MongoId'
+		'_id' => 'Validator:MongoId',
+		'_type' => 'Array'
 	);
 	
 	protected $_docRequirements = array();
@@ -50,13 +51,16 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 			$this->setConfigAttribute('collection', static::getCollectionName());
 		}
 		
-		// apply requirements from collection and requirement modifiers
-		$this->applyRequirements(static::getCollectionRequirements(), false);
+		// Get collection requirements
+		$this->_docRequirements = static::getCollectionRequirements();
+		
+		// apply requirements requirement modifiers
 		$this->applyRequirements($this->_config['requirementModifiers'], false);
 		
 		// Create document id if one is required
 		if ($this->isNewDocument() && ($this->hasKey() || (isset($this->_config['hasId']) && $this->_config['hasId']))) {
-			$this->_id = new MongoId();
+			$this->_data['_id'] = new MongoId();
+			$this->_data['_type'] = static::getCollectionInheritance();
 		}
 		
 		// If has key then add it to the update criteria
@@ -83,6 +87,16 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	public function hasId()
 	{
 		return !is_null($this->getId());
+	}
+	
+	/**
+	 * Get the inheritance of this document
+	 * 
+	 * @return array
+	 */
+	public function getInheritance()
+	{
+		return $this->_type;
 	}
 	
 	/**
@@ -175,7 +189,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	 */
 	public function hasKey()
 	{
-		return ($this->isRootDocument() && !is_null($this->getConfigAttribute('collection')));
+		return ($this->isRootDocument() && $this->isConnected());
 	}
 	
 	/**
@@ -562,6 +576,11 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	 */
 	public function setProperty($property, $value)
 	{
+		if (substr($property, 0, 1) == '_') {
+			require_once 'Shanty/Mongo/Exception.php';
+			throw new Shanty_Mongo_Exception("Can not set private property '$property'");
+		}
+		
 		$validators = $this->getValidators($property);
 		
 		// Throw exception if value is not valid
@@ -713,7 +732,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		// make sure required properties are not empty
 		$requiredProperties = $this->getPropertiesWithRequirement('Required');
 		foreach ($requiredProperties as $property) {
-			if (!isset($exportData[$property]) || empty($exportData[$property])) {
+			if (!isset($exportData[$property]) || (is_array($exportData[$property]) && empty($exportData[$property]))) {
 				require_once 'Shanty/Mongo/Exception.php';
 				throw new Shanty_Mongo_Exception("Property '{$property}' must not be null.");
 			}

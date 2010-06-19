@@ -32,6 +32,8 @@ class Shanty_Mongo_TestSetup extends PHPUnit_Framework_TestCase
 		require_once 'My/ShantyMongo/Users.php';
 		require_once 'My/ShantyMongo/Name.php';
 		require_once 'My/ShantyMongo/Student.php';
+		require_once 'My/ShantyMongo/ArtStudent.php';
+		require_once 'My/ShantyMongo/Teacher.php';
 		require_once 'My/ShantyMongo/Article.php';
 		require_once 'My/ShantyMongo/InvalidDocument.php';
 		
@@ -49,6 +51,10 @@ class Shanty_Mongo_TestSetup extends PHPUnit_Framework_TestCase
 		$this->_users = array(
 			'bob' => array(
 				'_id' => new MongoId('4c04516a1f5f5e21361e3ab0'),
+				'_type' => array(
+					'My_ShantyMongo_Teacher',
+					'My_ShantyMongo_User'
+				),
 				'name' => array(
 					'first' => 'Bob',
 					'last' => 'Jones',
@@ -74,6 +80,7 @@ class Shanty_Mongo_TestSetup extends PHPUnit_Framework_TestCase
 					MongoDBRef::create('user', new MongoId('4c0451791f5f5e21361e3ab2')),
 					MongoDBRef::create('user', new MongoId('broken reference'))
 				),
+				'faculty' => 'Maths',
 				'email' => 'bob.jones@domain.com',
 				'sex' => 'M',
 				'partner' => MongoDBRef::create('user', new MongoId('4c04516f1f5f5e21361e3ab1')),
@@ -81,21 +88,32 @@ class Shanty_Mongo_TestSetup extends PHPUnit_Framework_TestCase
 			),
 			'cherry' => array(
 				'_id' => new MongoId('4c04516f1f5f5e21361e3ab1'),
+				'_type' => array(
+					'My_ShantyMongo_Student',
+					'My_ShantyMongo_User'
+				),
 				'name' => array(
 					'first' => 'Cherry',
 					'last' => 'Jones',
 				),
 				'email' => 'cherry.jones@domain.com',
 				'sex' => 'F',
+				'concession' => true
 			),
 			'roger' => array(
 				'_id' => new MongoId('4c0451791f5f5e21361e3ab2'),
+				'_type' => array(
+					'My_ShantyMongo_ArtStudent',
+					'My_ShantyMongo_Student',
+					'My_ShantyMongo_User'
+				),
 				'name' => array(
 					'first' => 'Roger',
 					'last' => 'Smith',
 				),
 				'email' => 'roger.smith@domain.com',
-				'sex' => 'M'
+				'sex' => 'M',
+				'concession' => false
 			),
 		);
 		

@@ -21,12 +21,79 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 		$this->_articleBroken = My_ShantyMongo_Article::find('4c04516f1f5f5e21361e3ac2');
 	}
 	
+	public function testConstruct()
+	{
+		$student = new My_ShantyMongo_Student();
+		$this->assertTrue($student->isNewDocument());
+		$this->assertTrue($student->isRootDocument());
+		$this->assertTrue($student->isConnected());
+		$this->assertTrue($student->hasKey());
+		$this->assertTrue($student->hasId());
+		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $student->getId());
+		$this->assertEquals('MongoId', get_class($student->getId()));
+		$this->assertEquals(My_ShantyMongo_Student::getCollectionRequirements(), $student->getRequirements());
+		
+		$type = array(
+			'My_ShantyMongo_Student',
+			'My_ShantyMongo_User'
+		);
+		
+		$this->assertEquals($type, $student->getInheritance());
+		
+		$criteria = $student->getCriteria();
+		$this->assertTrue(array_key_exists('_id', $criteria));
+		$this->assertEquals($student->getId()->__toString(), $criteria['_id']->__toString());
+		
+		$name = new My_ShantyMongo_Name();
+		$this->assertTrue($name->isNewDocument());
+		$this->assertTrue($name->isRootDocument());
+		$this->assertFalse($name->isConnected());
+		$this->assertFalse($name->hasKey());
+		$this->assertFalse($name->hasId());
+		$this->assertEquals(array(), $name->getInheritance());
+		
+		$config = array(
+			'new' => false,
+			'connectionGroup' => 'default',
+			'db' => TESTS_SHANTY_MONGO_DB,
+			'collection' => 'user',
+			'pathToDocument' => 'name',
+			'requirementModifiers' => array(
+				'middle' => array('Required' => null)
+			)
+		);
+		
+		$name = new My_ShantyMongo_Name(array('first'=>'Jerry'), $config);
+		$this->assertFalse($name->isNewDocument());
+		$this->assertFalse($name->isRootDocument());
+		$this->assertTrue($name->isConnected());
+		
+		$requirements = array(
+			'_id' => array('Validator:MongoId' => null),
+			'_type' => array('Array' => null),
+			'first' => array('Required' => null),
+			'last' => array('Required' => null),
+			'middle' => array('Required' => null),
+		);
+		$this->assertEquals($requirements, $name->getRequirements());
+	}
+	
 	public function testGetHasId()
 	{
 		$this->assertTrue($this->_bob->hasId());
 		
 		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $this->_bob->getId());
 		$this->assertEquals('MongoId', get_class($this->_bob->getId()));
+	}
+	
+	public function testGetInheritance()
+	{
+		$type = array(
+			'My_ShantyMongo_Teacher',
+			'My_ShantyMongo_User'
+		);
+		
+		$this->assertEquals($type, $this->_bob->getInheritance());
 	}
 	
 	public function testGetSetHasConfigAttribute()
@@ -123,6 +190,8 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 	public function testGetRequirements()
 	{
 		$requirements = array(
+			'_id' => array('Validator:MongoId' => null),
+			'_type' => array('Array' => null),
 			'name' => array('Document:My_ShantyMongo_Name' => null, 'Required' => null),
 			'email' => array('Required' => null, 'Validator:EmailAddress' => null),
 			'addresses' => array('DocumentSet' => null),
@@ -134,7 +203,7 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 			'friends.$' => array('Document:My_ShantyMongo_User' => null, 'AsReference' => null),
 			'sex' => array('Required' => null, 'Validator:InArray' => array('F', 'M')),
 			'partner' => array('Document:My_ShantyMongo_User' => null, 'AsReference' => null),
-			'_id' => array('Validator:MongoId' => null)
+			'faculty' => array('Required' => null)
 		);
 		
 		$this->assertEquals($requirements, $this->_bob->getRequirements());
@@ -186,6 +255,7 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 	{
 		$totalRequirements = array(
 			'_id' => array('Validator:MongoId' => null),
+			'_type' => array('Array' => null),
 			'name' => array('Document:My_ShantyMongo_Name' => null, 'Required' => null),
 			'email' => array('Required' => null, 'Validator:EmailAddress' => null),
 			'addresses' => array('DocumentSet' => null),
@@ -197,6 +267,7 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 			'friends.$' => array('Document:My_ShantyMongo_User' => null, 'AsReference' => null),
 			'sex' => array('Required' => null, 'Validator:InArray' => array('F', 'M')),
 			'partner' => array('Document:My_ShantyMongo_User' => null, 'AsReference' => null),
+			'faculty' => array('Required' => null),
 			'birthday' => array('Required' => null),
 			'mobile' => array('Required' => null, 'Validator:Digits' => null)
 		);
@@ -216,6 +287,7 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 	{
 		$totalRequirements = array(
 			'_id' => array('Validator:MongoId' => null),
+			'_type' => array('Array' => null),
 			'name' => array('Document:My_ShantyMongo_Name' => null, 'Required' => null),
 			'email' => array('Required' => null, 'Validator:EmailAddress' => null),
 			'addresses' => array('DocumentSet' => null),
@@ -227,6 +299,7 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 			'friends.$' => array('Document:My_ShantyMongo_User' => null, 'AsReference' => null),
 			'sex' => array('Required' => null, 'Validator:InArray' => array('F', 'M')),
 			'partner' => array('Document:My_ShantyMongo_User' => null, 'AsReference' => null),
+			'faculty' => array('Required' => null),
 			'birthday' => array('Required' => null),
 			'mobile' => array('Required' => null, 'Validator:Digits' => null)
 		);
@@ -264,7 +337,8 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 		$reqiredProperties = array(
 			'name', 
 			'email', 
-			'sex'
+			'sex',
+			'faculty'
 		);
 		
 		$this->assertEquals($reqiredProperties, $this->_bob->getPropertiesWithRequirement('Required'));
@@ -398,11 +472,20 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 		
 		$requirements = array(
 			'_id' => array('Validator:MongoId' => null),
+			'_type' => array('Array' => null),
 			'date' => array('Required' => null)
 		);
 		
 		$this->assertEquals($requirements, $this->_bob->config->getRequirements());
 		
+	}
+	
+	/**
+     * @expectedException Shanty_Mongo_Exception
+     */
+	public function testSetPropertyPrivateProperty()
+	{
+		$this->_bob->_private = 'invalid email';
 	}
 	
 	/**
@@ -427,9 +510,11 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 	{
 		$properties = array(
 			'_id',
+			'_type',
 			'name',
 			'addresses',
 			'friends',
+			'faculty',
 			'email',
 			'sex',
 			'partner',
@@ -442,9 +527,11 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 			'_id',
 			'birthday',
 			'preferences',
+			'_type',
 			'name',
 			'addresses',
 			'friends',
+			'faculty',
 			'sex',
 			'partner',
 			'bestFriend'
@@ -511,6 +598,10 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 		
 		$bobRaw = array(
 			'_id' => new MongoId('4c04516a1f5f5e21361e3ab0'),
+			'_type' => array(
+				'My_ShantyMongo_Teacher',
+				'My_ShantyMongo_User'
+			),
 			'name' => array(
 				'first' => 'Bobby',
 				'last' => 'Jones',
@@ -520,6 +611,7 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 				MongoDBRef::create('user', new MongoId('4c0451791f5f5e21361e3ab2')),
 				MongoDBRef::create('user', new MongoId('broken reference'))
 			),
+			'faculty' => 'Maths',
 			'email' => 'bob.jones@domain.com',
 			'sex' => 'M',
 			'partner' => MongoDBRef::create('user', new MongoId('4c04516f1f5f5e21361e3ab1')),
@@ -585,6 +677,10 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 		
 		$bobRaw = array(
 			'_id' => new MongoId('4c04516a1f5f5e21361e3ab0'),
+			'_type' => array(
+				'My_ShantyMongo_Teacher',
+				'My_ShantyMongo_User'
+			),
 			'name' => array(
 				'first' => 'Bobby',
 				'last' => 'Jones',
@@ -594,6 +690,7 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 				MongoDBRef::create('user', new MongoId('4c0451791f5f5e21361e3ab2')),
 				MongoDBRef::create('user', new MongoId('broken reference'))
 			),
+			'faculty' => 'Maths',
 			'email' => 'bob.jones@domain.com',
 			'sex' => 'M',
 			'partner' => MongoDBRef::create('user', new MongoId('4c04516f1f5f5e21361e3ab1')),
@@ -611,6 +708,10 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 		
 		$bobRaw = array(
 			'_id' => new MongoId('4c04516a1f5f5e21361e3ab0'),
+			'_type' => array(
+				'My_ShantyMongo_Teacher',
+				'My_ShantyMongo_User'
+			),
 			'name' => array(
 				'first' => 'Bob',
 				'last' => 'Johnes',
@@ -620,6 +721,7 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 				MongoDBRef::create('user', new MongoId('4c0451791f5f5e21361e3ab2')),
 				MongoDBRef::create('user', new MongoId('broken reference'))
 			),
+			'faculty' => 'Maths',
 			'email' => 'bob.jones@domain.com',
 			'sex' => 'M',
 			'partner' => MongoDBRef::create('user', new MongoId('4c04516f1f5f5e21361e3ab1')),
@@ -650,6 +752,10 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 		
 		$bobRaw = array(
 			'_id' => new MongoId('4c04516a1f5f5e21361e3ab0'),
+			'_type' => array(
+				'My_ShantyMongo_Teacher',
+				'My_ShantyMongo_User'
+			),
 			'name' => array(
 				'first' => 'Bob',
 				'last' => 'Jones',
@@ -682,6 +788,7 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 				MongoDBRef::create('user', new MongoId('4c0451791f5f5e21361e3ab2')),
 				MongoDBRef::create('user', new MongoId('broken reference'))
 			),
+			'faculty' => 'Maths',
 			'email' => 'bob.jones@domain.com',
 			'sex' => 'M',
 			'partner' => MongoDBRef::create('user', new MongoId('4c04516f1f5f5e21361e3ab1')),
@@ -703,6 +810,9 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 		$userId = $user->getId();
 		$userRaw = array(
 			'_id' => new MongoId($userId->__toString()),
+			'_type' => array(
+				'My_ShantyMongo_User'
+			),
 			'name' => array(
 				'first' => 'Madeline',
 				'last' => 'Veenstra',
@@ -732,6 +842,12 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 		
 		$rogerData = array(
 			'_id' => new MongoId('4c0451791f5f5e21361e3ab2'),
+			'_type' => array(
+				'My_ShantyMongo_ArtStudent',
+				'My_ShantyMongo_Student',
+				'My_ShantyMongo_User'
+			),
+			'concession' => false,
 			'email' => 'roger.smith@domain.com',
 			'sex' => 'M'
 		);

@@ -19,7 +19,8 @@ class Shanty_Mongo_Iterator_DefaultTest extends Shanty_Mongo_TestSetup
 	public function testGetDocument()
 	{
 		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $this->_iterator->getDocument());
-		$this->assertEquals('My_ShantyMongo_User', get_class($this->_iterator->getDocument()));
+		$this->assertTrue($this->_iterator->getDocument() instanceof My_ShantyMongo_User);
+		$this->assertEquals('My_ShantyMongo_Teacher', get_class($this->_iterator->getDocument()));
 	}
 	
 	public function testGetDocumentProperties()
@@ -37,7 +38,8 @@ class Shanty_Mongo_Iterator_DefaultTest extends Shanty_Mongo_TestSetup
 		$this->assertFalse($this->_iterator->hasChildren());
 		
 		$this->_iterator->next();
-		$this->assertEquals($documentProperties[1], $this->_iterator->key());
+		$this->_iterator->next();
+		$this->assertEquals($documentProperties[2], $this->_iterator->key());
 		
 		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $this->_iterator->current());
 		$this->assertEquals('My_ShantyMongo_Name', get_class($this->_iterator->current()));
