@@ -1,0 +1,5 @@
+Changes for v0.3
+- Protected static property Shanty_Mongo_Document::$_dbName has been renamed to $_db
+- Protected static property Shanty_Mongo_Document::$_collectionName has been renamed to $_collection
+- Protected property Shanty_Mongo_Document::$_requirements is now a static property
+- Support for inheritance
