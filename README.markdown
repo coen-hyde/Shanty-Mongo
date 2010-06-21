@@ -352,37 +352,40 @@ As of 0.3 Shanty Mongo supports inheritance
 		);
 	}
 	
-	Class Teacher extends User
+	Class SchoolCaptain extends Student
 	{
 		protected static $_requirements = array(
-			'faculty' => 'Required'
+			'obligations' => 'Array'
 		);
 	}
 	
-In the above User, Student and Teacher will be saved in the user collection. Even though it looks like the requirements in User are being over-ridden by the requirements in Student and Teacher but they are not. Using some static magic they are actually merged. 
+In the above User, Student and SchoolCaptain will be saved in the user collection. Even though it looks like the requirements in User are being over-ridden by the requirements in Student and SchoolCaptain but they are not. Using some static magic they are actually merged. 
 
-So the effective requirements for Student would be:
+So the effective requirements for SchoolCaptain would be:
 
 	array(
 		'name' => array('Document:Name', 'Required'),
 		'email' => array('Required', 'Validator:EmailAddress'),
-		'classes' => 'DocumentSet'
+		'classes' => 'DocumentSet',
+		'obligations' => 'Array',
 	);
 
 #### Querying for subclasses is easy
 
-	$users = User::all(); // Returns all Users including Students and Teachers
+	$users = User::all(); // Returns all Users
 	
 	foreach ($users as $user) {
-		print(get_class($user)); // Will print either User, Student or Teacher
+		print(get_class($user)); // Will print either User, Student or SchoolCaptain
 	}
 	
 	Student::all(array('name.first' => 'Bob')); // Returns only Students with the first name of 'Bob'
+	SchoolCaptain::all(); // Returns only school captains
 	
 Before you jump in and use inheritance all over the place just be aware that searching subclasses will use query the attribute '_type' so be sure to index it for use in production.
 
 	$users = User::all(); // No lookup on '_type'
 	$students = Student::all(); // A lookup on '_type' is used
+	$schoolCaptains = SchoolCaptain::all(); // A lookup on '_type' is used
 
 Special thanks to
 -----------------
