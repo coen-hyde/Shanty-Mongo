@@ -428,11 +428,6 @@ To use one of the above hooks simply define a protected method in you document w
 		protected static $_db = 'forum';
 		protected static $_collection = 'user';
 		
-		protected static $_requirements = array(
-			'name' => array('Document:Name', 'Required'),
-			'email' => 'Validator:EmailAddress'
-		);
-		
 		protected function init()
 		{
 			// Do stuff on initialisting document
