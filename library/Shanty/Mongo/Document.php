@@ -27,7 +27,8 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		'pathToDocument' => null,
 		'criteria' => array(),
 		'parentIsDocumentSet' => false,
-		'requirementModifiers' => array()
+		'requirementModifiers' => array(),
+		'locked' => false
 	);
 	protected $_operations = array();
 	protected $_references = null;
@@ -67,6 +68,43 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		if ($this->hasKey()) {
 			$this->setCriteria($this->getPathToProperty('_id'), $this->getId());
 		}
+		
+		$this->init();
+	}
+	
+	public function init()
+	{
+		
+	}
+	
+	public function preInsert()
+	{
+		
+	}
+	
+	public function postInsert()
+	{
+		
+	}
+	
+	public function preUpdate()
+	{
+		
+	}
+	
+	public function postUpdate()
+	{
+		
+	}
+	
+	public function preSave()
+	{
+		
+	}
+	
+	public function postSave()
+	{
+		
 	}
 	
 	/**
@@ -138,6 +176,16 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	public function isConnected()
 	{
 		return (!is_null($this->getConfigAttribute('connectionGroup')) && !is_null($this->getConfigAttribute('db')) && !is_null($this->getConfigAttribute('collection')));
+	}
+	
+	/**
+	 * Is this document locked
+	 * 
+	 * @return boolean
+	 */
+	public function isLocked()
+	{
+		return $this->getConfigAttribute('locked');
 	}
 	
 	/**
@@ -832,6 +880,17 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 			throw new Shanty_Mongo_Exception('Can not save documet. Document is not connected to a db and collection');
 		}
 		
+		if ($this->isLocked()) {
+			require_once 'Shanty/Mongo/Exception.php';
+			throw new Shanty_Mongo_Exception('Can not save documet. Document is locked.');
+		}
+		
+		## execute pre hooks
+		if ($this->isNewDocument()) $this->preInsert();
+		else $this->preUpdate();
+		
+		$this->preSave();
+		
 		$exportData = $this->export();
 		
 		if ($this->isRootDocument() && ($this->isNewDocument() || $entierDocument)) {
@@ -845,6 +904,12 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 				if ($this->isNewDocument() && $this->isParentDocumentSet()) {
 					$this->_operations['$push'][$this->getPathToDocument()] = $exportData;
 					$exportData = array();
+					
+					/**
+					 * We need to lock this document because it has an incomplete document path and there is no way to find out it's true path.
+					 * Locking prevents overriding the parent array on another save() after this save().
+					 */
+					$this->setConfigAttribute('locked', true);
 				}
 			}
 			
@@ -864,6 +929,15 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		$this->_cleanData = $exportData;
 		$this->purgeOperations(true);
 		
+		// Run post hooks
+		if ($this->isNewDocument()) $this->postInsert();
+		else $this->postUpdate();
+		
+		$this->postSave();
+		
+		// This is not a new document anymore
+		$this->setConfigAttribute('new', false);
+		
 		return $result;
 	}
 	
@@ -877,6 +951,11 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		if (!$this->isConnected()) {
 			require_once 'Shanty/Mongo/Exception.php';
 			throw new Shanty_Mongo_Exception('Can not delete document. Document is not connected to a db and collection');
+		}
+	
+		if ($this->isLocked()) {
+			require_once 'Shanty/Mongo/Exception.php';
+			throw new Shanty_Mongo_Exception('Can not save documet. Document is locked.');
 		}
 		
 		$mongoCollection = $this->_getMongoCollection(true);

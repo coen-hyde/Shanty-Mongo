@@ -798,6 +798,36 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 		$this->assertEquals($bobRaw, $this->_userCollection->findOne(array('_id' => new MongoId('4c04516a1f5f5e21361e3ab0'))));
 	}
 	
+	/**
+	 * @expectedException Shanty_Mongo_Exception
+	 */
+	public function testSaveChildOfDocumentSetSaveException()
+	{
+		$address = $this->_bob->addresses->new();
+		$address->street = '35 Sheep Lane';
+		$address->suburb = 'Sheep Heaven';
+		$address->state = 'New Zealand';
+		$address->postcode = '2345';
+		$address->country = 'New Zealand';
+		$address->save();
+		$address->save(); // Should throw an exception because this document will be locked
+	}
+	
+	/**
+	 * @expectedException Shanty_Mongo_Exception
+	 */
+	public function testSaveChildOfDocumentSetDeleteException()
+	{
+		$address = $this->_bob->addresses->new();
+		$address->street = '35 Sheep Lane';
+		$address->suburb = 'Sheep Heaven';
+		$address->state = 'New Zealand';
+		$address->postcode = '2345';
+		$address->country = 'New Zealand';
+		$address->save();
+		$address->delete(); // Should throw an exception because this document will be locked
+	}
+	
 	public function testSaveNewDocument()
 	{
 		$user = new My_ShantyMongo_User();
@@ -1125,7 +1155,7 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 		$this->assertEquals(array(), $this->_bob->getOperations(true));
 	}
 	
-/**
+	/**
 	 * @depends testOperations
 	 * @depends testExport
 	 */
@@ -1138,6 +1168,30 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 		
 		$this->_bob->processChanges($this->_bob->export());
 		$this->assertEquals(array(), $this->_bob->getOperations(true));
+	}
+	
+	public function testInitHook()
+	{
+		$this->assertEquals(1, $this->_bob->_hookCounter['init']);
+	}
+	
+	public function testPrePostInsertUpdateSaveHook()
+	{
+		$user = new My_ShantyMongo_User();
+		$user->name->first = 'Stranger';
+		$user->name->last = 'Jill';
+		$user->email = 'jill@domain.com';
+		$user->sex = 'M';
+		$user->save();
 		
+		$user->email = 'jill@address.com';
+		$user->save();
+		
+		$this->assertEquals(1, $user->_hookCounter['preInsert']);
+		$this->assertEquals(1, $user->_hookCounter['postInsert']);
+		$this->assertEquals(1, $user->_hookCounter['preUpdate']);
+		$this->assertEquals(1, $user->_hookCounter['postUpdate']);
+		$this->assertEquals(2, $user->_hookCounter['preSave']);
+		$this->assertEquals(2, $user->_hookCounter['postSave']);
 	}
 }
