@@ -72,37 +72,37 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		$this->init();
 	}
 	
-	public function init()
+	protected function init()
 	{
 		
 	}
 	
-	public function preInsert()
+	protected function preInsert()
 	{
 		
 	}
 	
-	public function postInsert()
+	protected function postInsert()
 	{
 		
 	}
 	
-	public function preUpdate()
+	protected function preUpdate()
 	{
 		
 	}
 	
-	public function postUpdate()
+	protected function postUpdate()
 	{
 		
 	}
 	
-	public function preSave()
+	protected function preSave()
 	{
 		
 	}
 	
-	public function postSave()
+	protected function postSave()
 	{
 		
 	}

@@ -31,37 +31,37 @@ class My_ShantyMongo_User extends My_ShantyMongo_Abstract
 		'postSave' => 0
 	);
 	
-	public function init()
+	protected function init()
 	{
 		$this->_hookCounter['init'] += 1;
 	}
 	
-	public function preInsert()
+	protected function preInsert()
 	{
 		$this->_hookCounter['preInsert'] += 1;
 	}
 	
-	public function postInsert()
+	protected function postInsert()
 	{
 		$this->_hookCounter['postInsert'] += 1;
 	}
 	
-	public function preUpdate()
+	protected function preUpdate()
 	{
 		$this->_hookCounter['preUpdate'] += 1;
 	}
 	
-	public function postUpdate()
+	protected function postUpdate()
 	{
 		$this->_hookCounter['postUpdate'] += 1;
 	}
 	
-	public function preSave()
+	protected function preSave()
 	{
 		$this->_hookCounter['preSave'] += 1;
 	}
 	
-	public function postSave()
+	protected function postSave()
 	{
 		$this->_hookCounter['postSave'] += 1;
 	}
