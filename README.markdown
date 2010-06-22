@@ -387,6 +387,58 @@ Before you jump in and use inheritance all over the place just be aware that sea
 	$students = Student::all(); // A lookup on '_type' is used
 	$schoolCaptains = SchoolCaptain::all(); // A lookup on '_type' is used
 
+### Hooks
+
+The following hooks are available:
+
+##### init()
+
+Executed after the constructor has finished
+
+##### preInsert()
+
+Executed before saving a new document
+
+##### postInsert()
+
+Executed after saving a new document
+
+##### preUpdate()
+
+Executed before saving an existing document
+
+##### postUpdate()
+
+Executed after saving an existing document
+
+##### preSave()
+
+Executed before saving a document
+
+##### postSave()
+
+Executed after saving a document
+
+#### Using the Hooks
+
+To use one of the above hooks simply define a protected method in you document with the name of the hook eg.
+
+	Class User extends Shanty_Mongo_Document
+	{
+		protected static $_db = 'forum';
+		protected static $_collection = 'user';
+		
+		protected static $_requirements = array(
+			'name' => array('Document:Name', 'Required'),
+			'email' => 'Validator:EmailAddress'
+		);
+		
+		protected function init()
+		{
+			// Do stuff on initialisting document
+		}
+	}
+
 Special thanks to
 -----------------
 
