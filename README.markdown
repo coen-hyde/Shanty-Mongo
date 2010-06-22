@@ -381,7 +381,7 @@ So the effective requirements for SchoolCaptain would be:
 	Student::all(array('name.first' => 'Bob')); // Returns only Students with the first name of 'Bob'
 	SchoolCaptain::all(); // Returns only school captains
 	
-Before you jump in and use inheritance all over the place just be aware that searching subclasses will use query the attribute '_type' so be sure to index it for use in production.
+Before you jump in and use inheritance all over the place just be aware that searching subclasses will query the attribute '_type' so be sure to index it for use in production.
 
 	$users = User::all(); // No lookup on '_type'
 	$students = Student::all(); // A lookup on '_type' is used
