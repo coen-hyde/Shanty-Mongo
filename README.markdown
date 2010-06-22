@@ -430,7 +430,7 @@ To use one of the above hooks simply define a protected method in you document w
 		
 		protected function init()
 		{
-			// Do stuff on initialisting document
+			// Do stuff on initialising document
 		}
 	}
 
