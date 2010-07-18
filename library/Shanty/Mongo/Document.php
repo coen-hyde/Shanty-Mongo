@@ -871,9 +871,10 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	 * Save this document
 	 * 
 	 * @param boolean $entierDocument Force the saving of the entier document, instead of just the changes
+	 * @param boolean $safe If FALSE, the program continues executing without waiting for a database response. If TRUE, the program will wait for the database response and throw a MongoCursorException if the update did not succeed
 	 * @return boolean Result of save
 	 */
-	public function save($entierDocument = false)
+	public function save($entierDocument = false, $safe = true)
 	{
 		if (!$this->isConnected()) {
 			require_once 'Shanty/Mongo/Exception.php';
@@ -924,7 +925,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 			}
 		}
 		
-		$result = $this->_getMongoCollection(true)->update($this->getCriteria(), $operations, array('upsert' => true));
+		$result = $this->_getMongoCollection(true)->update($this->getCriteria(), $operations, array('upsert' => true, 'save' => $safe));
 		$this->_data = array();
 		$this->_cleanData = $exportData;
 		$this->purgeOperations(true);
@@ -939,6 +940,17 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		$this->setConfigAttribute('new', false);
 		
 		return $result;
+	}
+	
+	/**
+	 * Save this document without waiting for a response from the server
+	 * 
+	 * @param boolean $entierDocument Force the saving of the entier document, instead of just the changes
+	 * @return boolean Result of save
+	 */
+	public function saveUnsafe($entierDocument = false)
+	{
+		return $this->save($entierDocument, false);
 	}
 	
 	/**
