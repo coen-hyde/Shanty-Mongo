@@ -335,5 +335,6 @@ class Shanty_Mongo
 		static::removeConnectionGroups();
 		static::removeRequirements();
 		static::removeRequirementCreators();
+		static::$_initialised = false;
 	}
 }
