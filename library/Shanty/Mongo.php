@@ -18,6 +18,7 @@ class Shanty_Mongo
 	protected static $_requirements = array();
 	protected static $_requirementCreators = array();
 	protected static $_validOperations = array('$set', '$unset', '$push', '$pushAll', '$pull', '$pullAll', '$addToSet', '$pop', '$inc');
+	protected static $_initialised = false;
 	
 	/**
 	 * Initialise Shanty_Mongo. In particular all the requirements.
@@ -25,7 +26,7 @@ class Shanty_Mongo
 	public static function init()
 	{
 		// If requirements are not empty then we have already initialised requirements
-		if (!empty(static::$_requirements)) return;
+		if (static::$_initialised) return;
 		
 		// Custom validators
 		static::storeRequirement('Validator:Array', new Shanty_Mongo_Validate_Array());
@@ -72,6 +73,8 @@ class Shanty_Mongo
 		
 		static::storeRequirementCreator('/^Document:([A-Za-z]+[\w\-]*)$/', $classValidator);
 		static::storeRequirementCreator('/^DocumentSet:([A-Za-z]+[\w\-]*)$/', $classValidator);
+		
+		static::$_initialised = true;
 	}
 	
 	/**
