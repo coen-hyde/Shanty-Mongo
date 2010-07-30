@@ -993,7 +993,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		}
 		
 		// Execute post delete hook
-		$this->preDelete();
+		$this->postDelete();
 		
 		return $result;
 	}
