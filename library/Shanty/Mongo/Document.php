@@ -107,6 +107,16 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		
 	}
 	
+	protected function preDelete()
+	{
+		
+	}
+	
+	protected function postDelete()
+	{
+		
+	}
+	
 	/**
 	 * Get this document's id
 	 * 
@@ -972,12 +982,18 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		
 		$mongoCollection = $this->_getMongoCollection(true);
 		
+		// Execute pre delete hook
+		$this->preDelete();
+		
 		if (!$this->isRootDocument()) {
 			$result = $mongoCollection->update($this->getCriteria(), array('$unset' => array($this->getPathToDocument() => 1)));
 		}
 		else {
 			$result = $mongoCollection->remove($this->getCriteria(), true);
 		}
+		
+		// Execute post delete hook
+		$this->preDelete();
 		
 		return $result;
 	}
