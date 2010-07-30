@@ -378,6 +378,19 @@ abstract class Shanty_Mongo_Collection
 	}
 	
 	/**
+	 * Select distinct values for a property
+	 * 
+	 * @param String $property
+	 * @return array
+	 */
+	public static function distinct($property)
+	{
+		$results = static::getMongoDb(false)->command(array('distinct' => static::getCollectionName(), 'key' => $property));
+		
+		return $results['values'];
+	}
+	
+	/**
 	 * Insert a document
 	 * 
 	 * @param array $object
