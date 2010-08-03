@@ -968,7 +968,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	 * 
 	 * $return boolean Result of delete
 	 */
-	public function delete()
+	public function delete($safe = true)
 	{
 		if (!$this->isConnected()) {
 			require_once 'Shanty/Mongo/Exception.php';
@@ -986,10 +986,10 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		$this->preDelete();
 		
 		if (!$this->isRootDocument()) {
-			$result = $mongoCollection->update($this->getCriteria(), array('$unset' => array($this->getPathToDocument() => 1)));
+			$result = $mongoCollection->update($this->getCriteria(), array('$unset' => array($this->getPathToDocument() => 1)), array('save' => $safe));
 		}
 		else {
-			$result = $mongoCollection->remove($this->getCriteria(), true);
+			$result = $mongoCollection->remove($this->getCriteria(), array('save' => $safe));
 		}
 		
 		// Execute post delete hook
