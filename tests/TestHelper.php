@@ -50,7 +50,6 @@ $path = array(
     );
 set_include_path(implode(PATH_SEPARATOR, $path));
 
-
 if (defined('TESTS_GENERATE_REPORT') && TESTS_GENERATE_REPORT === true &&
     version_compare(PHPUnit_Runner_Version::id(), '3.1.6', '>=')) {
 

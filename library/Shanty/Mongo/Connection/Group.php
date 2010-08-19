@@ -44,7 +44,9 @@ class Shanty_Mongo_Connection_Group
 		$group = $this;
 		$addConnections = function(Shanty_Mongo_Connection_Stack $stack, array $connections) use ($group) {
 			foreach ($connections as $connectionData) {
-				$connection = new Shanty_Mongo_Connection($group->formatConnectionString($connectionData));
+				$options = array_intersect_key($connectionData, array_flip(Shanty_Mongo_Connection::getAvailableOptions()));
+				
+				$connection = new Shanty_Mongo_Connection($group->formatConnectionString($connectionData), $options);
 				if (array_key_exists('weight', $connectionData)) $weight = (int) $connectionData['weight'];
 				else $weight = 1;
 				
@@ -160,8 +162,8 @@ class Shanty_Mongo_Connection_Group
 	 */
 	public function formatConnectionString(array $connectionOptions = array())
 	{
-		// See if we are dealing with a replica pair
-		if (array_key_exists('replica_pair', $connectionOptions)) $hosts = $connectionOptions['replica_pair'];
+		// See if we are dealing with a replica set
+		if (array_key_exists('hosts', $connectionOptions)) $hosts = $connectionOptions['hosts'];
 		else $hosts = array($connectionOptions);
 		
 		$connectionString = 'mongodb://';

@@ -18,7 +18,7 @@ class Shanty_Mongo_Connection_GroupTest extends Shanty_Mongo_TestSetup
 	public function testAddConnectionsNewGroupWithConnections()
 	{
 		$connections = array(
-			'master' => array('host' => 'localhost'),
+			'master' => array('host' => 'localhost', 'timeout' => 300),
 			'slave' => array('host' => '127.0.0.1'),
 		);
 		
@@ -31,6 +31,7 @@ class Shanty_Mongo_Connection_GroupTest extends Shanty_Mongo_TestSetup
 		
 		$masterInfo = $masters[0]->getConnectionInfo();
 		$this->assertEquals('mongodb://localhost:27017', $masterInfo['connectionString']);
+		$this->assertEquals(300, $masterInfo['timeout']);
 		
 		$slave1Info = $slaves[0]->getConnectionInfo();
 		$this->assertEquals('mongodb://127.0.0.1:27017', $slave1Info['connectionString']);
@@ -179,12 +180,13 @@ class Shanty_Mongo_Connection_GroupTest extends Shanty_Mongo_TestSetup
 		$this->assertEquals("mongodb://{$options['host']}:27017", $this->_group->formatConnectionString($options));
 		
 		$options = array(
-			'replica_pair' => array(
+			'hosts' => array(
 				array('host' => 'mongodb1.local'),
 				array('host' => 'mongodb2.local'),
-			)
+				array('host' => 'mongodb3.local'),
+			),
 		);
-		$this->assertEquals("mongodb://{$options['replica_pair'][0]['host']}:27017,{$options['replica_pair'][1]['host']}:27017", $this->_group->formatConnectionString($options));
+		$this->assertEquals("mongodb://{$options['hosts'][0]['host']}:27017,{$options['hosts'][1]['host']}:27017,{$options['hosts'][2]['host']}:27017", $this->_group->formatConnectionString($options));
 	}
 	
 	public function testFormatHostString()
@@ -204,5 +206,25 @@ class Shanty_Mongo_Connection_GroupTest extends Shanty_Mongo_TestSetup
 		 $this->assertEquals("127.0.0.1:27017/{$options['database']}", $this->_group->formatHostString($options));
 	}
 	
-	
+	public function testReplicaSet()
+	{
+		$connections = array(
+			'hosts' => array(
+				array('host' => 'mongodb1.local'),
+				array('host' => 'mongodb2.local'),
+				array('host' => 'mongodb3.local'),
+			),
+			'replicaSet' => true
+		);
+		
+		$group = new Shanty_Mongo_Connection_Group($connections);
+		$this->assertEquals(1, count($group->getMasters()));
+		$this->assertEquals(0, count($group->getSlaves()));
+		
+		$masters = $group->getMasters();
+		
+		$masterInfo = $masters[0]->getConnectionInfo();
+		$this->assertEquals("mongodb://{$connections['hosts'][0]['host']}:27017,{$connections['hosts'][1]['host']}:27017,{$connections['hosts'][2]['host']}:27017", $masterInfo['connectionString']);
+		$this->assertTrue($masterInfo['replicaSet']);
+	}
 }

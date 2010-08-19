@@ -88,7 +88,7 @@ class Shanty_Mongo
 			$options = $options->toArray();
 		}
 		
-		$blurbs = array('host', 'master', 'masters', 'slaves', 'slave');
+		$blurbs = array('host', 'master', 'masters', 'slaves', 'slave', 'hosts');
 		$intersection = array_intersect(array_keys($options), $blurbs);
 
 		$connectionGroups = array();

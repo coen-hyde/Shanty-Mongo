@@ -11,6 +11,12 @@ require_once 'Shanty/Mongo.php';
  */
 class Shanty_Mongo_Connection extends Mongo
 {
+	static protected $_availableOptions = array(
+		'persist',
+		'timeout',
+		'replicaSet'
+	);
+	
 	protected $_connectionInfo = array();
 	
 	public function __construct($connectionString = null, array $options = array())
@@ -31,5 +37,15 @@ class Shanty_Mongo_Connection extends Mongo
 	public function getConnectionInfo()
 	{
 		return $this->_connectionInfo;
+	}
+	
+	/**
+	 * Get available options
+	 * 
+	 * @return array
+	 */
+	static public function getAvailableOptions()
+	{
+		return static::$_availableOptions;
 	}
 }
