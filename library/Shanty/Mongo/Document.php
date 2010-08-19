@@ -762,7 +762,16 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 			
 			// If property is a document
 			if ($value instanceof Shanty_Mongo_Document) {
-				if ($this->hasRequirement($property, 'AsReference') || $this->isReference($value)) {
+				// Make when exporting from a documentset look up the correct requirement index
+				if ($this instanceof Shanty_Mongo_DocumentSet) {
+					$requirementIndex = Shanty_Mongo_DocumentSet::DYNAMIC_INDEX;
+				}
+				else {
+					$requirementIndex = $property;
+				}
+				
+				// If document is supposed to be a reference
+				if ($this->hasRequirement($requirementIndex, 'AsReference') || $this->isReference($value)) {
 					$exportData[$property] = $value->createReference();
 					continue;
 				}
