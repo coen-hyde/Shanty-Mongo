@@ -143,12 +143,12 @@ class Shanty_Mongo_DocumentSetTest extends Shanty_Mongo_TestSetup
 		$this->assertEquals('addresses.2', $this->_bob->addresses[2]->getPathToDocument());
 		
 		$requirements = array(
-			'_id' => array('Validator:MongoId' => null),
-			'_type' => array('Array' => null),
-			'street' => array('Required' => null),
-			'state' => array('Required' => null),
-			'suburb' => array('Required' => null),
-			'postcode' => array('Required' => null),
+			'_id' => array('Optional' => null, 'Validator:MongoId' => null),
+			'_type' => array('Optional' => null, 'Array' => null),
+			'street' => array(),
+			'state' => array(),
+			'suburb' => array(),
+			'postcode' => array(),
 		);
 		
 		$this->assertEquals($requirements, $this->_bob->addresses[2]->getRequirements());
@@ -194,19 +194,19 @@ class Shanty_Mongo_DocumentSetTest extends Shanty_Mongo_TestSetup
 		$this->assertEquals('', $this->_article->contributors[5]->getPathToDocument());
 		
 		$requirements = array(
-			'_id' => array('Validator:MongoId' => null),
-			'_type' => array('Array' => null),
-			'name' => array('Document:My_ShantyMongo_Name' => null, 'Required' => null),
-			'email' => array('Required' => null, 'Validator:EmailAddress' => null),
-			'addresses' => array('DocumentSet' => null),
-			'addresses.$.street' => array('Required' => null),
-			'addresses.$.state' => array('Required' => null),
-			'addresses.$.suburb' => array('Required' => null),
-			'addresses.$.postcode' => array('Required' => null),
-			'friends' => array('DocumentSet:My_ShantyMongo_Users' => null),
+			'_id' => array('Optional' => null, 'Validator:MongoId' => null),
+			'_type' => array('Optional' => null, 'Array' => null),
+			'name' => array('Document:My_ShantyMongo_Name' => null),
+			'email' => array('Validator:EmailAddress' => null),
+			'addresses' => array('DocumentSet' => null, 'Optional' => null),
+			'addresses.$.street' => array(),
+			'addresses.$.state' => array(),
+			'addresses.$.suburb' => array(),
+			'addresses.$.postcode' => array(),
+			'friends' => array('DocumentSet:My_ShantyMongo_Users' => null, 'Optional' => null),
 			'friends.$' => array('Document:My_ShantyMongo_User' => null, 'AsReference' => null),
-			'sex' => array('Required' => null, 'Validator:InArray' => array('F', 'M')),
-			'partner' => array('Document:My_ShantyMongo_User' => null, 'AsReference' => null)
+			'sex' => array('Validator:InArray' => array('F', 'M')),
+			'partner' => array('Document:My_ShantyMongo_User' => null, 'AsReference' => null, 'Optional' => null)
 		);
 		
 		$this->assertEquals($requirements, $this->_article->contributors[5]->getRequirements());

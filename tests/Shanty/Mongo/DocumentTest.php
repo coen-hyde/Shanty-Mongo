@@ -59,7 +59,7 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 			'collection' => 'user',
 			'pathToDocument' => 'name',
 			'requirementModifiers' => array(
-				'middle' => array('Required' => null)
+				'middle' => array('Optional' => null)
 			)
 		);
 		
@@ -69,11 +69,11 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 		$this->assertTrue($name->isConnected());
 		
 		$requirements = array(
-			'_id' => array('Validator:MongoId' => null),
-			'_type' => array('Array' => null),
-			'first' => array('Required' => null),
-			'last' => array('Required' => null),
-			'middle' => array('Required' => null),
+			'_id' => array('Optional' => null, 'Validator:MongoId' => null),
+			'_type' => array('Optional' => null, 'Array' => null),
+			'first' => array(),
+			'last' => array(),
+			'middle' => array('Optional' => null),
 		);
 		$this->assertEquals($requirements, $name->getRequirements());
 	}
@@ -190,29 +190,29 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 	public function testGetRequirements()
 	{
 		$requirements = array(
-			'_id' => array('Validator:MongoId' => null),
-			'_type' => array('Array' => null),
-			'name' => array('Document:My_ShantyMongo_Name' => null, 'Required' => null),
-			'email' => array('Required' => null, 'Validator:EmailAddress' => null),
-			'addresses' => array('DocumentSet' => null),
-			'addresses.$.street' => array('Required' => null),
-			'addresses.$.state' => array('Required' => null),
-			'addresses.$.suburb' => array('Required' => null),
-			'addresses.$.postcode' => array('Required' => null),
-			'friends' => array('DocumentSet:My_ShantyMongo_Users' => null),
+			'_id' => array('Optional' => null, 'Validator:MongoId' => null),
+			'_type' => array('Optional' => null, 'Array' => null),
+			'name' => array('Document:My_ShantyMongo_Name' => null),
+			'email' => array('Validator:EmailAddress' => null),
+			'addresses' => array('DocumentSet' => null, 'Optional' => null),
+			'addresses.$.street' => array(),
+			'addresses.$.state' => array(),
+			'addresses.$.suburb' => array(),
+			'addresses.$.postcode' => array(),
+			'friends' => array('DocumentSet:My_ShantyMongo_Users' => null, 'Optional' => null),
 			'friends.$' => array('Document:My_ShantyMongo_User' => null, 'AsReference' => null),
-			'sex' => array('Required' => null, 'Validator:InArray' => array('F', 'M')),
-			'partner' => array('Document:My_ShantyMongo_User' => null, 'AsReference' => null),
-			'faculty' => array('Required' => null)
+			'sex' => array('Validator:InArray' => array('F', 'M')),
+			'partner' => array('Document:My_ShantyMongo_User' => null, 'AsReference' => null, 'Optional' => null),
+			'faculty' => array()
 		);
 		
 		$this->assertEquals($requirements, $this->_bob->getRequirements());
 		
 		$requirements2 = $requirements = array(
-			'$.street' => array('Required' => null),
-			'$.state' => array('Required' => null),
-			'$.suburb' => array('Required' => null),
-			'$.postcode' => array('Required' => null),
+			'$.street' => array(),
+			'$.state' => array(),
+			'$.suburb' => array(),
+			'$.postcode' => array()
 		);
 		
 		$this->assertEquals($requirements2, $this->_bob->getRequirements('addresses.'));
@@ -220,12 +220,12 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 	
 	public function testHasRequirement()
 	{
-		$this->assertTrue($this->_bob->hasRequirement('name', 'Required'));
+		$this->assertTrue($this->_bob->hasRequirement('addresses', 'Optional'));
 		$this->assertEquals('My_ShantyMongo_Name', $this->_bob->hasRequirement('name', 'Document'));
 		$this->assertEquals('My_ShantyMongo_Users', $this->_bob->hasRequirement('friends', 'DocumentSet'));
 		$this->assertEquals('Shanty_Mongo_DocumentSet', $this->_bob->hasRequirement('addresses', 'DocumentSet'));
 		
-		$this->assertFalse($this->_bob->hasRequirement('age', 'Required'));
+		$this->assertFalse($this->_bob->hasRequirement('age', 'Required')); // age has no requirements
 		$this->assertFalse($this->_bob->hasRequirement('name', 'Validator:EmailAddress'));
 		$this->assertFalse($this->_bob->hasRequirement('sex', 'Document'));
 	}
@@ -254,27 +254,27 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 	public function testApplyRequirementsDirty()
 	{
 		$totalRequirements = array(
-			'_id' => array('Validator:MongoId' => null),
-			'_type' => array('Array' => null),
-			'name' => array('Document:My_ShantyMongo_Name' => null, 'Required' => null),
-			'email' => array('Required' => null, 'Validator:EmailAddress' => null),
-			'addresses' => array('DocumentSet' => null),
-			'addresses.$.street' => array('Required' => null),
-			'addresses.$.state' => array('Required' => null),
-			'addresses.$.suburb' => array('Required' => null),
-			'addresses.$.postcode' => array('Required' => null),
-			'friends' => array('DocumentSet:My_ShantyMongo_Users' => null),
+			'_id' => array('Optional' => null, 'Validator:MongoId' => null),
+			'_type' => array('Optional' => null, 'Array' => null),
+			'name' => array('Document:My_ShantyMongo_Name' => null),
+			'email' => array('Validator:EmailAddress' => null),
+			'addresses' => array('DocumentSet' => null, 'Optional' => null),
+			'addresses.$.street' => array(),
+			'addresses.$.state' => array(),
+			'addresses.$.suburb' => array(),
+			'addresses.$.postcode' => array(),
+			'friends' => array('DocumentSet:My_ShantyMongo_Users' => null, 'Optional' => null),
 			'friends.$' => array('Document:My_ShantyMongo_User' => null, 'AsReference' => null),
-			'sex' => array('Required' => null, 'Validator:InArray' => array('F', 'M')),
-			'partner' => array('Document:My_ShantyMongo_User' => null, 'AsReference' => null),
-			'faculty' => array('Required' => null),
-			'birthday' => array('Required' => null),
-			'mobile' => array('Required' => null, 'Validator:Digits' => null)
+			'sex' => array('Validator:InArray' => array('F', 'M')),
+			'partner' => array('Document:My_ShantyMongo_User' => null, 'AsReference' => null, 'Optional' => null),
+			'faculty' => array(),
+			'birthday' => array(),
+			'mobile' => array('Validator:Digits' => null)
 		);
 		
 		$this->_bob->applyRequirements(array(
-			'birthday' => 'Required',
-			'mobile' => array('Required', 'Validator:Digits')
+			'birthday',
+			'mobile' => array('Validator:Digits')
 		));
 		
 		$this->assertEquals($totalRequirements, $this->_bob->getRequirements());
@@ -286,27 +286,27 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 	public function testApplyRequirementsClean()
 	{
 		$totalRequirements = array(
-			'_id' => array('Validator:MongoId' => null),
-			'_type' => array('Array' => null),
-			'name' => array('Document:My_ShantyMongo_Name' => null, 'Required' => null),
-			'email' => array('Required' => null, 'Validator:EmailAddress' => null),
-			'addresses' => array('DocumentSet' => null),
-			'addresses.$.street' => array('Required' => null),
-			'addresses.$.state' => array('Required' => null),
-			'addresses.$.suburb' => array('Required' => null),
-			'addresses.$.postcode' => array('Required' => null),
-			'friends' => array('DocumentSet:My_ShantyMongo_Users' => null),
+			'_id' => array('Optional' => null, 'Validator:MongoId' => null),
+			'_type' => array('Optional' => null, 'Array' => null),
+			'name' => array('Document:My_ShantyMongo_Name' => null),
+			'email' => array('Validator:EmailAddress' => null),
+			'addresses' => array('DocumentSet' => null, 'Optional' => null),
+			'addresses.$.street' => array(),
+			'addresses.$.state' => array(),
+			'addresses.$.suburb' => array(),
+			'addresses.$.postcode' => array(),
+			'friends' => array('DocumentSet:My_ShantyMongo_Users' => null, 'Optional' => null),
 			'friends.$' => array('Document:My_ShantyMongo_User' => null, 'AsReference' => null),
-			'sex' => array('Required' => null, 'Validator:InArray' => array('F', 'M')),
-			'partner' => array('Document:My_ShantyMongo_User' => null, 'AsReference' => null),
-			'faculty' => array('Required' => null),
-			'birthday' => array('Required' => null),
-			'mobile' => array('Required' => null, 'Validator:Digits' => null)
+			'sex' => array('Validator:InArray' => array('F', 'M')),
+			'partner' => array('Document:My_ShantyMongo_User' => null, 'AsReference' => null, 'Optional' => null),
+			'faculty' => array(),
+			'birthday' => array(),
+			'mobile' => array('Validator:Digits' => null)
 		);
 		
 		$this->_bob->applyRequirements(array(
-			'birthday' => array('Required' => null),
-			'mobile' => array('Required' => null, 'Validator:Digits' => null)
+			'birthday' => array(),
+			'mobile' => array('Validator:Digits' => null)
 		), false);
 		
 		$this->assertEquals($totalRequirements, $this->_bob->getRequirements());
@@ -327,21 +327,34 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 	 */
 	public function testRemoveRequirement()
 	{
-		$this->assertTrue($this->_bob->hasRequirement('name', 'Required'));
-		$this->_bob->removeRequirement('name', 'Required');
-		$this->assertFalse($this->_bob->hasRequirement('name', 'Required'));
+		$this->assertTrue($this->_bob->hasRequirement('email', 'Validator:EmailAddress'));
+		$this->_bob->removeRequirement('email', 'Validator:EmailAddress');
+		$this->assertFalse($this->_bob->hasRequirement('email', 'Validator:EmailAddress'));
 	}
 	
 	public function testGetPropertiesWithRequirement()
 	{
-		$reqiredProperties = array(
-			'name', 
-			'email', 
+		$optionalProperties = array(
+			'_id', 
+			'_type', 
+			'addresses', 
+			'friends', 
+			'partner'
+		);
+		
+		$this->assertEquals($optionalProperties, $this->_bob->getPropertiesWithRequirement('Optional'));
+	}
+	
+	public function testGetPropertiesWithoutRequirement()
+	{
+		$optionalProperties = array(
+			'name',
+			'email',
 			'sex',
 			'faculty'
 		);
 		
-		$this->assertEquals($reqiredProperties, $this->_bob->getPropertiesWithRequirement('Required'));
+		$this->assertEquals($optionalProperties, $this->_bob->getPropertiesWithoutRequirement('Optional'));
 	}
 	
 	public function testGetValidators()
@@ -471,8 +484,8 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 		$this->_bob->config = new Shanty_Mongo_Document();
 		
 		$requirements = array(
-			'_id' => array('Validator:MongoId' => null),
-			'_type' => array('Array' => null),
+			'_id' => array('Optional' => null, 'Validator:MongoId' => null),
+			'_type' => array('Optional' => null, 'Array' => null),
 			'date' => array('Required' => null)
 		);
 		

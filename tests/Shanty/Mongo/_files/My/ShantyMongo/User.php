@@ -8,17 +8,17 @@ class My_ShantyMongo_User extends My_ShantyMongo_Abstract
 	protected static $_collection = 'user';
 
 	protected static $_requirements = array(
-		'name' => array('Document:My_ShantyMongo_Name', 'Required'),
-		'email' => array('Required', 'Validator:EmailAddress'),
-		'addresses' => 'DocumentSet',
-		'addresses.$.street' => 'Required',
-		'addresses.$.state' => 'Required',
-		'addresses.$.suburb' => 'Required',
-		'addresses.$.postcode' => 'Required',
-		'friends' => 'DocumentSet:My_ShantyMongo_Users',
+		'name' => 'Document:My_ShantyMongo_Name',
+		'email' => 'Validator:EmailAddress',
+		'addresses' => array('DocumentSet', 'Optional'),
+		'addresses.$.street',
+		'addresses.$.state',
+		'addresses.$.suburb',
+		'addresses.$.postcode',
+		'friends' => array('DocumentSet:My_ShantyMongo_Users', 'Optional'),
 		'friends.$' => array('Document:My_ShantyMongo_User', 'AsReference'),
-		'sex' => array('Required', 'Validator:InArray' => array('F', 'M')),
-		'partner' => array('Document:My_ShantyMongo_User', 'AsReference')
+		'sex' => array('Validator:InArray' => array('F', 'M')),
+		'partner' => array('Document:My_ShantyMongo_User', 'AsReference', 'Optional')
 	);
 	
 	public $_hookCounter = array(

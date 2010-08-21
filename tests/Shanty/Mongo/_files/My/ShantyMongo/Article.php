@@ -8,12 +8,12 @@ class My_ShantyMongo_Article extends My_ShantyMongo_Abstract
 	protected static $_collection = 'article';
 
 	protected static $_requirements = array(
-		'title' => array('Required', 'Filter:StringTrim'),
-		'author' => array('Document:My_ShantyMongo_User', 'AsReference'),
-		'contributors' => 'DocumentSet:My_ShantyMongo_Users',
+		'title' => 'Filter:StringTrim',
+		'author' => array('Document:My_ShantyMongo_User', 'AsReference', 'Optional'),
+		'contributors' => array('DocumentSet:My_ShantyMongo_Users', 'Optional'),
 		'contributors.$' => array('Document:My_ShantyMongo_User', 'AsReference'),
-		'relatedArticles' => 'DocumentSet',
+		'relatedArticles' => array('DocumentSet', 'Optional'),
 		'relatedArticles.$' => 'Document:My_ShantyMongo_Article',
-		'tags' => 'Array'
+		'tags' => array('Array', 'Optional')
 	);
 }

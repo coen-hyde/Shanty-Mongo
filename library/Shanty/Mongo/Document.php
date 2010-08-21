@@ -12,8 +12,8 @@ require_once 'Shanty/Mongo/Iterator/Default.php';
 class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAccess, Countable, IteratorAggregate
 {
 	protected static $_requirements = array(
-		'_id' => 'Validator:MongoId',
-		'_type' => 'Array'
+		'_id' => array('Optional', 'Validator:MongoId'),
+		'_type' => array('Optional', 'Array')
 	);
 	
 	protected $_docRequirements = array();
@@ -461,6 +461,26 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	}
 	
 	/**
+	 * Get all the properties without a particular requirement
+	 * 
+	 * @param array $requirement
+	 */
+	public function getPropertiesWithoutRequirement($requirement)
+	{
+		$properties = array();
+		
+		foreach ($this->_docRequirements as $property => $requirementList) {
+			if (strpos($property, '.') > 0) continue;
+			
+			if (!array_key_exists($requirement, $requirementList)) {
+				$properties[] = $property;
+			}
+		}
+		
+		return $properties;
+	}
+	
+	/**
 	 * Get all validators attached to a property
 	 * 
 	 * @param String $property Name of property
@@ -548,13 +568,12 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 			return $this->_data[$property];
 		}
 	
-		// If property is supposed to be an array then initialise an array
+		// If property is supposed to be an array then leave it as an array
 		if ($this->hasRequirement($property, 'Array')) {
 			return $this->_data[$property] = $data;
 		}
 		
 		// If property is a reference to another document then fetch the reference document
-		$db = $this->getConfigAttribute('db');
 		if (MongoDBRef::isRef($data)) {
 			$collection = $data['$ref'];
 			$data = MongoDBRef::get($this->_getMongoDB(false), $data);
@@ -572,7 +591,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 			$reference = false;
 		}
 		
-		// Find out the class name of the document or document set we are loaded
+		// Find out the class name of the document or document set we are loading
 		if ($className = $this->hasRequirement($property, 'DocumentSet')) {
 			$docType = 'Shanty_Mongo_DocumentSet';
 		}
@@ -787,11 +806,13 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		}
 		
 		// make sure required properties are not empty
-		$requiredProperties = $this->getPropertiesWithRequirement('Required');
-		foreach ($requiredProperties as $property) {
-			if (!isset($exportData[$property]) || (is_array($exportData[$property]) && empty($exportData[$property]))) {
-				require_once 'Shanty/Mongo/Exception.php';
-				throw new Shanty_Mongo_Exception("Property '{$property}' must not be null.");
+		if (!($this instanceof Shanty_Mongo_DocumentSet)) {
+			$requiredProperties = $this->getPropertiesWithoutRequirement('Optional');
+			foreach ($requiredProperties as $property) {
+				if (!isset($exportData[$property]) || (is_array($exportData[$property]) && empty($exportData[$property]))) {
+					require_once 'Shanty/Mongo/Exception.php';
+					throw new Shanty_Mongo_Exception("Property '{$property}' must not be null.");
+				}
 			}
 		}
 		
