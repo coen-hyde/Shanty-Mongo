@@ -173,21 +173,33 @@ abstract class Shanty_Mongo_Collection
 	 * @return array
 	 */
 	public static function makeRequirementsTidy(array $requirements) {
-		foreach ($requirements as $property => $requirementList) {
-			if (!is_array($requirementList)) {
-				$requirements[$property] = array($requirementList);
+		$cleanRequirements = array();
+		
+		foreach ($requirements as $key => $value) {
+			if (is_numeric($key)) {
+				// Property was listed but had no requirements
+				$property = $value;
+				$requirementList = array();
+			}
+			else {
+				$property = $key;
+				$requirementList = $value;
+				
+				if (!is_array($requirementList)) {
+					$requirementList = array($requirementList);
+				}
 			}
 				
-			$newRequirementList = array();
-			foreach ($requirements[$property] as $key => $requirement) {
-				if (is_numeric($key)) $newRequirementList[$requirement] = null;
-				else $newRequirementList[$key] = $requirement;
+			$cleanRequirementList = array();
+			foreach ($requirementList as $requirementKey => $requirement) {
+				if (is_numeric($requirementKey)) $cleanRequirementList[$requirement] = null;
+				else $cleanRequirementList[$requirementKey] = $requirement;
 			}
 			
-			$requirements[$property] = $newRequirementList;
+			$cleanRequirements[$property] = $cleanRequirementList;
 		}
 			
-		return $requirements;
+		return $cleanRequirements;
 	}
 	
 	/**

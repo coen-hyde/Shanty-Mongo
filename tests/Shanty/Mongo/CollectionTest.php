@@ -70,6 +70,7 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 			'friends' => 'DocumentSet',
 			'friends.$' => array('Document:My_ShantyMongo_User', 'AsReference'),
 			'sex' => array('Required', 'Validator:InArray' => array('F', 'M')),
+			'optional'
 		);
 		
 		$clean = array(
@@ -77,6 +78,7 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 			'friends' => array('DocumentSet' => null),
 			'friends.$' => array('Document:My_ShantyMongo_User' => null, 'AsReference' => null),
 			'sex' => array('Required' => null, 'Validator:InArray' => array('F', 'M')),
+			'optional' => array()
 		);
 		
 		$this->assertEquals($clean, Shanty_Mongo_Collection::makeRequirementsTidy($dirty));
@@ -95,7 +97,8 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 			'name' => array('Document:My_ShantyMongo_Name' => null),
 			'email' => array('Required' => null),
 			'concession' => array('Required' => null),
-			'friends' => array('DocumentSet' => null)
+			'friends' => array('DocumentSet' => null),
+			'optional' => array()
 		);
 		
 		$result = array(
@@ -104,6 +107,7 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 			'friends' => array('DocumentSet' => null),
 			'friends.$' => array('Document:My_ShantyMongo_User' => null, 'AsReference' => null),
 			'concession' => array('Required' => null),
+			'optional' => array()
 		);
 		
 		$this->assertEquals($result, Shanty_Mongo_Collection::mergeRequirements($requirements1, $requirements2));
