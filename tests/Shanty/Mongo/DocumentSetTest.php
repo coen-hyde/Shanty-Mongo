@@ -286,6 +286,29 @@ class Shanty_Mongo_DocumentSetTest extends Shanty_Mongo_TestSetup
 		$this->assertEquals($exportData, $this->_bob->addresses->export());
 	}
 	
+	public function testExportReferences()
+	{
+		// Pull all reference doc
+		foreach ($this->_bob->friends as $friend) {
+			
+		}
+		
+		// Bob is going to become a friend of himself
+		$this->_bob->friends[] = $this->_bob;
+		
+		$exportData = $this->_bob->friends->export();
+		$this->assertEquals(3, count($exportData));
+		
+		$this->assertTrue(MongoDBRef::isRef($exportData[0]));
+		$this->assertEquals('4c04516f1f5f5e21361e3ab1', $exportData[0]['$id']->__toString());
+		
+		$this->assertTrue(MongoDBRef::isRef($exportData[1]));
+		$this->assertEquals('4c0451791f5f5e21361e3ab2', $exportData[1]['$id']->__toString());
+		
+		$this->assertTrue(MongoDBRef::isRef($exportData[2]));
+		$this->assertEquals('4c04516a1f5f5e21361e3ab0', $exportData[2]['$id']->__toString());
+	}
+	
 	public function testAddDocument()
 	{
 		$address = new Shanty_Mongo_Document();
