@@ -419,9 +419,9 @@ abstract class Shanty_Mongo_Collection
 	 * @param array $criteria
 	 * @param unknown_type $justone
 	 */
-	public static function remove(array $criteria, $justone = false)
+	public static function remove(array $criteria, array $options = array())
 	{
-		return static::getMongoCollection(true)->remove($criteria, $justone);
+		return static::getMongoCollection(true)->remove($criteria, $options);
 	}
 	
 	/**

@@ -989,7 +989,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 			$result = $mongoCollection->update($this->getCriteria(), array('$unset' => array($this->getPathToDocument() => 1)), array('save' => $safe));
 		}
 		else {
-			$result = $mongoCollection->remove($this->getCriteria(), array('save' => $safe));
+			$result = $mongoCollection->remove($this->getCriteria(), array('justOne' => true, 'save' => $safe));
 		}
 		
 		// Execute post delete hook
