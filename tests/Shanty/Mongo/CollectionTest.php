@@ -315,6 +315,12 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 		$this->assertEquals(2, $males->count());
 	}
 	
+	public function testDistinct()
+	{
+		$distinctSexes = My_ShantyMongo_User::distinct('sex');
+		$this->assertEquals(array('F', 'M'), $distinctSexes);
+	}
+	
 	public function testInsert()
 	{
 		$sarah = array(
