@@ -60,7 +60,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		
 		// Create document id if one is required
 		if ($this->isNewDocument() && ($this->hasKey() || (isset($this->_config['hasId']) && $this->_config['hasId']))) {
-			$this->_data['_id'] = new MongoId();
+			//$this->_data['_id'] = new MongoId();
 			$this->_data['_type'] = static::getCollectionInheritance();
 		}
 		
@@ -752,8 +752,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	public function export()
 	{
 		$exportData = $this->_cleanData;
-		
-		foreach ($this->_data as $property => $value) {
+        foreach ($this->_data as $property => $value) {
 			// If property has been deleted
 			if (is_null($value)) {
 				unset($exportData[$property]);
@@ -775,8 +774,9 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 					$exportData[$property] = $value->createReference();
 					continue;
 				}
-				
+
 				$data = $value->export();
+
 				if (!empty($data)) {
 					$exportData[$property] = $data;
 				}
@@ -935,10 +935,17 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		}
 		
 		$result = $this->_getMongoCollection(true)->update($this->getCriteria(), $operations, array('upsert' => true, 'save' => $safe));
+        $last_error = $this->_getMongoDb(true)->command(array('getlasterror'=>1));
 		$this->_data = array();
 		$this->_cleanData = $exportData;
 		$this->purgeOperations(true);
-		
+
+        //update _id if needed
+        if (!empty($last_error['upserted'])) {
+            $this->_cleanData['_id'] = $last_error['upserted'];
+        }
+        
+        
 		// Run post hooks
 		if ($this->isNewDocument()) $this->postInsert();
 		else $this->postUpdate();
