@@ -378,6 +378,19 @@ abstract class Shanty_Mongo_Collection
 	}
 	
 	/**
+	 * Select distinct values for a property
+	 * 
+	 * @param String $property
+	 * @return array
+	 */
+	public static function distinct($property)
+	{
+		$results = static::getMongoDb(false)->command(array('distinct' => static::getCollectionName(), 'key' => $property));
+		
+		return $results['values'];
+	}
+	
+	/**
 	 * Insert a document
 	 * 
 	 * @param array $object
@@ -406,9 +419,9 @@ abstract class Shanty_Mongo_Collection
 	 * @param array $criteria
 	 * @param unknown_type $justone
 	 */
-	public static function remove(array $criteria, $justone = false)
+	public static function remove(array $criteria, array $options = array())
 	{
-		return static::getMongoCollection(true)->remove($criteria, $justone);
+		return static::getMongoCollection(true)->remove($criteria, $options);
 	}
 	
 	/**

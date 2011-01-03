@@ -31,6 +31,7 @@ class Shanty_Mongo
 		// Custom validators
 		static::storeRequirement('Validator:Array', new Shanty_Mongo_Validate_Array());
 		static::storeRequirement('Validator:MongoId', new Shanty_Mongo_Validate_Class('MongoId'));
+		static::storeRequirement('Validator:MongoDate', new Shanty_Mongo_Validate_Class('MongoDate'));
 		static::storeRequirement('Document', new Shanty_Mongo_Validate_Class('Shanty_Mongo_Document'));
 		static::storeRequirement('DocumentSet', new Shanty_Mongo_Validate_Class('Shanty_Mongo_DocumentSet'));
 		
