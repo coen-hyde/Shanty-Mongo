@@ -943,7 +943,6 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 				return true;
 			}
 		}
-		
 		$result = $this->_getMongoCollection(true)->update($this->getCriteria(), $operations, array('upsert' => true, 'save' => $safe));
         $last_error = $this->_getMongoDb(true)->command(array('getlasterror'=>1));
 		$this->_data = array();
@@ -953,9 +952,8 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
         //update _id if needed
         if (!empty($last_error['upserted'])) {
             $this->_cleanData['_id'] = $last_error['upserted'];
+            $this->setCriteria('_id', $this->_cleanData['_id']);
         }
-        
-        
 		// Run post hooks
 		if ($this->isNewDocument()) $this->postInsert();
 		else $this->postUpdate();
