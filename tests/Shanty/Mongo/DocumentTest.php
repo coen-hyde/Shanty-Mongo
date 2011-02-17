@@ -143,12 +143,12 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 	
 	public function testGetSetHasCriteria()
 	{
-		$this->assertEquals(array('_id' => new MongoId()), $this->_bob->getCriteria());
+		$this->assertEquals(array('_id' => new MongoId('4c04516a1f5f5e21361e3ab0')), $this->_bob->getCriteria());
 		$this->assertFalse($this->_bob->hasCriteria('username'));
 		$this->_bob->setCriteria('username', 'bobjones');
 		$this->assertTrue($this->_bob->hasCriteria('username'));
 		$this->assertEquals('bobjones', $this->_bob->getCriteria('username'));
-		$this->assertEquals(array('_id' => new MongoId(), 'username' => 'bobjones'), $this->_bob->getCriteria());
+		$this->assertEquals(array('_id' => new MongoId('4c04516a1f5f5e21361e3ab0'), 'username' => 'bobjones'), $this->_bob->getCriteria());
 	}
 	
 	public function test_GetMongoDb()
