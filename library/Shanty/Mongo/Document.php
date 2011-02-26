@@ -995,10 +995,10 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		$this->preDelete();
 		
 		if (!$this->isRootDocument()) {
-			$result = $mongoCollection->update($this->getCriteria(), array('$unset' => array($this->getPathToDocument() => 1)), array('save' => $safe));
+			$result = $mongoCollection->update($this->getCriteria(), array('$unset' => array($this->getPathToDocument() => 1)), array('safe' => $safe));
 		}
 		else {
-			$result = $mongoCollection->remove($this->getCriteria(), array('justOne' => true, 'save' => $safe));
+			$result = $mongoCollection->remove($this->getCriteria(), array('justOne' => true, 'safe' => $safe));
 		}
 		
 		// Execute post delete hook
