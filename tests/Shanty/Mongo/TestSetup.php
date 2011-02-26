@@ -160,7 +160,8 @@ class Shanty_Mongo_TestSetup extends PHPUnit_Framework_TestCase
 
 		$this->_connection->selectDb(TESTS_SHANTY_MONGO_DB)->selectCollection('user')->drop();
 		$this->_connection->selectDb(TESTS_SHANTY_MONGO_DB)->selectCollection('article')->drop();
-		
+		$this->_connection->selectDb(TESTS_SHANTY_MONGO_DB)->selectCollection('simple')->drop();
+
 		Shanty_Mongo::makeClean();
 		
 		parent::tearDown();
