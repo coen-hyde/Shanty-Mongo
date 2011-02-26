@@ -590,36 +590,18 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 		$this->_bob->name->first = 'Bobby';
 		$this->_bob->addresses = null;
 		$this->_bob->favouriteColour = 'Blue';
-		$this->_bob->config = new Shanty_Mongo_Document();
-		
-		// Load references into memory
+		$this->_bob->config = new Shanty_Mongo_Document(); // Empty documents don't get saved
+
+		// Load references into memory to make sure they are exported correctly as references
 		$this->_bob->partner;
 		$this->_bob->bestFriend;
-		
-		$bobRaw = array(
-			'_id' => new MongoId('4c04516a1f5f5e21361e3ab0'),
-			'_type' => array(
-				'My_ShantyMongo_Teacher',
-				'My_ShantyMongo_User'
-			),
-			'name' => array(
-				'first' => 'Bobby',
-				'last' => 'Jones',
-			),
-			'friends' => array(
-				MongoDBRef::create('user', new MongoId('4c04516f1f5f5e21361e3ab1')),
-				MongoDBRef::create('user', new MongoId('4c0451791f5f5e21361e3ab2')),
-				MongoDBRef::create('user', new MongoId('broken reference'))
-			),
-			'faculty' => 'Maths',
-			'email' => 'bob.jones@domain.com',
-			'sex' => 'M',
-			'partner' => MongoDBRef::create('user', new MongoId('4c04516f1f5f5e21361e3ab1')),
-			'bestFriend' => MongoDBRef::create('user', new MongoId('4c0451791f5f5e21361e3ab2')),
-			'favouriteColour' => 'Blue'
-		);
-			
-		$this->assertEquals($bobRaw, $this->_bob->export());
+
+
+		$this->_users['bob']['name']['first'] = 'Bobby';
+		unset($this->_users['bob']['addresses']);
+		$this->_users['bob']['favouriteColour'] = 'Blue';
+
+		$this->assertEquals($this->_users['bob'], $this->_bob->export());
 	}
 	
 	/**
