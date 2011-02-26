@@ -944,7 +944,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 			}
 		}
 		
-		$result = $this->_getMongoCollection(true)->update($this->getCriteria(), $operations, array('upsert' => true, 'save' => $safe));
+		$result = $this->_getMongoCollection(true)->update($this->getCriteria(), $operations, array('upsert' => true, 'safe' => $safe));
 		$this->_data = array();
 		$this->_cleanData = $exportData;
 		$this->purgeOperations(true);

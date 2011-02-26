@@ -20,7 +20,21 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 		$this->_articleRegular = My_ShantyMongo_Article::find('4c04516f1f5f5e21361e3ac1');
 		$this->_articleBroken = My_ShantyMongo_Article::find('4c04516f1f5f5e21361e3ac2');
 	}
-	
+
+	public function testSaveSafe() {
+		$reader = new Mongo('mongodb://' . TESTS_SHANTY_MONGO_CONNECTIONSTRING);
+		$readerDB = $reader->{TESTS_SHANTY_MONGO_DB};
+		for($nr = 0; $nr <= 100; $nr++) {
+			$data = array('data' => '123');
+			$entry = new My_ShantyMongo_Simple($data);
+			$entry->save();
+			$found = $readerDB->simple->findOne($data);
+			$this->assertTrue(is_array($found));
+			$this->assertEquals($data['data'], $found['data']);
+			$entry->drop();
+		}
+	}
+
 	public function testConstruct()
 	{
 		$student = new My_ShantyMongo_Student();
