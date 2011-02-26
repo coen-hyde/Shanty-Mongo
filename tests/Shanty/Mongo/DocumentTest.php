@@ -822,7 +822,24 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 		$name = new My_ShantyMongo_Name();
 		$name->delete();
 	}
-	
+
+	public function testDeleteSafe() {
+		$reader = new Mongo('mongodb://' . TESTS_SHANTY_MONGO_CONNECTIONSTRING);
+		$readerDB = $reader->{TESTS_SHANTY_MONGO_DB};
+
+		for($nr = 0; $nr < 1000; $nr++) {
+			$entry = new My_ShantyMongo_Simple(array('data' => '123'));
+			$entry->save();
+			$entry->delete();
+			$found = $readerDB->simple->findOne(array('_id' => $entry->getId()));
+			if (!is_null($found)) {
+				print($nr);
+				die();
+			}
+			$this->assertNull($found);
+		}
+	}
+
 	public function testMagicGetAndSet()
 	{
 		$this->assertEquals('bob.jones@domain.com', $this->_bob->email);
