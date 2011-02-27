@@ -67,7 +67,8 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 		$this->assertFalse($name->isNewDocument());
 		$this->assertFalse($name->isRootDocument());
 		$this->assertTrue($name->isConnected());
-		
+		$this->assertEquals($name->first, 'Jerry');
+
 		$requirements = array(
 			'_id' => array('Validator:MongoId' => null),
 			'_type' => array('Array' => null),
