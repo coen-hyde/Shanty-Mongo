@@ -56,9 +56,19 @@ To define a document and the collection that the document will be saved to, exte
 	$user->name = 'Bob';
 	$user->save();
 
+	// Or you can pass an array of data to the constructor as so
+	$data = array(
+	    'name' => 'Bob'
+	);
+
+	$user = new User($data);
+	$user->save();
+
 ### Find a document
 
 	$user = User::find($id);
+
+$id can either be a string representation of the document id or an instance of MongoId. 
 	
 ### Adding requirements
 

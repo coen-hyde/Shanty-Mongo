@@ -20,7 +20,7 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 		$this->_articleRegular = My_ShantyMongo_Article::find('4c04516f1f5f5e21361e3ac1');
 		$this->_articleBroken = My_ShantyMongo_Article::find('4c04516f1f5f5e21361e3ac2');
 	}
-	
+
 	public function testConstruct()
 	{
 		$student = new My_ShantyMongo_Student();
@@ -67,7 +67,8 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 		$this->assertFalse($name->isNewDocument());
 		$this->assertFalse($name->isRootDocument());
 		$this->assertTrue($name->isConnected());
-		
+		$this->assertEquals($name->first, 'Jerry');
+
 		$requirements = array(
 			'_id' => array('Optional' => null, 'Validator:MongoId' => null),
 			'_type' => array('Optional' => null, 'Array' => null),
@@ -143,12 +144,12 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 	
 	public function testGetSetHasCriteria()
 	{
-		$this->assertEquals(array('_id' => new MongoId()), $this->_bob->getCriteria());
+		$this->assertEquals(array('_id' => new MongoId('4c04516a1f5f5e21361e3ab0')), $this->_bob->getCriteria());
 		$this->assertFalse($this->_bob->hasCriteria('username'));
 		$this->_bob->setCriteria('username', 'bobjones');
 		$this->assertTrue($this->_bob->hasCriteria('username'));
 		$this->assertEquals('bobjones', $this->_bob->getCriteria('username'));
-		$this->assertEquals(array('_id' => new MongoId(), 'username' => 'bobjones'), $this->_bob->getCriteria());
+		$this->assertEquals(array('_id' => new MongoId('4c04516a1f5f5e21361e3ab0'), 'username' => 'bobjones'), $this->_bob->getCriteria());
 	}
 	
 	public function test_GetMongoDb()
@@ -603,35 +604,17 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 		$this->_bob->name->first = 'Bobby';
 		$this->_bob->addresses = null;
 		$this->_bob->favouriteColour = 'Blue';
-		$this->_bob->config = new Shanty_Mongo_Document();
-		
-		// Load references into memory
+		$this->_bob->config = new Shanty_Mongo_Document(); // Empty documents don't get saved
+
+		// Load references into memory to make sure they are exported correctly as references
 		$this->_bob->partner;
 		$this->_bob->bestFriend;
-		
-		$bobRaw = array(
-			'_id' => new MongoId('4c04516a1f5f5e21361e3ab0'),
-			'_type' => array(
-				'My_ShantyMongo_Teacher',
-				'My_ShantyMongo_User'
-			),
-			'name' => array(
-				'first' => 'Bobby',
-				'last' => 'Jones',
-			),
-			'friends' => array(
-				MongoDBRef::create('user', new MongoId('4c04516f1f5f5e21361e3ab1')),
-				MongoDBRef::create('user', new MongoId('4c0451791f5f5e21361e3ab2')),
-				MongoDBRef::create('user', new MongoId('broken reference'))
-			),
-			'faculty' => 'Maths',
-			'email' => 'bob.jones@domain.com',
-			'sex' => 'M',
-			'partner' => MongoDBRef::create('user', new MongoId('4c04516f1f5f5e21361e3ab1')),
-			'bestFriend' => MongoDBRef::create('user', new MongoId('4c0451791f5f5e21361e3ab2')),
-			'favouriteColour' => 'Blue'
-		);
-			
+
+		$bobRaw = $this->_users['bob'];
+		$bobRaw['name']['first'] = 'Bobby';
+		unset($bobRaw['addresses']);
+		$bobRaw['favouriteColour'] = 'Blue';
+
 		$this->assertEquals($bobRaw, $this->_bob->export());
 	}
 	
@@ -687,29 +670,11 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 		$this->_bob->name->first = 'Bobby';
 		$this->_bob->addresses = null;
 		$this->_bob->save();
-		
-		$bobRaw = array(
-			'_id' => new MongoId('4c04516a1f5f5e21361e3ab0'),
-			'_type' => array(
-				'My_ShantyMongo_Teacher',
-				'My_ShantyMongo_User'
-			),
-			'name' => array(
-				'first' => 'Bobby',
-				'last' => 'Jones',
-			),
-			'friends' => array(
-				MongoDBRef::create('user', new MongoId('4c04516f1f5f5e21361e3ab1')),
-				MongoDBRef::create('user', new MongoId('4c0451791f5f5e21361e3ab2')),
-				MongoDBRef::create('user', new MongoId('broken reference'))
-			),
-			'faculty' => 'Maths',
-			'email' => 'bob.jones@domain.com',
-			'sex' => 'M',
-			'partner' => MongoDBRef::create('user', new MongoId('4c04516f1f5f5e21361e3ab1')),
-			'bestFriend' => MongoDBRef::create('user', new MongoId('4c0451791f5f5e21361e3ab2')),
-		);
-		
+
+		$bobRaw = $this->_users['bob'];
+		$bobRaw['name']['first'] = 'Bobby';
+		unset($bobRaw['addresses']);
+
 		$this->assertEquals($bobRaw, $this->_userCollection->findOne(array('_id' => new MongoId('4c04516a1f5f5e21361e3ab0'))));
 	}
 	
@@ -718,29 +683,11 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 		$this->_bob->name->last = 'Johnes';
 		$this->_bob->addresses = null;
 		$this->_bob->save(true);
-		
-		$bobRaw = array(
-			'_id' => new MongoId('4c04516a1f5f5e21361e3ab0'),
-			'_type' => array(
-				'My_ShantyMongo_Teacher',
-				'My_ShantyMongo_User'
-			),
-			'name' => array(
-				'first' => 'Bob',
-				'last' => 'Johnes',
-			),
-			'friends' => array(
-				MongoDBRef::create('user', new MongoId('4c04516f1f5f5e21361e3ab1')),
-				MongoDBRef::create('user', new MongoId('4c0451791f5f5e21361e3ab2')),
-				MongoDBRef::create('user', new MongoId('broken reference'))
-			),
-			'faculty' => 'Maths',
-			'email' => 'bob.jones@domain.com',
-			'sex' => 'M',
-			'partner' => MongoDBRef::create('user', new MongoId('4c04516f1f5f5e21361e3ab1')),
-			'bestFriend' => MongoDBRef::create('user', new MongoId('4c0451791f5f5e21361e3ab2')),
-		);
-		
+
+		$bobRaw = $this->_users['bob'];
+		$bobRaw['name']['last'] = 'Johnes';
+		unset($bobRaw['addresses']);
+
 		$this->assertEquals($bobRaw, $this->_userCollection->findOne(array('_id' => new MongoId('4c04516a1f5f5e21361e3ab0'))));
 	}
 	
@@ -762,51 +709,16 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 		$address->postcode = '2345';
 		$address->country = 'New Zealand';
 		$address->save();
-		
-		$bobRaw = array(
-			'_id' => new MongoId('4c04516a1f5f5e21361e3ab0'),
-			'_type' => array(
-				'My_ShantyMongo_Teacher',
-				'My_ShantyMongo_User'
-			),
-			'name' => array(
-				'first' => 'Bob',
-				'last' => 'Jones',
-			),
-			'addresses' => array(
-				array(
-					'street' => '19 Hill St',
-					'suburb' => 'Brisbane',
-					'state' => 'QLD',
-					'postcode' => '4000',
-					'country' => 'Australia'
-				),
-				array(
-					'street' => '742 Evergreen Terrace',
-					'suburb' => 'Springfield',
-					'state' => 'Nevada',
-					'postcode' => '89002',
-					'country' => 'USA'
-				),
-				array(
-					'street' => '35 Sheep Lane',
-					'suburb' => 'Sheep Heaven',
-					'state' => 'New Zealand',
-					'postcode' => '2345',
-					'country' => 'New Zealand'
-				)
-			),
-			'friends' => array(
-				MongoDBRef::create('user', new MongoId('4c04516f1f5f5e21361e3ab1')),
-				MongoDBRef::create('user', new MongoId('4c0451791f5f5e21361e3ab2')),
-				MongoDBRef::create('user', new MongoId('broken reference'))
-			),
-			'faculty' => 'Maths',
-			'email' => 'bob.jones@domain.com',
-			'sex' => 'M',
-			'partner' => MongoDBRef::create('user', new MongoId('4c04516f1f5f5e21361e3ab1')),
-			'bestFriend' => MongoDBRef::create('user', new MongoId('4c0451791f5f5e21361e3ab2')),
+
+		$bobRaw = $this->_users['bob'];
+		$addressRaw = array(
+			'street' => '35 Sheep Lane',
+			'suburb' => 'Sheep Heaven',
+			'state' => 'New Zealand',
+			'postcode' => '2345',
+			'country' => 'New Zealand',
 		);
+		$bobRaw['addresses'][] = $addressRaw;
 		
 		$this->assertEquals($bobRaw, $this->_userCollection->findOne(array('_id' => new MongoId('4c04516a1f5f5e21361e3ab0'))));
 	}
@@ -866,6 +778,19 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 		
 		$this->assertEquals($userRaw, $this->_userCollection->findOne(array('_id' => new MongoId($userId->__toString()))));
 	}
+
+	public function testSaveSafe() {
+		$reader = new Mongo('mongodb://' . TESTS_SHANTY_MONGO_CONNECTIONSTRING);
+		$readerDB = $reader->{TESTS_SHANTY_MONGO_DB};
+
+		for($nr = 0; $nr < 1000; $nr++) {
+			$entry = new My_ShantyMongo_Simple(array('data' => '123'));
+			$entry->save();
+			$found = $readerDB->simple->findOne(array('_id' => $entry->getId()));
+			$this->assertTrue(is_array($found));
+			$this->assertEquals($entry->export(), $found);
+		}
+	}
 	
 	/**
      * @expectedException Shanty_Mongo_Exception
@@ -911,7 +836,24 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 		$name = new My_ShantyMongo_Name();
 		$name->delete();
 	}
-	
+
+	public function testDeleteSafe() {
+		$reader = new Mongo('mongodb://' . TESTS_SHANTY_MONGO_CONNECTIONSTRING);
+		$readerDB = $reader->{TESTS_SHANTY_MONGO_DB};
+
+		for($nr = 0; $nr < 1000; $nr++) {
+			$entry = new My_ShantyMongo_Simple(array('data' => '123'));
+			$entry->save();
+			$entry->delete();
+			$found = $readerDB->simple->findOne(array('_id' => $entry->getId()));
+			if (!is_null($found)) {
+				print($nr);
+				die();
+			}
+			$this->assertNull($found);
+		}
+	}
+
 	public function testMagicGetAndSet()
 	{
 		$this->assertEquals('bob.jones@domain.com', $this->_bob->email);

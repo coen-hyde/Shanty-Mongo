@@ -408,9 +408,9 @@ abstract class Shanty_Mongo_Collection
 	 * @param array $object
 	 * @param unknown_type $safe
 	 */
-	public static function insert(array $object, $safe = false)
+	public static function insert(array $object, array $options = array())
 	{
-		return static::getMongoCollection(true)->insert($object, $safe);
+		return static::getMongoCollection(true)->insert($object, $options);
 	}
 	
 	/**

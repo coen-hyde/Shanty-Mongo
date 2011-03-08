@@ -418,8 +418,14 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 			)
 		);
 		
-		
-		$this->assertEquals($indexInfo, My_ShantyMongo_User::getIndexInfo());
+		$retrievedIndexInfo = My_ShantyMongo_User::getIndexInfo();
+
+		$this->assertEquals($indexInfo[0], $retrievedIndexInfo[0]);
+		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $retrievedIndexInfo[1]['_id']);
+		$this->assertEquals('MongoId', get_class($retrievedIndexInfo[1]['_id']));
+		$this->assertEquals($indexInfo[1]['ns'], $retrievedIndexInfo[1]['ns']);
+		$this->assertEquals($indexInfo[1]['key'], $retrievedIndexInfo[1]['key']);
+		$this->assertEquals($indexInfo[1]['name'], $retrievedIndexInfo[1]['name']);
 	}
 	
 	/**
