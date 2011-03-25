@@ -60,7 +60,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		
 		// Create document id if one is required
 		if ($this->isNewDocument() && ($this->hasKey() || (isset($this->_config['hasId']) && $this->_config['hasId']))) {
-			//$this->_data['_id'] = new MongoId();
+			$this->_data['_id'] = new MongoId();
 			$this->_data['_type'] = static::getCollectionInheritance();
 		}
 		
@@ -944,7 +944,8 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 			}
 		}
 		$result = $this->_getMongoCollection(true)->update($this->getCriteria(), $operations, array('upsert' => true, 'save' => $safe));
-        $last_error = $this->_getMongoDb(true)->command(array('getlasterror'=>1));
+                
+                $last_error = $this->_getMongoDb(true)->command(array('getlasterror' => 1));
 		$this->_data = array();
 		$this->_cleanData = $exportData;
 		$this->purgeOperations(true);
