@@ -129,7 +129,9 @@ class Shanty_Mongo_Connection_Group
 	{
 		// Select master
 		$write = $this->_masters->selectNode();
-		if ($write) $write->connect();
+		if ($write && !$write->connected) {
+                    $write->connect();
+                }
 		
 		return $write;
 	}
