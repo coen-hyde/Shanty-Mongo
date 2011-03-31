@@ -1,4 +1,5 @@
 <?php
+// Copy this file to ./TestConfiguration.php and modify appropriately
 
 define('ZEND_FRAMEWORK_PATH', 'Zend Framework path here');
 
