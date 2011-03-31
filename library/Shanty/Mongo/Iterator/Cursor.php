@@ -89,15 +89,18 @@ class Shanty_Mongo_Iterator_Cursor implements OuterIterator
 	{
 		$data = $this->getInnerIterator()->current();
 		
-		$config = array();
-		$config['new'] = false;
-		$config['hasKey'] = true;
+		$config                    = array();
+		$config['new']             = false;
+		$config['hasKey']          = true;
 		$config['connectionGroup'] = $this->_config['connectionGroup'];
-		$config['db'] = $this->_config['db'];
-		$config['collection'] = $this->_config['collection'];
+		$config['db']              = $this->_config['db'];
+		$config['collection']      = $this->_config['collection'];
 		
 		$documentClass = $this->getDocumentClass();
-		
+        if (!empty($data['_type'][0])) {
+            $documentClass = $data['_type'][0];
+        }
+        
 		return new $documentClass($data, $config);
 	}
 	
