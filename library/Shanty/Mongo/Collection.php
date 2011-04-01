@@ -297,9 +297,10 @@ abstract class Shanty_Mongo_Collection
 	 * Find a document by id
 	 * 
 	 * @param MongoId|String $id
+	 * @param array $fields
 	 * @return Shanty_Mongo_Document
 	 */
-	public static function find($id)
+	public static function find($id, array $fields = array())
 	{
 		if (!($id instanceof MongoId)) {
 			$id = new MongoId($id);
@@ -307,23 +308,24 @@ abstract class Shanty_Mongo_Collection
 		
 		$query = array('_id' => $id);
 		
-		return static::one($query);
+		return static::one($query, $fields);
 	}
 	
 	/**
 	 * Find one document
 	 * 
 	 * @param array $query
+	 * @param array $fields
 	 * @return Shanty_Mongo_Document
 	 */
-	public static function one(array $query = array())
+	public static function one(array $query = array(), array $fields = array())
 	{
 		$inheritance = static::getCollectionInheritance();
 		if (count($inheritance) > 1) {
 			$query['_type'] = $inheritance[0];
 		}
 		
-		$data = static::getMongoCollection(false)->findOne($query);
+		$data = static::getMongoCollection(false)->findOne($query, $fields);
 		
 		if (is_null($data)) return null;
 		
@@ -334,16 +336,17 @@ abstract class Shanty_Mongo_Collection
 	 * Find many documents
 	 * 
 	 * @param array $query
+	 * @param array $fields
 	 * @return Shanty_Mongo_Iterator_Cursor
 	 */
-	public static function all(array $query = array())
+	public static function all(array $query = array(), array $fields = array())
 	{
 		$inheritance = static::getCollectionInheritance();
 		if (count($inheritance) > 1) {
 			$query['_type'] = $inheritance[0];
 		}
 		
-		$cursor = static::getMongoCollection(false)->find($query);
+		$cursor = static::getMongoCollection(false)->find($query, $fields);
 
 		$config = array();
 		$config['connectionGroup'] = static::getConnectionGroupName();
@@ -359,22 +362,24 @@ abstract class Shanty_Mongo_Collection
 	 * Alias for one
 	 * 
 	 * @param array $query
+	 * @param array $fields
 	 * @return Shanty_Mongo_Document
 	 */
-	public static function fetchOne($query = array())
+	public static function fetchOne($query = array(), $fields = array())
 	{
-		return static::one($query);
+		return static::one($query, $fields);
 	}
 	
 	/**
 	 * Alias for all
 	 * 
 	 * @param array $query
+	 * @param array $fields
 	 * @return Shanty_Mongo_Iterator_Cursor
 	 */
-	public static function fetchAll($query = array())
+	public static function fetchAll($query = array(), $fields = array())
 	{
-		return static::all($query);
+		return static::all($query, $fields);
 	}
 	
 	/**
