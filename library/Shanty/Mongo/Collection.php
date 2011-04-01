@@ -29,7 +29,13 @@ abstract class Shanty_Mongo_Collection
 	 */
 	public static function getDbName()
 	{
-		return static::$_db;
+		$db = static::$_db;
+
+		if (is_null($db)) {
+			$db = static::getConnection()->getDatabase();
+		}
+
+		return $db;
 	}
 	
 	/**
@@ -236,6 +242,20 @@ abstract class Shanty_Mongo_Collection
 		return $requirements;
 	}
 
+	/*
+	 * Get a connection
+	 *
+	 * @param $writable should the connection be writable
+	 * @return Shanty_Mongo_Connection
+	 */
+	public static function getConnection($writable = true)
+	{
+		if ($writable) $connection = Shanty_Mongo::getWriteConnection(static::getConnectionGroupName());
+		else $connection = Shanty_Mongo::getReadConnection(static::getConnectionGroupName());
+
+		return $connection;
+	}
+
 	/**
 	 * Get an instance of MongoDb
 	 * 
@@ -249,10 +269,7 @@ abstract class Shanty_Mongo_Collection
 			throw new Shanty_Mongo_Exception(get_called_class().'::$_db is null');
 		}
 
-		if ($writable) $connection = Shanty_Mongo::getWriteConnection(static::getConnectionGroupName());
-		else $connection = Shanty_Mongo::getReadConnection(static::getConnectionGroupName());
-		
-		return $connection->selectDB(static::getDbName());
+		return static::getConnection($writable)->selectDB(static::getDbName());
 	}
 	
 	/**

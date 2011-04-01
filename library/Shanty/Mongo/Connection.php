@@ -46,6 +46,17 @@ class Shanty_Mongo_Connection extends Mongo
 	}
 
 	/**
+	 * Get the actual connection string used for this connection. This differs from __toString in
+	 * that __toString returns a string representation of the connection, not the connection string used
+	 *
+	 * @return array
+	 */
+	public function getActualConnectionString()
+	{
+		return $this->_connectionInfo['connectionString'];
+	}
+	
+	/**
 	 * Get the database this connection is connection to
 	 *
 	 * @return string

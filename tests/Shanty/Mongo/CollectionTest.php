@@ -14,6 +14,14 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 	public function testGetDbName()
 	{
 		$this->assertEquals(TESTS_SHANTY_MONGO_DB, My_ShantyMongo_User::getDbName());
+
+		Shanty_Mongo::removeConnectionGroups();
+
+		$connection = new Shanty_Mongo_Connection('localhost/shanty-mongo');
+		Shanty_Mongo::addMaster($connection);
+
+		$this->assertEquals(TESTS_SHANTY_MONGO_DB, My_ShantyMongo_User::getDbName());
+		$this->assertEquals('shanty-mongo', My_ShantyMongo_Name::getDbName());
 	}
 	
 	public function testGetCollectionName()
@@ -172,17 +180,23 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 		// This assertion is needed to ensure parent requirements have not been contaminated by child requirements
 		$this->assertEquals($requirements, My_ShantyMongo_User::getCollectionRequirements());
 	}
-	
+
+	public function testGetConnection()
+	{
+		$connection = new Shanty_Mongo_Connection('localhost');
+		Shanty_Mongo::addSlave($connection);
+
+		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, My_ShantyMongo_User::getConnection());
+		$this->assertEquals(TESTS_SHANTY_MONGO_CONNECTIONSTRING, My_ShantyMongo_User::getConnection()->getActualConnectionString());
+
+		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, My_ShantyMongo_User::getConnection(false));
+		$this->assertEquals('localhost', My_ShantyMongo_User::getConnection(false)->getActualConnectionString());
+	}
+
 	public function testGetMongoDb()
 	{
 		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, My_ShantyMongo_User::getMongoDb());
 		$this->assertEquals(TESTS_SHANTY_MONGO_DB, My_ShantyMongo_User::getMongoDb()->__toString());
-		
-		$connection = new Shanty_Mongo_Connection('localhost');
-		Shanty_Mongo::addSlave($connection);
-		
-		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, My_ShantyMongo_User::getMongoDb(false));
-		$this->assertEquals(TESTS_SHANTY_MONGO_DB, My_ShantyMongo_User::getMongoDb(false)->__toString());
 	}
 	
 	/**
