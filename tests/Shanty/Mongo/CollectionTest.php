@@ -328,7 +328,7 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 	public function testDistinct()
 	{
 		$distinctSexes = My_ShantyMongo_User::distinct('sex');
-		$this->assertEquals(array('F', 'M'), $distinctSexes);
+		$this->assertEquals(array('M', 'F'), $distinctSexes);
 	}
 	
 	public function testInsert()
@@ -399,7 +399,8 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 				'ns' => 'shanty-mongo-testing.user',
 				'key' => array(
 					'_id' => 1
-				)
+				),
+				'v' => 0
 			)
 		);
 		
@@ -416,7 +417,8 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 				'ns' => 'shanty-mongo-testing.user',
 				'key' => array(
 					'_id' => 1
-				)
+				),
+				'v' => 0
 			),
 			array(
 				'_id' => new MongoId(),
@@ -425,6 +427,7 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 					'name.first' => 1
 				),
 				'name' => 'name_first_1',
+				'v' => 0
 			)
 		);
 		
@@ -452,7 +455,8 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 				'ns' => 'shanty-mongo-testing.user',
 				'key' => array(
 					'_id' => 1
-				)
+				),
+				'v' => 0
 			)
 		);
 		
@@ -473,7 +477,8 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 				'ns' => 'shanty-mongo-testing.user',
 				'key' => array(
 					'_id' => 1
-				)
+				),
+				'v' => 0
 			)
 		);
 		
