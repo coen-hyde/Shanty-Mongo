@@ -415,12 +415,23 @@ abstract class Shanty_Mongo_Collection
 	/**
 	 * Insert a document
 	 * 
-	 * @param array $object
-	 * @param unknown_type $safe
+	 * @param array $document
+	 * @param array $options
 	 */
-	public static function insert(array $object, array $options = array())
+	public static function insert(array $document, array $options = array())
 	{
-		return static::getMongoCollection(true)->insert($object, $options);
+		return static::getMongoCollection(true)->insert($document, $options);
+	}
+
+	/**
+	 * Insert a batch of documents
+	 *
+	 * @param array $documents
+	 * @param unknown_type $options
+	 */
+	public static function insertBatch(array $documents, array $options = array())
+	{
+		return static::getMongoCollection(true)->batchInsert($documents, $options);
 	}
 	
 	/**
