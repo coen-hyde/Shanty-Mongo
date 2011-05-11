@@ -1,6 +1,7 @@
 <?php
 
 require_once 'Shanty/Mongo/Connection.php';
+require_once 'Shanty/Mongo/Connection/Stack.php';
 
 /**
  * @category   Shanty
