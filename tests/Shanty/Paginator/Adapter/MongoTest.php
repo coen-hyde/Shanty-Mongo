@@ -15,15 +15,15 @@ class Shanty_Paginator_Adapter_MongoTest extends Shanty_Paginator_TestSetup
 		$paginator = new Zend_Paginator(new Shanty_Paginator_Adapter_Mongo($countries));
 		$paginator->setItemCountPerPage(10);
 		$paginator->setCurrentPageNumber(3);
-
+		
 		$this->assertEquals(24, $paginator->count()); // Count pages
 		$this->assertEquals(239, $paginator->getTotalItemCount()); // count total items
 		$this->assertEquals(10, $paginator->getCurrentItemCount()); // count items on this page
 
-		$currentItems = $paginator->getCurrentItems()->export();
-		$firstItem = array_shift($currentItems);
-		$this->assertEquals($firstItem['code'], 'BB');
-		$this->assertEquals($firstItem['name'], 'Barbados');
-		
+		$paginator->getCurrentItems()->rewind();
+		$firstItem = $paginator->getCurrentItems()->current();
+
+		$this->assertEquals($firstItem->code, 'BB');
+		$this->assertEquals($firstItem->name, 'Barbados');
 	}
 }
