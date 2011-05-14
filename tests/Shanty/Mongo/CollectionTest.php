@@ -359,7 +359,7 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 			'sex' => 'M'
 		);
 		
-		My_ShantyMongo_User::insert($sarah);
+		My_ShantyMongo_User::insert($sarah, array('safe' => true));
 		
 		$user = My_ShantyMongo_User::find('4c04d5101f5f5e21361e3ab5');
 		
@@ -370,6 +370,34 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 		
 		$users = My_ShantyMongo_User::all();
 		$this->assertEquals(4, $users->count());
+	}
+
+	public function testInsertBatch()
+	{
+		$data = array(
+			array(
+				'_id' => new MongoId('4c04d5101f5f5e21361e3ab6'),
+				'name' => 'green',
+				'hex' => '006600'
+			),
+			array(
+				'_id' => new MongoId('4c04d5101f5f5e21361e3ab7'),
+				'name' => 'blue',
+				'hex' => '0000CC'
+			),
+			array(
+				'_id' => new MongoId('4c04d5101f5f5e21361e3ab8'),
+				'name' => 'red',
+				'hex' => 'FF0000'
+			),
+		);
+
+		My_ShantyMongo_Simple::insertBatch($data, array('safe' => true));
+		$colours = My_ShantyMongo_Simple::all();
+
+		$colour = $colours->getNext();
+		$this->assertEquals('green', $colour->name);
+		$this->assertEquals(3, $colours->count());
 	}
 	
 	/**
