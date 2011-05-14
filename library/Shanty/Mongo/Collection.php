@@ -341,7 +341,12 @@ abstract class Shanty_Mongo_Collection
 		if (count($inheritance) > 1) {
 			$query['_type'] = $inheritance[0];
 		}
-		
+
+		// If we are selecting specific fields make sure _type is always there
+		if (!empty($fields) && !isset($fields['_type'])) {
+			$fields['_type'] = 1;
+		}
+
 		$data = static::getMongoCollection(false)->findOne($query, $fields);
 		
 		if (is_null($data)) return null;
@@ -361,6 +366,11 @@ abstract class Shanty_Mongo_Collection
 		$inheritance = static::getCollectionInheritance();
 		if (count($inheritance) > 1) {
 			$query['_type'] = $inheritance[0];
+		}
+
+		// If we are selecting specific fields make sure _type is always there
+		if (!empty($fields) && !isset($fields['_type'])) {
+			$fields['_type'] = 1;
 		}
 		
 		$cursor = static::getMongoCollection(false)->find($query, $fields);
@@ -382,7 +392,7 @@ abstract class Shanty_Mongo_Collection
 	 * @param array $fields
 	 * @return Shanty_Mongo_Document
 	 */
-	public static function fetchOne($query = array(), $fields = array())
+	public static function fetchOne($query = array(), array $fields = array())
 	{
 		return static::one($query, $fields);
 	}
@@ -394,7 +404,7 @@ abstract class Shanty_Mongo_Collection
 	 * @param array $fields
 	 * @return Shanty_Mongo_Iterator_Cursor
 	 */
-	public static function fetchAll($query = array(), $fields = array())
+	public static function fetchAll($query = array(), array $fields = array())
 	{
 		return static::all($query, $fields);
 	}
