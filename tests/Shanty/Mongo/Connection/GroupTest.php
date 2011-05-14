@@ -3,7 +3,9 @@ require_once dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR . 'TestSetup.php';
 
 require_once 'Shanty/Mongo/Connection/Group.php';
 require_once 'Shanty/Mongo/Connection/Stack.php';
- 
+
+require_once 'Zend/Config.php';
+
 class Shanty_Mongo_Connection_GroupTest extends Shanty_Mongo_TestSetup
 {
 	protected $_group;

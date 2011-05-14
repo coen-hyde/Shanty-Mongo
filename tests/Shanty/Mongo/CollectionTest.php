@@ -262,22 +262,29 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 		$this->assertEquals('My_ShantyMongo_ArtStudent', get_class($roger));
 		$this->assertEquals('Roger', $roger->name->first);
 		$this->assertEquals($this->_users['roger'], $roger->export());
+
+		// Find only rodger's name and email
+		$roger = My_ShantyMongo_User::one(array('name.first' => 'Roger'), array('name' => 1, 'email' => 1));
+		$this->assertEquals('My_ShantyMongo_ArtStudent', get_class($roger));
+		$this->assertEquals(4, count($roger));
+		$this->assertEquals(array('_id', '_type', 'name', 'email'), $roger->getPropertyKeys());
+		$this->assertEquals('Roger', $roger->name->first);
+		$this->assertNull($roger->sex);
+
+		// No teacher by the name of roger exists
+		$roger = My_ShantyMongo_Teacher::fetchOne(array('name.first' => 'Roger'));
+		$this->assertNull($roger);
 	}
 
 	public function testFetchOne()
 	{
-		$roger = My_ShantyMongo_User::fetchOne(array('name.first' => 'Roger'));
+		$roger = My_ShantyMongo_User::fetchOne(array('name.first' => 'Roger'), array('name' => 1, 'email' => 1));
 
 		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $roger);
 		$this->assertEquals('My_ShantyMongo_ArtStudent', get_class($roger));
+		$this->assertEquals(array('_id', '_type', 'name', 'email'), $roger->getPropertyKeys());
 		$this->assertEquals('Roger', $roger->name->first);
-		$this->assertEquals($this->_users['roger'], $roger->export());
-		
-		// Test inheritance
-		
-		// No teacher by the name of roger exists
-		$roger = My_ShantyMongo_Teacher::fetchOne(array('name.first' => 'Roger'));
-		$this->assertNull($roger);
+		$this->assertNull($roger->sex);
 	}
 	
 	public function testAll()
@@ -308,6 +315,12 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 		$artstudents = My_ShantyMongo_ArtStudent::all();
 		$this->assertEquals(1, $artstudents->count());
 		$this->assertEquals('4c0451791f5f5e21361e3ab2', $artstudents->getNext()->getId()->__toString());
+
+		// Test loading of partial documents
+		$users = My_ShantyMongo_User::all(array(), array('name' => 1, 'email' => 1));
+		$firstUser = $users->getNext();
+		$this->assertEquals(array('_id', '_type', 'name', 'email'), $firstUser->getPropertyKeys());
+		$this->assertNull($firstUser->sex);
 	}
 	
 	public function testFetchAll()
@@ -318,11 +331,14 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 		$this->assertEquals('Shanty_Mongo_Iterator_Cursor', get_class($users));
 		$this->assertEquals(3, $users->count());
 		
-		$males = My_ShantyMongo_User::fetchAll(array('sex' => 'M'));
+		$males = My_ShantyMongo_User::fetchAll(array('sex' => 'M'), array('name' => 1, 'email' => 1));
 		
 		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $males);
 		$this->assertEquals('Shanty_Mongo_Iterator_Cursor', get_class($males));
 		$this->assertEquals(2, $males->count());
+		$firstUser = $males->getNext();
+		$this->assertEquals(array('_id', '_type', 'name', 'email'), $firstUser->getPropertyKeys());
+		$this->assertNull($firstUser->sex);
 	}
 	
 	public function testDistinct()
