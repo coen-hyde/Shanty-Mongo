@@ -5,6 +5,8 @@ Changes for v0.4
 - Shanty_Mongo_Collection::remove now accepts options
 - Shanty_Mongo_Document::delete() is now safe by default
 - Added pre and post hooks for delete
+- Added batch insert
+- Added Shanty Paginator
 Changes for v0.3.2
 - Saves now safe by default
 Changes for v0.3
