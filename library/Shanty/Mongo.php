@@ -340,3 +340,5 @@ class Shanty_Mongo
 		static::$_initialised = false;
 	}
 }
+
+Shanty_Mongo::init();
