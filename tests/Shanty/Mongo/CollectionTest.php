@@ -405,7 +405,7 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 	 */
 	public function testUpdate()
 	{
-		My_ShantyMongo_User::update(array('_id' => new MongoId('4c04516f1f5f5e21361e3ab1')), array('$set' => array('name.first' => 'Lauren')));
+		My_ShantyMongo_User::update(array('_id' => new MongoId('4c04516f1f5f5e21361e3ab1')), array('$set' => array('name.first' => 'Lauren')), array('safe' => true));
 		
 		$lauren = My_ShantyMongo_User::find('4c04516f1f5f5e21361e3ab1');
 		$this->assertEquals('Lauren', $lauren->name->first);
@@ -416,7 +416,7 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 	 */
 	public function testRemove()
 	{
-		My_ShantyMongo_User::remove(array('name.first' => 'Bob'));
+		My_ShantyMongo_User::remove(array('name.first' => 'Bob'), array('safe' => true));
 		
 		$bob = My_ShantyMongo_User::find('4c04516a1f5f5e21361e3ab0');
 		
@@ -453,7 +453,7 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 	
 	public function testEnsureIndex()
 	{
-		My_ShantyMongo_User::ensureIndex(array('name.first' => 1));
+		My_ShantyMongo_User::ensureIndex(array('name.first' => 1), array('safe' => true));
 		
 		$indexInfo = array(
 			array(
@@ -490,7 +490,7 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 	 */
 	public function testDeleteIndex()
 	{
-		My_ShantyMongo_User::ensureIndex(array('name.first' => 1));
+		My_ShantyMongo_User::ensureIndex(array('name.first' => 1), array('safe' => true));
 		My_ShantyMongo_User::deleteIndex('name.first');
 		
 		$indexInfo = array(
@@ -512,7 +512,7 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 	 */
 	public function testDeleteIndexes()
 	{
-		My_ShantyMongo_User::ensureIndex(array('name.first' => 1));
+		My_ShantyMongo_User::ensureIndex(array('name.first' => 1), array('safe' => true));
 		My_ShantyMongo_User::deleteIndexes();
 		
 		$indexInfo = array(
