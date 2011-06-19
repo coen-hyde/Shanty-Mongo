@@ -67,6 +67,20 @@ class Shanty_Mongo_Iterator_CursorTest extends Shanty_Mongo_TestSetup
 		$namesCompare = array();
 		
 		foreach ($this->_cursor as $userId => $user) {
+			switch ($userId) {
+				case '4c04516a1f5f5e21361e3ab0':
+					$this->assertEquals('My_ShantyMongo_Teacher', get_class($user));
+					break;
+
+				case '4c04516f1f5f5e21361e3ab1':
+					$this->assertEquals('My_ShantyMongo_Student', get_class($user));
+					break;
+
+				case '4c0451791f5f5e21361e3ab2':
+					$this->assertEquals('My_ShantyMongo_ArtStudent', get_class($user));
+					break;
+			}
+
 			$namesCompare[$userId] = $user->name->full();
 		}
 		

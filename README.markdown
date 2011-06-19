@@ -69,7 +69,7 @@ To define a document and the collection that the document will be saved to, exte
 	$user = User::find($id);
 
 $id can either be a string representation of the document id or an instance of MongoId. 
-	
+
 ### Adding requirements
 
 There are 3 types of requirements. Validators, filters and special. 
@@ -285,11 +285,11 @@ We could have also added the new document to the document set like this
 	
 	$user->addresses->save();
 
-This method may be prefered in certain circumstances
+This method may be preferred in certain circumstances
 
 ### Fetching multiple documents
 
-We can fetch multiple documents by calling fetchAll. FetchAll will return a Shanty_Mongo_Iterator_Cursor that has all the functionality of MongoCursor
+We can fetch multiple documents by calling all. All will return a Shanty_Mongo_Iterator_Cursor that has all the functionality of MongoCursor
 
 Find all users and print their names
 
@@ -299,12 +299,26 @@ Find all users and print their names
 		print($user->name->full()."<br />\n");
 	}
 	
-fetchAll also accepts queries.
+All also accepts queries.
 
 Find all users with the first name Bob
 
 	$users = User::all(array('name.first' => 'Bob'));
-	
+
+Just as with finding a single document you can limit the fields that Shanty Mongo will pull down.
+
+    $users = User::all(array(), array('name' => 1, 'email' => 1);
+
+This will return only the name and email address for all users.
+
+### Using Skip, Limit, Sort etc
+
+Since the shanty mongo cursor returned by the all method is a subclass of MongoCursor you have all the functionality that is usually available to you as if you were querying mongodb directy. eg
+
+    $users = User::all()->skip(10)->limit(5);
+
+This will skip the first 10 users and limit the result set to 5 users. Even though it may appear as though we are fetching all the users then skipping and limiting the result set on the php end, this is not the case. The nice thing about the way the Mongo implements cursors is that no results are fetched from the database until the method getNext is called, directly or indirectly. This means that the above skip and limit will only fetch 5 users from the database.
+
 ### Deleting documents
 
 To delete a document simply call the method delete(). You can call delete() on root documents or embedded documents. eg
@@ -316,7 +330,32 @@ To delete a document simply call the method delete(). You can call delete() on r
 	
 	// Delete the entire document
 	$user->delete();
-	
+
+### Batch Inserting
+
+Sometimes you just want to save a whole bunch of stuff to the database without the extra overhead of initialising documents.
+
+    $users = array(
+        array(
+            'name' => array(
+                'first' => 'John',
+                'last' => 'Mackison'
+            ),
+            'email' => 'john@mackison.com'
+        ),
+        array(
+            'name' => array(
+                'first' => 'Joan',
+                'last' => 'Mackison'
+            ),
+            'email' => 'joan@mackison.com'
+        )
+    );
+
+    User::insertBatch($users);
+
+This will insert two users into the user collection. A word or warning; batch inserting bypasses all validation and filtering.
+
 ### Operations
 
 Operations are queued until a document is saved.
@@ -429,6 +468,14 @@ Executed before saving a document
 
 Executed after saving a document
 
+##### preDelete()
+
+Executed before deleting a document
+
+##### postDelete()
+
+Executed after deleting a document
+
 #### Using the Hooks
 
 To use one of the above hooks simply define a protected method in you document with the name of the hook eg.
@@ -448,6 +495,7 @@ Special thanks to
 -----------------
 
 [stunti](http://github.com/stunti) for bug fixes
+[sh](http://github.com/sh) for Shanty_Paginator
 
 Mongoid for inspiration
  

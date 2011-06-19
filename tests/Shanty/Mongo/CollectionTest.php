@@ -14,6 +14,14 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 	public function testGetDbName()
 	{
 		$this->assertEquals(TESTS_SHANTY_MONGO_DB, My_ShantyMongo_User::getDbName());
+
+		Shanty_Mongo::removeConnectionGroups();
+
+		$connection = new Shanty_Mongo_Connection('localhost/shanty-mongo');
+		Shanty_Mongo::addMaster($connection);
+
+		$this->assertEquals(TESTS_SHANTY_MONGO_DB, My_ShantyMongo_User::getDbName());
+		$this->assertEquals('shanty-mongo', My_ShantyMongo_Name::getDbName());
 	}
 	
 	public function testGetCollectionName()
@@ -176,17 +184,23 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 		// This assertion is needed to ensure parent requirements have not been contaminated by child requirements
 		$this->assertEquals($requirements, My_ShantyMongo_User::getCollectionRequirements());
 	}
-	
+
+	public function testGetConnection()
+	{
+		$connection = new Shanty_Mongo_Connection('localhost');
+		Shanty_Mongo::addSlave($connection);
+
+		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, My_ShantyMongo_User::getConnection());
+		$this->assertEquals(TESTS_SHANTY_MONGO_CONNECTIONSTRING, My_ShantyMongo_User::getConnection()->getActualConnectionString());
+
+		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, My_ShantyMongo_User::getConnection(false));
+		$this->assertEquals('localhost', My_ShantyMongo_User::getConnection(false)->getActualConnectionString());
+	}
+
 	public function testGetMongoDb()
 	{
 		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, My_ShantyMongo_User::getMongoDb());
 		$this->assertEquals(TESTS_SHANTY_MONGO_DB, My_ShantyMongo_User::getMongoDb()->__toString());
-		
-		$connection = new Shanty_Mongo_Connection('localhost');
-		Shanty_Mongo::addSlave($connection);
-		
-		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, My_ShantyMongo_User::getMongoDb(false));
-		$this->assertEquals(TESTS_SHANTY_MONGO_DB, My_ShantyMongo_User::getMongoDb(false)->__toString());
 	}
 	
 	/**
@@ -252,22 +266,29 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 		$this->assertEquals('My_ShantyMongo_ArtStudent', get_class($roger));
 		$this->assertEquals('Roger', $roger->name->first);
 		$this->assertEquals($this->_users['roger'], $roger->export());
+
+		// Find only rodger's name and email
+		$roger = My_ShantyMongo_User::one(array('name.first' => 'Roger'), array('name' => 1, 'email' => 1));
+		$this->assertEquals('My_ShantyMongo_ArtStudent', get_class($roger));
+		$this->assertEquals(4, count($roger));
+		$this->assertEquals(array('_id', '_type', 'name', 'email'), $roger->getPropertyKeys());
+		$this->assertEquals('Roger', $roger->name->first);
+		$this->assertNull($roger->sex);
+
+		// No teacher by the name of roger exists
+		$roger = My_ShantyMongo_Teacher::fetchOne(array('name.first' => 'Roger'));
+		$this->assertNull($roger);
 	}
 
 	public function testFetchOne()
 	{
-		$roger = My_ShantyMongo_User::fetchOne(array('name.first' => 'Roger'));
+		$roger = My_ShantyMongo_User::fetchOne(array('name.first' => 'Roger'), array('name' => 1, 'email' => 1));
 
 		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $roger);
 		$this->assertEquals('My_ShantyMongo_ArtStudent', get_class($roger));
+		$this->assertEquals(array('_id', '_type', 'name', 'email'), $roger->getPropertyKeys());
 		$this->assertEquals('Roger', $roger->name->first);
-		$this->assertEquals($this->_users['roger'], $roger->export());
-		
-		// Test inheritance
-		
-		// No teacher by the name of roger exists
-		$roger = My_ShantyMongo_Teacher::fetchOne(array('name.first' => 'Roger'));
-		$this->assertNull($roger);
+		$this->assertNull($roger->sex);
 	}
 	
 	public function testAll()
@@ -298,6 +319,12 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 		$artstudents = My_ShantyMongo_ArtStudent::all();
 		$this->assertEquals(1, $artstudents->count());
 		$this->assertEquals('4c0451791f5f5e21361e3ab2', $artstudents->getNext()->getId()->__toString());
+
+		// Test loading of partial documents
+		$users = My_ShantyMongo_User::all(array(), array('name' => 1, 'email' => 1));
+		$firstUser = $users->getNext();
+		$this->assertEquals(array('_id', '_type', 'name', 'email'), $firstUser->getPropertyKeys());
+		$this->assertNull($firstUser->sex);
 	}
 	
 	public function testFetchAll()
@@ -308,17 +335,20 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 		$this->assertEquals('Shanty_Mongo_Iterator_Cursor', get_class($users));
 		$this->assertEquals(3, $users->count());
 		
-		$males = My_ShantyMongo_User::fetchAll(array('sex' => 'M'));
+		$males = My_ShantyMongo_User::fetchAll(array('sex' => 'M'), array('name' => 1, 'email' => 1));
 		
 		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $males);
 		$this->assertEquals('Shanty_Mongo_Iterator_Cursor', get_class($males));
 		$this->assertEquals(2, $males->count());
+		$firstUser = $males->getNext();
+		$this->assertEquals(array('_id', '_type', 'name', 'email'), $firstUser->getPropertyKeys());
+		$this->assertNull($firstUser->sex);
 	}
 	
 	public function testDistinct()
 	{
 		$distinctSexes = My_ShantyMongo_User::distinct('sex');
-		$this->assertEquals(array('F', 'M'), $distinctSexes);
+		$this->assertEquals(array('M', 'F'), $distinctSexes);
 	}
 	
 	public function testInsert()
@@ -333,7 +363,7 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 			'sex' => 'M'
 		);
 		
-		My_ShantyMongo_User::insert($sarah);
+		My_ShantyMongo_User::insert($sarah, array('safe' => true));
 		
 		$user = My_ShantyMongo_User::find('4c04d5101f5f5e21361e3ab5');
 		
@@ -345,13 +375,41 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 		$users = My_ShantyMongo_User::all();
 		$this->assertEquals(4, $users->count());
 	}
+
+	public function testInsertBatch()
+	{
+		$data = array(
+			array(
+				'_id' => new MongoId('4c04d5101f5f5e21361e3ab6'),
+				'name' => 'green',
+				'hex' => '006600'
+			),
+			array(
+				'_id' => new MongoId('4c04d5101f5f5e21361e3ab7'),
+				'name' => 'blue',
+				'hex' => '0000CC'
+			),
+			array(
+				'_id' => new MongoId('4c04d5101f5f5e21361e3ab8'),
+				'name' => 'red',
+				'hex' => 'FF0000'
+			),
+		);
+
+		My_ShantyMongo_Simple::insertBatch($data, array('safe' => true));
+		$colours = My_ShantyMongo_Simple::all();
+
+		$colour = $colours->getNext();
+		$this->assertEquals('green', $colour->name);
+		$this->assertEquals(3, $colours->count());
+	}
 	
 	/**
 	 * @depends testFind
 	 */
 	public function testUpdate()
 	{
-		My_ShantyMongo_User::update(array('_id' => new MongoId('4c04516f1f5f5e21361e3ab1')), array('$set' => array('name.first' => 'Lauren')));
+		My_ShantyMongo_User::update(array('_id' => new MongoId('4c04516f1f5f5e21361e3ab1')), array('$set' => array('name.first' => 'Lauren')), array('safe' => true));
 		
 		$lauren = My_ShantyMongo_User::find('4c04516f1f5f5e21361e3ab1');
 		$this->assertEquals('Lauren', $lauren->name->first);
@@ -362,7 +420,7 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 	 */
 	public function testRemove()
 	{
-		My_ShantyMongo_User::remove(array('name.first' => 'Bob'));
+		My_ShantyMongo_User::remove(array('name.first' => 'Bob'), array('safe' => true));
 		
 		$bob = My_ShantyMongo_User::find('4c04516a1f5f5e21361e3ab0');
 		
@@ -389,7 +447,8 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 				'ns' => 'shanty-mongo-testing.user',
 				'key' => array(
 					'_id' => 1
-				)
+				),
+				'v' => 0
 			)
 		);
 		
@@ -398,7 +457,7 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 	
 	public function testEnsureIndex()
 	{
-		My_ShantyMongo_User::ensureIndex(array('name.first' => 1));
+		My_ShantyMongo_User::ensureIndex(array('name.first' => 1), array('safe' => true));
 		
 		$indexInfo = array(
 			array(
@@ -406,7 +465,8 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 				'ns' => 'shanty-mongo-testing.user',
 				'key' => array(
 					'_id' => 1
-				)
+				),
+				'v' => 0
 			),
 			array(
 				'_id' => new MongoId(),
@@ -415,6 +475,7 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 					'name.first' => 1
 				),
 				'name' => 'name_first_1',
+				'v' => 0
 			)
 		);
 		
@@ -433,7 +494,7 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 	 */
 	public function testDeleteIndex()
 	{
-		My_ShantyMongo_User::ensureIndex(array('name.first' => 1));
+		My_ShantyMongo_User::ensureIndex(array('name.first' => 1), array('safe' => true));
 		My_ShantyMongo_User::deleteIndex('name.first');
 		
 		$indexInfo = array(
@@ -442,7 +503,8 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 				'ns' => 'shanty-mongo-testing.user',
 				'key' => array(
 					'_id' => 1
-				)
+				),
+				'v' => 0
 			)
 		);
 		
@@ -454,7 +516,7 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 	 */
 	public function testDeleteIndexes()
 	{
-		My_ShantyMongo_User::ensureIndex(array('name.first' => 1));
+		My_ShantyMongo_User::ensureIndex(array('name.first' => 1), array('safe' => true));
 		My_ShantyMongo_User::deleteIndexes();
 		
 		$indexInfo = array(
@@ -463,7 +525,8 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 				'ns' => 'shanty-mongo-testing.user',
 				'key' => array(
 					'_id' => 1
-				)
+				),
+				'v' => 0
 			)
 		);
 		

@@ -4,6 +4,7 @@ require_once dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR . 'TestHelper.php'
 
 require_once 'Shanty/MongoTest.php';
 require_once 'Shanty/Mongo/AllTests.php';
+require_once 'Shanty/Paginator/AllTests.php';
 
 class Shanty_AllTests
 {
@@ -13,7 +14,8 @@ class Shanty_AllTests
  
         $suite->addTestSuite('Shanty_MongoTest');
         $suite->addTest(Shanty_Mongo_AllTests::suite());
- 
+        $suite->addTest(Shanty_Paginator_AllTests::suite());
+
         return $suite;
     }
 }

@@ -3,7 +3,9 @@ require_once dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR . 'TestSetup.php';
 
 require_once 'Shanty/Mongo/Connection/Group.php';
 require_once 'Shanty/Mongo/Connection/Stack.php';
- 
+
+require_once 'Zend/Config.php';
+
 class Shanty_Mongo_Connection_GroupTest extends Shanty_Mongo_TestSetup
 {
 	protected $_group;
@@ -182,11 +184,12 @@ class Shanty_Mongo_Connection_GroupTest extends Shanty_Mongo_TestSetup
 		$options = array(
 			'hosts' => array(
 				array('host' => 'mongodb1.local'),
-				array('host' => 'mongodb2.local'),
+				array('host' => 'mongodb2.local', 'port' => 27018),
 				array('host' => 'mongodb3.local'),
 			),
+			'database' => 'shanty-mongo'
 		);
-		$this->assertEquals("mongodb://{$options['hosts'][0]['host']}:27017,{$options['hosts'][1]['host']}:27017,{$options['hosts'][2]['host']}:27017", $this->_group->formatConnectionString($options));
+		$this->assertEquals("mongodb://{$options['hosts'][0]['host']}:27017,{$options['hosts'][1]['host']}:27018,{$options['hosts'][2]['host']}:27017/shanty-mongo", $this->_group->formatConnectionString($options));
 	}
 	
 	public function testFormatHostString()
@@ -201,11 +204,8 @@ class Shanty_Mongo_Connection_GroupTest extends Shanty_Mongo_TestSetup
 		 
 		 $options = array('username' => 'jerry', 'password' => 'springer');
 		 $this->assertEquals("{$options['username']}:{$options['password']}@127.0.0.1:27017", $this->_group->formatHostString($options));
-		 
-		 $options = array('database' => 'test');
-		 $this->assertEquals("127.0.0.1:27017/{$options['database']}", $this->_group->formatHostString($options));
 	}
-	
+
 	public function testReplicaSet()
 	{
 		$connections = array(

@@ -167,7 +167,8 @@ class Shanty_Mongo
 	public static function createRequirement($name, $options = null)
 	{
 		// Match requirement name against regex's
-		foreach (static::$_requirementCreators as $regex => $function) {
+		$requirements = array_reverse(static::$_requirementCreators);
+		foreach ($requirements as $regex => $function) {
 			$matches = array();
 			preg_match($regex, $name, $matches);
 				
@@ -340,3 +341,5 @@ class Shanty_Mongo
 		static::$_initialised = false;
 	}
 }
+
+Shanty_Mongo::init();
