@@ -9,8 +9,7 @@ class Shanty_Application_Resource_Mongodb extends Zend_Application_Resource_Reso
      */
     public function init()
     {
-        $options = $this->getOptions();
-        Shanty_Mongo::addConnections($options);
+        Shanty_Mongo::addConnections($this->getOptions());
         return $this;
     }
 }
