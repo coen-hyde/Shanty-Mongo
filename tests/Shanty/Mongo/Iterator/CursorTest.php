@@ -95,6 +95,9 @@ class Shanty_Mongo_Iterator_CursorTest extends Shanty_Mongo_TestSetup
 	public function testGetNext()
 	{
 		$this->assertEquals('Bob Jones', $this->_cursor->getNext()->name->full());
+		$this->assertEquals('Cherry Jones', $this->_cursor->getNext()->name->full());
+		$this->assertEquals('Roger Smith', $this->_cursor->getNext()->name->full());
+		$this->assertEquals(null, $this->_cursor->getNext());
 	}
 	
 	public function testInfo()
