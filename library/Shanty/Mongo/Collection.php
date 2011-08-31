@@ -383,9 +383,9 @@ abstract class Shanty_Mongo_Collection
 	 * @param String $property
 	 * @return array
 	 */
-	public static function distinct($property)
+	public static function distinct($property, $query = null)
 	{
-		$results = static::getMongoDb(false)->command(array('distinct' => static::getCollectionName(), 'key' => $property));
+		$results = static::getMongoDb(false)->command(array('distinct' => static::getCollectionName(), 'key' => $property, 'query' => $query));
 		
 		return $results['values'];
 	}
