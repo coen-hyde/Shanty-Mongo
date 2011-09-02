@@ -356,6 +356,16 @@ Sometimes you just want to save a whole bunch of stuff to the database without t
 
 This will insert two users into the user collection. A word or warning; batch inserting bypasses all validation and filtering.
 
+### Deleting from a collection
+
+Maybe you just want to delete all users with the first name John without fetching and initialising all the John documents
+
+    User::remove(array('name.first' => 'John'));
+
+If you would like that operation to be safe remember to pass the safe flag
+
+    User::remove(array('name.first' => 'John'), array('safe' => true));
+
 ### Operations
 
 Operations are queued until a document is saved.
