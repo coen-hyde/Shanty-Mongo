@@ -29,7 +29,7 @@ class Shanty_Log_Writer_Mongo extends Zend_Log_Writer_Abstract
     /**
      * Class constructor
      *
-     * @param string $documentClass         String representing your Mongo document class name§
+     * @param string $documentClass         String representing Mongo document class name
      * @param array $columnMap
      * @return void
      */
