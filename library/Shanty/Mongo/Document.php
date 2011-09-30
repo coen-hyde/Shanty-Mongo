@@ -859,6 +859,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	 */
 	public function processChanges(array $data = array())
 	{
+        
 		foreach ($data as $property => $value) {
 			if ($property === '_id') continue;
 			
@@ -874,10 +875,17 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 				$newValue['$id'] = $newValue['$id']->__toString();
 				$oldValue['$id'] = $oldValue['$id']->__toString();
 			}
-			
-			if ($newValue !== $oldValue) {
+
+            /* arrays do not work the same way in evaluations */
+            if(is_array($oldValue) && is_array($newValue))
+            {
+                if(json_encode($oldValue) !== json_encode($newValue))
+                    $this->addOperation('$set', $property, $newValue);
+
+            }
+			elseif ($newValue !== $oldValue)
 				$this->addOperation('$set', $property, $value);
-			}
+
 		}
 		
 		foreach ($this->_cleanData as $property => $value) {
@@ -886,7 +894,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 			$this->addOperation('$unset', $property, 1);
 		}
 	}
-	
+
 	/**
 	 * Save this document
 	 * 

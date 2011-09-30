@@ -88,9 +88,6 @@ class Shanty_Mongo_Iterator_Cursor implements OuterIterator
 	public function current()
 	{
 		$data = $this->getInnerIterator()->current();
-		if ($data === null) {
-		    return null;
-		}
 		
 		$config                    = array();
 		$config['new']             = false;
@@ -120,12 +117,18 @@ class Shanty_Mongo_Iterator_Cursor implements OuterIterator
 	
 	public function next()
 	{
-		return $this->getInnerIterator()->next();
+        $key = Shanty_Mongo::getProfiler()->queryStart('Next');
+		$next = $this->getInnerIterator()->next();
+        Shanty_Mongo::getProfiler()->queryEnd($key);
+        return $next;
 	}
 	
 	public function rewind()
 	{
-		return $this->getInnerIterator()->rewind();
+        $key = Shanty_Mongo::getProfiler()->queryStart('Next');
+		$last = $this->getInnerIterator()->rewind();
+        Shanty_Mongo::getProfiler()->queryEnd($key);
+        return $last;
 	}
 	
 	public function valid()

@@ -21,7 +21,8 @@ abstract class Shanty_Mongo_Collection
 	protected static $_cachedCollectionInheritance = array();
 	protected static $_cachedCollectionRequirements = array();
 	protected static $_documentSetClass = 'Shanty_Mongo_DocumentSet';
-	
+	protected static $_requireType = true;
+    
 	/**
 	 * Get the name of the mongo db
 	 * 
@@ -337,18 +338,23 @@ abstract class Shanty_Mongo_Collection
 	 */
 	public static function one(array $query = array(), array $fields = array())
 	{
-		$inheritance = static::getCollectionInheritance();
-		if (count($inheritance) > 1) {
-			$query['_type'] = $inheritance[0];
-		}
+        if(static::$_requireType)
+        {
+            $inheritance = static::getCollectionInheritance();
+            if (count($inheritance) > 1) {
+                $query['_type'] = $inheritance[0];
+            }
 
-		// If we are selecting specific fields make sure _type is always there
-		if (!empty($fields) && !isset($fields['_type'])) {
-			$fields['_type'] = 1;
-		}
+            // If we are selecting specific fields make sure _type is always there
+            if (!empty($fields) && !isset($fields['_type'])) {
+                $fields['_type'] = 1;
+            }
+        }
 
+        $key = Shanty_Mongo::getProfiler()->queryStart('Query: '.json_encode($query).' Fields: '.json_encode($fields));
 		$data = static::getMongoCollection(false)->findOne($query, $fields);
-		
+        Shanty_Mongo::getProfiler()->queryEnd($key);
+
 		if (is_null($data)) return null;
 		
 		return static::create($data, false);
@@ -363,18 +369,23 @@ abstract class Shanty_Mongo_Collection
 	 */
 	public static function all(array $query = array(), array $fields = array())
 	{
-		$inheritance = static::getCollectionInheritance();
-		if (count($inheritance) > 1) {
-			$query['_type'] = $inheritance[0];
-		}
+		if(static::$_requireType)
+        {
+            $inheritance = static::getCollectionInheritance();
+            if (count($inheritance) > 1) {
+                $query['_type'] = $inheritance[0];
+            }
 
-		// If we are selecting specific fields make sure _type is always there
-		if (!empty($fields) && !isset($fields['_type'])) {
-			$fields['_type'] = 1;
-		}
-		
+            // If we are selecting specific fields make sure _type is always there
+            if (!empty($fields) && !isset($fields['_type'])) {
+                $fields['_type'] = 1;
+            }
+        }
+
+        $key = Shanty_Mongo::getProfiler()->queryStart('Query: '.json_encode($query).' Fields: '.json_encode($fields));
 		$cursor = static::getMongoCollection(false)->find($query, $fields);
-
+        Shanty_Mongo::getProfiler()->queryEnd($key);
+        
 		$config = array();
 		$config['connectionGroup'] = static::getConnectionGroupName();
 		$config['db'] = static::getDbName();
@@ -417,8 +428,9 @@ abstract class Shanty_Mongo_Collection
 	 */
 	public static function distinct($property)
 	{
+        $key = Shanty_Mongo::getProfiler()->queryStart('Property: '.print_r($property, true));
 		$results = static::getMongoDb(false)->command(array('distinct' => static::getCollectionName(), 'key' => $property));
-		
+		Shanty_Mongo::getProfiler()->queryEnd($key);
 		return $results['values'];
 	}
 	
@@ -430,7 +442,10 @@ abstract class Shanty_Mongo_Collection
 	 */
 	public static function insert(array $document, array $options = array())
 	{
-		return static::getMongoCollection(true)->insert($document, $options);
+        $key = Shanty_Mongo::getProfiler()->queryStart('Document: '.print_r($document, true).' Document: '.print_r($options, true), 'insert');
+		$return = static::getMongoCollection(true)->insert($document, $options);
+        Shanty_Mongo::getProfiler()->queryEnd($key);
+        return $return;
 	}
 
 	/**
@@ -441,7 +456,10 @@ abstract class Shanty_Mongo_Collection
 	 */
 	public static function insertBatch(array $documents, array $options = array())
 	{
-		return static::getMongoCollection(true)->batchInsert($documents, $options);
+        $key = Shanty_Mongo::getProfiler()->queryStart('Document: '.count($documents).' Document: '.print_r($options, true), 'insert');
+		$return = static::getMongoCollection(true)->batchInsert($documents, $options);
+        Shanty_Mongo::getProfiler()->queryEnd($key);
+        return $return;
 	}
 	
 	/**
@@ -453,7 +471,10 @@ abstract class Shanty_Mongo_Collection
 	 */
 	public static function update(array $criteria, array $object, array $options = array())
 	{
-		return static::getMongoCollection(true)->update($criteria, $object, $options);
+        $key = Shanty_Mongo::getProfiler()->queryStart('Criteria: '.print_r($criteria, true).' Object: '.print_r($object, true).' Options: '.print_r($options, true), 'update');
+		$return = static::getMongoCollection(true)->update($criteria, $object, $options);
+        Shanty_Mongo::getProfiler()->queryEnd($key);
+        return $return;
 	}
 	
 	/**
@@ -464,7 +485,11 @@ abstract class Shanty_Mongo_Collection
 	 */
 	public static function remove(array $criteria, array $options = array())
 	{
-		return static::getMongoCollection(true)->remove($criteria, $options);
+        $key = Shanty_Mongo::getProfiler()->queryStart('Criteria: '.print_r($criteria, true).' Options: '.print_r($options, true), 'delete');
+        $return = static::getMongoCollection(true)->remove($criteria, $options);
+        Shanty_Mongo::getProfiler()->queryEnd($key);
+		return $return;
+
 	}
 	
 	/**
@@ -472,7 +497,10 @@ abstract class Shanty_Mongo_Collection
 	 */
 	public static function drop()
 	{
-		return static::getMongoCollection(true)->drop();
+        $key = Shanty_Mongo::getProfiler()->queryStart('', 'drop');
+        $return = static::getMongoCollection(true)->drop();
+        Shanty_Mongo::getProfiler()->queryEnd($key);
+		return $return;
 	}
 	
 	/**
