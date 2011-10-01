@@ -910,7 +910,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		if ($this->isNewDocument()) $this->preInsert();
 		else $this->preUpdate();
 		
-		$this->preSave();
+		$this->fireHook('preSave');
 		
 		$exportData = $this->export();
 		
@@ -1254,4 +1254,22 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	{
 		return $this->addOperation('$pop', $property, $value);
 	}
+	
+	/*
+	 * Fires off hooks recursively.
+	 * 
+	 * @param string $hook name of the hook function to fire.
+	 */
+	public function fireHook($hook) {
+      
+      foreach ($this->_data as $property => $document) {
+        if (!($document instanceof Shanty_Mongo_Document)) continue;
+
+        if (!$this->isReference($document) && !$this->hasRequirement($property, 'AsReference')) {
+          $document->fireHook($hook);
+        }
+      }
+
+      call_user_func(array($this, $hook));
+    }
 }
