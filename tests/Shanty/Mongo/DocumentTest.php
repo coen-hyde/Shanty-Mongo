@@ -1150,15 +1150,20 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 		
 		$user->email = 'jill@address.com';
 		$user->save();
+
+		// Make sure Hooks are not fired on references
+		$user->friends[] = $this->_cherry;
+		$user->save();
 		
 		$this->assertEquals(1, $user->_hookCounter['preInsert']);
 		$this->assertEquals(1, $user->_hookCounter['postInsert']);
-		$this->assertEquals(1, $user->_hookCounter['preUpdate']);
-		$this->assertEquals(1, $user->_hookCounter['postUpdate']);
-		$this->assertEquals(2, $user->_hookCounter['preSave']);
-		$this->assertEquals(2, $user->_hookCounter['postSave']);
-		
-		$this->assertEquals(1, $user->name->_hookCounter['preSave']);
-		
+		$this->assertEquals(2, $user->_hookCounter['preUpdate']);
+		$this->assertEquals(2, $user->_hookCounter['postUpdate']);
+		$this->assertEquals(3, $user->_hookCounter['preSave']);
+		$this->assertEquals(3, $user->_hookCounter['postSave']);
+
+		$this->assertEquals(4, $user->name->_hookCounter['preSave']);
+		$this->assertEquals(0, $user->friends[0]->_hookCounter['preSave']);
+
 	}
 }
