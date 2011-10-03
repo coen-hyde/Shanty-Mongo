@@ -181,18 +181,23 @@ class Shanty_Mongo_DocumentSet extends Shanty_Mongo_Document
 	{
 		// Since this is an array, fill in empty index's with null
 		$exportData = parent::export();
-		$maxKey = max(array_keys($exportData));
-		
-		for ($i = 0; $i<$maxKey; $i++) {
-			if (array_key_exists($i, $exportData)) {
-				continue;
-			}
-			
-			$exportData[$i] = null;
-		}
-		
-		ksort($exportData);
-		
+
+		// Fix PHP "max(): Array must contain at least one element" bug
+        // if DocumentSet has no data
+        if (count($exportData) > 0) {
+            $maxKey = max(array_keys($exportData));
+
+            for ($i = 0; $i<$maxKey; $i++) {
+                if (array_key_exists($i, $exportData)) {
+                    continue;
+                }
+                
+                $exportData[$i] = null;
+            }
+
+            ksort($exportData);
+        }
+
 		return $exportData;
 	}
 	

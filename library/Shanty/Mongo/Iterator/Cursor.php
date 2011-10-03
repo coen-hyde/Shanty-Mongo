@@ -88,7 +88,10 @@ class Shanty_Mongo_Iterator_Cursor implements OuterIterator
 	public function current()
 	{
 		$data = $this->getInnerIterator()->current();
-		
+		if ($data === null) {
+		    return null;
+		}
+
 		$config                    = array();
 		$config['new']             = false;
 		$config['hasKey']          = true;
