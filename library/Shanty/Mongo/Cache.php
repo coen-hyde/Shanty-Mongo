@@ -139,7 +139,14 @@ class Shanty_Mongo_Cache extends Zend_Cache_Backend implements Zend_Cache_Backen
             )
         );
 
-        if ($tmp && (time() < $tmp['date_added'] + $tmp['lifetime'] || $doNotTestCacheValidity))
+        if (
+            !isset($tmp['lifetime'])
+            || (
+                $tmp
+                && isset($tmp['lifetime'])
+                && (time() < $tmp['date_added'] + $tmp['lifetime'] || $doNotTestCacheValidity)
+            )
+        )
         {
             return $tmp['data'];
         }
@@ -266,7 +273,8 @@ class Shanty_Mongo_Cache extends Zend_Cache_Backend implements Zend_Cache_Backen
             case Zend_Cache::CLEANING_MODE_OLD:
                 $result = $this->_connection->find(
                     array(
-                        'date_added' => array('$lte' => time())
+                        'date_added' => array('$lte' => time()),
+                        'lifetime' => array('$exists' => true)
                     ),
                     array('date_added', 'lifetime')
                 );
@@ -355,9 +363,22 @@ class Shanty_Mongo_Cache extends Zend_Cache_Backend implements Zend_Cache_Backen
     public function getIds()
     {
         $return = array();
-        $result = $this->_connection->find(array(), array('cache_id', 'date_added', 'lifetime'));
+        $result = $this->_connection->find(
+            array(),
+            array(
+                'cache_id',
+                'date_added',
+                'lifetime'
+            )
+        );
         foreach($result as $item)
-            if(time() < $item['date_added'] + $item['lifetime'])
+            if (
+                !isset($item['lifetime'])
+                || (
+                    isset($item['lifetime'])
+                    && time() < $item['date_added'] + $item['lifetime']
+                )
+            )
                 $return[] = $item['cache_id'];
 
         return $return;
@@ -373,7 +394,13 @@ class Shanty_Mongo_Cache extends Zend_Cache_Backend implements Zend_Cache_Backen
         $return = array();
         $result = $this->_connection->find(array(), array('tags', 'date_added', 'lifetime'));
         foreach($result as $item)
-            if(time() < $item['date_added'] + $item['lifetime'])
+            if (
+                !isset($item['lifetime'])
+                || (
+                    isset($item['lifetime'])
+                    && time() < $item['date_added'] + $item['lifetime']
+                )
+            )
                 $return = array_merge($return, $item['tags']);
 
         return $return;
@@ -392,7 +419,13 @@ class Shanty_Mongo_Cache extends Zend_Cache_Backend implements Zend_Cache_Backen
         $return = array();
         $result = $this->_connection->find(array('tags' => array('$all', $tags)), array('cache_id', 'date_added', 'lifetime'));
         foreach($result as $item)
-            if(time() < $item['date_added'] + $item['lifetime'])
+            if (
+                !isset($item['lifetime'])
+                || (
+                    isset($item['lifetime'])
+                    && time() < $item['date_added'] + $item['lifetime']
+                )
+            )
                 $return[] = $item['cache_id'];
 
         return $return;
@@ -411,7 +444,13 @@ class Shanty_Mongo_Cache extends Zend_Cache_Backend implements Zend_Cache_Backen
         $return = array();
         $result = $this->_connection->find(array('tags' => array('$nin', $tags)), array('cache_id', 'date_added', 'lifetime'));
         foreach($result as $item)
-            if(time() < $item['date_added'] + $item['lifetime'])
+            if (
+                !isset($item['lifetime'])
+                || (
+                    isset($item['lifetime'])
+                    && time() < $item['date_added'] + $item['lifetime']
+                )
+            )
                 $return[] = $item['cache_id'];
 
         return $return;
@@ -430,7 +469,13 @@ class Shanty_Mongo_Cache extends Zend_Cache_Backend implements Zend_Cache_Backen
         $return = array();
         $result = $this->_connection->find(array('tags' => array('$in', $tags)), array('cache_id', 'date_added', 'lifetime'));
         foreach($result as $item)
-            if(time() < $item['date_added'] + $item['lifetime'])
+            if (
+                !isset($item['lifetime'])
+                || (
+                    isset($item['lifetime'])
+                    && time() < $item['date_added'] + $item['lifetime']
+                )
+            )
                 $return[] = $item['cache_id'];
 
         return $return;
@@ -444,7 +489,6 @@ class Shanty_Mongo_Cache extends Zend_Cache_Backend implements Zend_Cache_Backen
      */
     public function getFillingPercentage()
     {
-        $this->_log("Shanty_Mongo_Cache::getFillingPercentage() : Based on the Hard Drive size of your MongoDB Server");
         return 0;
     }
 
@@ -464,9 +508,16 @@ class Shanty_Mongo_Cache extends Zend_Cache_Backend implements Zend_Cache_Backen
 
         $tmp = $this->_connection->findOne(array('cache_id' => $id));
 
-        if ($tmp && time() < $tmp['date_added'] + $tmp['lifetime']) {
+        if (
+            !isset($tmp['lifetime'])
+            || (
+                isset($tmp['lifetime'])
+                && time() < $tmp['date_added'] + $tmp['lifetime']
+            )
+        )
+        {
             $mtime = $tmp['date_added'];
-            $lifetime = $tmp['lifetime'];
+            $lifetime = ((isset($tmp['lifetime']))?($tmp['lifetime']):(0));
             return array(
                 'expire' => $mtime + $lifetime,
                 'tags' => $tmp['tags'],
@@ -500,12 +551,26 @@ class Shanty_Mongo_Cache extends Zend_Cache_Backend implements Zend_Cache_Backen
                 )
             );
 
-            $cachedItem['lifetime'] = $cachedItem['lifetime'] + $extraLifetime;
+            if(isset($cachedItem['lifetime']))
+                $cachedItem['lifetime'] = $cachedItem['lifetime'] + $extraLifetime;
+            else
+                $cachedItem['lifetime'] = $extraLifetime;
 
             $cachedItem->save();
             return true;
         }
         return false;
+    }
+
+    public function getLifetime($specificLifetime)
+    {
+        if ($specificLifetime === false) {
+            return $this->_directives['lifetime'];
+        }
+
+        $specificLifetime = $specificLifetime - time();
+
+        return $specificLifetime;
     }
 
     /**
@@ -529,8 +594,8 @@ class Shanty_Mongo_Cache extends Zend_Cache_Backend implements Zend_Cache_Backen
             'tags' => true,
             'expired_read' => true,
             'priority' => false,
-            'infinite_lifetime' => false,
-            'get_list' => false
+            'infinite_lifetime' => true,
+            'get_list' => true
         );
     }
 
