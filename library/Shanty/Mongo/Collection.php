@@ -464,6 +464,11 @@ abstract class Shanty_Mongo_Collection
 	 */
 	public static function remove(array $criteria, array $options = array())
 	{
+		// if you want to remove a document by MongoId
+	        if (array_key_exists('_id', $criteria) && !($criteria["_id"] instanceof MongoId)) {
+	            $criteria["_id"] = new MongoId($criteria["_id"]);
+	        }
+	        
 		return static::getMongoCollection(true)->remove($criteria, $options);
 	}
 	
