@@ -417,7 +417,18 @@ class Shanty_Mongo_Cache extends Zend_Cache_Backend implements Zend_Cache_Backen
     public function getIdsMatchingTags($tags = array())
     {
         $return = array();
-        $result = $this->_connection->find(array('tags' => array('$all', $tags)), array('cache_id', 'date_added', 'lifetime'));
+        $result = $this->_connection->find(
+            array(
+                'tags' => array(
+                    '$all' => $tags
+                )
+            ),
+            array(
+                'cache_id',
+                'date_added',
+                'lifetime'
+            )
+        );
         foreach($result as $item)
             if (
                 !isset($item['lifetime'])
@@ -442,7 +453,18 @@ class Shanty_Mongo_Cache extends Zend_Cache_Backend implements Zend_Cache_Backen
     public function getIdsNotMatchingTags($tags = array())
     {
         $return = array();
-        $result = $this->_connection->find(array('tags' => array('$nin', $tags)), array('cache_id', 'date_added', 'lifetime'));
+        $result = $this->_connection->find(
+            array(
+                'tags' => array(
+                    '$nin' => $tags
+                )
+            ),
+            array(
+                'cache_id',
+                'date_added',
+                'lifetime'
+            )
+        );
         foreach($result as $item)
             if (
                 !isset($item['lifetime'])
@@ -467,7 +489,18 @@ class Shanty_Mongo_Cache extends Zend_Cache_Backend implements Zend_Cache_Backen
     public function getIdsMatchingAnyTags($tags = array())
     {
         $return = array();
-        $result = $this->_connection->find(array('tags' => array('$in', $tags)), array('cache_id', 'date_added', 'lifetime'));
+        $result = $this->_connection->find(
+            array(
+                'tags' => array(
+                    '$in' => $tags
+                )
+            ),
+            array(
+                'cache_id',
+                'date_added',
+                'lifetime'
+            )
+        );
         foreach($result as $item)
             if (
                 !isset($item['lifetime'])

@@ -120,7 +120,11 @@ class Shanty_Mongo_Iterator_Cursor implements OuterIterator
 	
 	public function next()
 	{
-        $key = Shanty_Mongo::getProfiler()->queryStart('Next');
+        $key = Shanty_Mongo::getProfiler()->queryStart(
+            'Database: '.$this->_config['db']
+            .' | Collection: '.$this->_config['collection']
+            .' | Next'
+        );
 		$next = $this->getInnerIterator()->next();
         Shanty_Mongo::getProfiler()->queryEnd($key);
         return $next;
@@ -128,7 +132,12 @@ class Shanty_Mongo_Iterator_Cursor implements OuterIterator
 	
 	public function rewind()
 	{
-        $key = Shanty_Mongo::getProfiler()->queryStart('Next');
+
+        $key = Shanty_Mongo::getProfiler()->queryStart(
+            'Database: '.$this->_config['db']
+            .' | Collection: '.$this->_config['collection']
+            .' | Rewind'
+        );
 		$last = $this->getInnerIterator()->rewind();
         Shanty_Mongo::getProfiler()->queryEnd($key);
         return $last;
