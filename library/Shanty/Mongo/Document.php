@@ -43,8 +43,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		$this->_references = new SplObjectStorage();
 		
 		// Store data
-		if ($this->isNewDocument()) $this->_data = $data;
-		else $this->_cleanData = $data;
+		$this->_cleanData = $data;
 		
 		// If not connected and this is a new root document, figure out the db and collection
 		if ($this->isNewDocument() && $this->isRootDocument() && !$this->isConnected()) {
@@ -544,7 +543,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		if (array_key_exists($property, $this->_data)) {
 			return $this->_data[$property];
 		}
-		
+
 		// Fetch clean data for this property
 		if (array_key_exists($property, $this->_cleanData)) {
 			$data = $this->_cleanData[$property];
@@ -552,7 +551,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		else {
 			$data = array();
 		}
-		
+
 		// If data is not an array then we can do nothing else with it
 		if (!is_array($data)) {
 			$this->_data[$property] = $data;

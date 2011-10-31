@@ -1145,25 +1145,28 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 	 **/
 	public function testConcreteClassFromArray()
 	{
-	    $this->assertInstanceOf('My_ShantyMongo_Name', $this->_articleRegular->author->name);
-	    $this->assertEquals('Bob Jones', $this->_articleRegular->author->name->full());
-	    
-	    $data = array(
+		$data = array(
 	       'title' => '101 reasons mongo is the bomb digidy',
-	       'author' => array(
-	           'name' => array(
-	               'first' => 'Tom',
-	               'last' => 'Holder'
+	       'relatedArticles' => array(
+	           array(
+				   'title' => '102 reasons mongo is the bomb digidy',
+	               'relatedArticles' => array(
+						array(
+							'title' => '103 reasons mongo is the bomb digidy',
+						)
+				   )
 	           )
 	       )
 	    );
-	    
+
 	    $article = new My_ShantyMongo_Article($data);
-	    
-        $this->assertInstanceOf('My_ShantyMongo_Name', $article->author->name);
-	    $this->assertEquals('Tom Holder', $article->author->name->full());
-	    
+
+        $this->assertInstanceOf('Shanty_Mongo_DocumentSet', $article->relatedArticles);
+        $this->assertInstanceOf('My_ShantyMongo_Article', $article->relatedArticles[0]);
+	    $this->assertEquals('102 reasons mongo is the bomb digidy', $article->relatedArticles[0]->title);
+	    $this->assertEquals('103 reasons mongo is the bomb digidy', $article->relatedArticles[0]->relatedArticles[0]->title);
+
 	    $exportedData = $article->export();
-	    $this->assertEquals('Tom', $exportedData['author']['name']['first']);
+	    $this->assertEquals('102 reasons mongo is the bomb digidy', $exportedData['relatedArticles'][0]['title']);
 	}
 }
