@@ -1136,4 +1136,34 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 		$this->assertEquals(2, $user->_hookCounter['preSave']);
 		$this->assertEquals(2, $user->_hookCounter['postSave']);
 	}
+	
+	/**
+	 * Test for issue https://github.com/coen-hyde/Shanty-Mongo/issues/50
+	 *
+	 * @return void
+	 * @author Tom Holder
+	 **/
+	public function testConcreteClassFromArray()
+	{
+	    $this->assertInstanceOf('My_ShantyMongo_Name', $this->_articleRegular->author->name);
+	    $this->assertEquals('Bob Jones', $this->_articleRegular->author->name->full());
+	    
+	    $data = array(
+	       'title' => '101 reasons mongo is the bomb digidy',
+	       'author' => array(
+	           'name' => array(
+	               'first' => 'Tom',
+	               'last' => 'Holder'
+	           )
+	       )
+	    );
+	    
+	    $article = new My_ShantyMongo_Article($data);
+	    
+        $this->assertInstanceOf('My_ShantyMongo_Name', $article->author->name);
+	    $this->assertEquals('Tom Holder', $article->author->name->full());
+	    
+	    $exportedData = $article->export();
+	    $this->assertEquals('Tom', $exportedData['author']['name']['first']);
+	}
 }
