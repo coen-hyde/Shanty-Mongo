@@ -53,6 +53,17 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 			$this->setConfigAttribute('collection', static::getCollectionName());
 		}
 		
+        /* allows for this object to be created by itself without the need to be overridden */
+        if(!$this->getConfigAttribute('db') && isset($config['db']))
+            $this->setConfigAttribute('db', $config['db']);
+
+        if(!$this->getConfigAttribute('connectionGroup') && isset($config['connectionGroup']))
+            $this->setConfigAttribute('connectionGroup', $config['connectionGroup']);
+
+        if(!$this->getConfigAttribute('collection') && isset($config['collection']))
+            $this->setConfigAttribute('collection', $config['collection']);
+
+
 		// Get collection requirements
 		$this->_docRequirements = static::getCollectionRequirements();
 		
