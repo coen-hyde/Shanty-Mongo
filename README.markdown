@@ -56,7 +56,9 @@ To define a document and the collection that the document will be saved to, exte
 	$user->name = 'Bob';
 	$user->save();
 
-	// Or you can pass an array of data to the constructor as so
+	// Or you can pass an array of data to the constructor as so.
+	// Please be aware passing data into the constructor by passes filtering and validation
+	// It assumes you are passing in a raw 'json' document from mongo
 	$data = array(
 	    'name' => 'Bob'
 	);
