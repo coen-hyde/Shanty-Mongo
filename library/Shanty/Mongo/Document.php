@@ -41,10 +41,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		
 		$this->_config = array_merge($this->_config, $config);
 		$this->_references = new SplObjectStorage();
-		
-		// Store data
-		$this->_cleanData = $data;
-		
+
 		// If not connected and this is a new root document, figure out the db and collection
 		if ($this->isNewDocument() && $this->isRootDocument() && !$this->isConnected()) {
 			$this->setConfigAttribute('connectionGroup', static::getConnectionGroupName());
@@ -57,7 +54,17 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		
 		// apply requirements requirement modifiers
 		$this->applyRequirements($this->_config['requirementModifiers'], false);
-		
+
+		// Store data
+		$this->_cleanData = $data;
+
+		// Initialize input data
+		if ($this->isNewDocument() && is_array($data)) {
+			foreach ($data as $key => $value) {
+				$this->getProperty($key);
+			}
+		}
+
 		// Create document id if one is required
 		if ($this->isNewDocument() && ($this->hasKey() || (isset($this->_config['hasId']) && $this->_config['hasId']))) {
 			$this->_data['_id'] = new MongoId();

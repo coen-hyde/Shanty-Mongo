@@ -77,6 +77,31 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 			'middle' => array('Required' => null),
 		);
 		$this->assertEquals($requirements, $name->getRequirements());
+
+		// Test input data initialisation
+		$data = array(
+			'name' => array('first'=>'Jerry', 'last' => 'Springer'),
+			'addresses' => array(
+				array(
+					'street' => '35 Sheep Lane',
+					'suburb' => 'Sheep Heaven',
+					'state' => 'New Zealand',
+					'postcode' => '2345',
+					'country' => 'New Zealand',
+				)
+			),
+			'friends' => array(
+				MongoDBRef::create('user', new MongoId('4c04516f1f5f5e21361e3ab1')),
+				MongoDBRef::create('user', new MongoId('4c0451791f5f5e21361e3ab2')),
+			),
+		);
+
+		$student = new My_ShantyMongo_Student($data);
+		$this->assertNotNull($student->name);
+		$this->assertEquals('My_ShantyMongo_Name', get_class($student->name));
+		$this->assertEquals('Sheep Heaven', $student->addresses[0]->suburb);
+		$this->assertEquals('My_ShantyMongo_ArtStudent', get_class($student->friends[1]));
+
 	}
 	
 	public function testGetHasId()
