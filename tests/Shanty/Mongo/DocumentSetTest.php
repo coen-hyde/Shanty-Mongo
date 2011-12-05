@@ -54,13 +54,16 @@ class Shanty_Mongo_DocumentSetTest extends Shanty_Mongo_TestSetup
 		$this->assertNull($this->_bob->addresses[404]);
 		
 		// Test known references
+		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $this->_bob->friends[1]);
+		$this->assertEquals('My_ShantyMongo_ArtStudent', get_class($this->_bob->friends[1]));
+
 		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $this->_article->contributors);
 		$this->assertEquals('My_ShantyMongo_Users', get_class($this->_article->contributors));
 		$this->assertEquals(2, count($this->_article->contributors));
 		
 		$user = $this->_article->contributors[0];
 		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $user);
-		$this->assertEquals('My_ShantyMongo_User', get_class($user));
+		$this->assertEquals('My_ShantyMongo_Student', get_class($user));
 		$this->assertEquals('Cherry Jones', $user->name->full());
 		
 		$this->assertEquals('default', $user->getConfigAttribute('connectionGroup'));
@@ -186,7 +189,7 @@ class Shanty_Mongo_DocumentSetTest extends Shanty_Mongo_TestSetup
 		$this->_article->contributors[5] = $this->_bob->friends[0];
 		$this->assertFalse($this->_article->contributors[5]->isNewDocument());
 		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $this->_article->contributors[5]);
-		$this->assertEquals('My_ShantyMongo_User', get_class($this->_article->contributors[5]));
+		$this->assertEquals('My_ShantyMongo_Student', get_class($this->_article->contributors[5]));
 		$this->assertTrue($objStorage->contains($this->_article->contributors[5]));
 		$this->assertEquals('default', $this->_article->contributors[5]->getConfigAttribute('connectionGroup'));
 		$this->assertEquals(TESTS_SHANTY_MONGO_DB, $this->_article->contributors[5]->getConfigAttribute('db'));
@@ -197,6 +200,7 @@ class Shanty_Mongo_DocumentSetTest extends Shanty_Mongo_TestSetup
 			'_id' => array('Validator:MongoId' => null),
 			'_type' => array('Array' => null),
 			'name' => array('Document:My_ShantyMongo_Name' => null, 'Required' => null),
+			'concession' => array('Required' => null),
 			'email' => array('Required' => null, 'Validator:EmailAddress' => null),
 			'addresses' => array('DocumentSet' => null),
 			'addresses.$.street' => array('Required' => null),
