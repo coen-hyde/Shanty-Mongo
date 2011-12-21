@@ -38,7 +38,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	{
 		// Make sure mongo is initialised
 		Shanty_Mongo::init();
-		
+
 		$this->_config = array_merge($this->_config, $config);
 		$this->_references = new SplObjectStorage();
 		
@@ -52,7 +52,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 			$this->setConfigAttribute('db', static::getDbName());
 			$this->setConfigAttribute('collection', static::getCollectionName());
 		}
-		
+
         /* allows for this object to be created by itself without the need to be overridden */
         if(!$this->getConfigAttribute('db') && isset($config['db']))
             $this->setConfigAttribute('db', $config['db']);
