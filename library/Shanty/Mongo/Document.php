@@ -1201,17 +1201,49 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		
 		// Mix operation with existing operations if needed
 		switch($operation) {
+            case '$addToSet':
+                if(
+                    /* If we call addToSet to the same property more than once, we need to make sure we are translating to a $each
+                       So we don't just add single values over and over again */
+                    isset($this->_operations[$operation])
+                    && isset($this->_operations[$operation][$path])
+                )
+                {
+                    /* translate from [$addToSet][$property][$value] to [$addToSet][$property][$each][$value] */
+                    if(!isset($this->_operations[$operation][$path]['$each']) || !is_array($this->_operations[$operation][$path]['$each']))
+                        $this->_operations[$operation][$path] = array('$each' => array($this->_operations[$operation][$path]));
+
+                    /* make sure we add the value to the array appropriately */
+                    if(is_array($value))
+                    {
+                        if(isset($value['$each']) && is_array($value['$each']))
+                            $this->_operations['$addToSet'][$path]['$each'] = array_merge($this->_operations['$addToSet'][$path]['$each'], $value['$each']) ;
+                        else if(isset($value['$each']) && !is_array($value['$each']))
+                            $this->_operations['$addToSet'][$path]['$each'][] = $value['$each'];
+                        else
+                            $this->_operations['$addToSet'][$path]['$each'] += $value;
+                    }
+                    else
+                        $this->_operations['$addToSet'][$path]['$each'][] = $value;
+                }
+                else
+                    /* when addToSet is called once, we just add one item
+                       if we call it more than once we need to make sure we are calling a $each to send to mongodb */
+                    $this->_operations[$operation][$path] = $value;
+                break;
+
 			case '$pushAll':
 			case '$pullAll':
 				if (!array_key_exists($path, $this->_operations[$operation])) {
 					break;
 				}
-				
-				$value = array_merge($this->_operations[$operation][$path], $value);
+                $this->_operations[$operation][$path] = array_merge($this->_operations[$operation][$path], $value);
 				break;
-		}
 		
-		$this->_operations[$operation][$path] = $value;
+            default:
+		        $this->_operations[$operation][$path] = $value;
+                break;
+		}
 	}
 	
 	/**

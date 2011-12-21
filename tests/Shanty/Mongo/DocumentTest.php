@@ -9,10 +9,11 @@ require_once 'Shanty/Mongo/Connection/GroupTest.php';
  
 class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 {
+
 	public function setUp()
 	{
 		parent::setUp();
-		
+        /** @var $_bob Shanty_Mongo_Document */
 		$this->_bob = My_ShantyMongo_User::find('4c04516a1f5f5e21361e3ab0');
 		$this->_cherry = My_ShantyMongo_User::find('4c04516f1f5f5e21361e3ab1');
 		$this->_roger = My_ShantyMongo_User::find('4c0451791f5f5e21361e3ab2');
@@ -1040,6 +1041,28 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 		);
 		
 		$this->assertEquals($operations, $this->_bob->getOperations());
+
+        $this->_bob->purgeOperations(true);
+        $this->_bob->addToSet('tags', 'tag1');
+        $this->_bob->addToSet('tags', 'tag2');
+        $this->_bob->addToSet('tags', array('$each' => array('tag3', 'tag4')));
+
+        $operations = array(
+            '$addToSet' => array(
+                'tags' => array(
+                    '$each' => array(
+                        'tag1',
+                        'tag2',
+                        'tag3',
+                        'tag4'
+                    )
+                )
+            )
+        );
+
+        $this->assertEquals($operations, $this->_bob->getOperations());
+
+        $this->_bob->purgeOperations(true);
 	}
 	
 	/**
@@ -1054,7 +1077,7 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 				'addresses' => 1
 			)
 		);
-		
+
 		$this->assertEquals($operations, $this->_bob->getOperations());
 	}
 	
