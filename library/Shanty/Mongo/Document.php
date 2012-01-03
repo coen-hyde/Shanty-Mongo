@@ -18,6 +18,8 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	);
 	
 	protected $_docRequirements = array();
+	protected $_filters = array();
+	protected $_validators = array();
 	protected $_data = array();
 	protected $_cleanData = array();
 	protected $_config = array(
@@ -344,6 +346,8 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		}
 		
 		$this->_docRequirements = static::mergeRequirements($this->_docRequirements, $requirements);
+		$this->_filters = null;
+		$this->_validators = null;
 	}
 	
 	/**
@@ -432,6 +436,8 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		}
 		
 		$this->_docRequirements[$property][$requirement] = $options;
+		unset($this->_filters[$property]);
+		unset($this->_validators[$property]);
 	}
 	
 	/**
@@ -447,6 +453,8 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		foreach ($this->_docRequirements[$property] as $requirementItem => $options) {
 			if ($requirement === $requirementItem) {
 				unset($this->_docRequirements[$property][$requirementItem]);
+				unset($this->_filters[$property]);
+				unset($this->_validators[$property]);
 			}
 		}
 	}
@@ -470,6 +478,41 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		
 		return $properties;
 	}
+
+	/**
+	 * Load the requirements as validators or filters for a given property,
+	 * and cache them as validators or filters, respectively.
+	 *
+	 * @param String $property Name of property
+	 * @return boolean whether or not cache was used. 
+	 */
+	public function loadRequirements($property)
+	{
+		if (isset($this->_validators[$property]) || isset($this->_filters[$property])) {
+			return true;
+		}
+
+		$validators = new Zend_Validate;
+		$filters = new Zend_Filter;
+
+		if (!isset($this->_docRequirements[$property])) {
+			$this->_filters[$property] = $filters;
+			$this->_validators[$property] = $validators;
+			return false;
+		}
+
+		foreach ($this->_docRequirements[$property] as $requirement => $options) {
+			$req = Shanty_Mongo::retrieveRequirement($requirement, $options);
+			if ($req instanceof Zend_Validate_Interface) {
+				$validators->addValidator($req);
+			} else if ($req instanceof Zend_Filter_Interface) {
+				$filters->addFilter($req);
+			}
+		}
+		$this->_filters[$property] = $filters;
+		$this->_validators[$property] = $validators;
+		return false;
+	}
 	
 	/**
 	 * Get all validators attached to a property
@@ -479,20 +522,8 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	 **/
 	public function getValidators($property)
 	{
-		$validators = new Zend_Validate();
-		
-		// Return if no requirements are set for this property
-		if (!array_key_exists($property, $this->_docRequirements)) return $validators;
-
-		foreach ($this->_docRequirements[$property] as $requirement => $options) {
-			// continue if requirement does not exist or is not a validator requirement
-			$validator = Shanty_Mongo::retrieveRequirement($requirement, $options);
-			if (!$validator || !($validator instanceof Zend_Validate_Interface)) continue;
-			
-			$validators->addValidator($validator);
-		}
-		
-		return $validators;
+		$this->loadRequirements($property);
+		return $this->_validators[$property];
 	}
 	
 	/**
@@ -503,20 +534,8 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	 */
 	public function getFilters($property)
 	{
-		$filters = new Zend_Filter();
-		
-		// Return if no requirements are set for this property
-		if (!array_key_exists($property, $this->_docRequirements)) return $filters;
-		
-		foreach ($this->_docRequirements[$property] as $requirement => $options) {
-			// continue if requirement does not exist or is not a filter requirement
-			$filter = Shanty_Mongo::retrieveRequirement($requirement, $options);
-			if (!$filter || !($filter instanceof Zend_Filter_Interface)) continue;
-			
-			$filters->addFilter($filter);
-		}
-		
-		return $filters;
+		$this->loadRequirements($property);
+		return $this->_filters[$property];
 	}
 	
 	
