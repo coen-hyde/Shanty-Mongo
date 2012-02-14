@@ -1,7 +1,6 @@
 <?php
 require_once dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR . 'TestSetup.php';
 
-require_once 'PHPUnit/Framework.php';
 require_once 'Shanty/Mongo/Iterator/Default.php';
  
 class Shanty_Mongo_Iterator_DefaultTest extends Shanty_Mongo_TestSetup
@@ -18,7 +17,7 @@ class Shanty_Mongo_Iterator_DefaultTest extends Shanty_Mongo_TestSetup
 	
 	public function testGetDocument()
 	{
-		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $this->_iterator->getDocument());
+		$this->assertInternalType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $this->_iterator->getDocument());
 		$this->assertTrue($this->_iterator->getDocument() instanceof My_ShantyMongo_User);
 		$this->assertEquals('My_ShantyMongo_Teacher', get_class($this->_iterator->getDocument()));
 	}
@@ -33,7 +32,7 @@ class Shanty_Mongo_Iterator_DefaultTest extends Shanty_Mongo_TestSetup
 		$documentProperties = $this->_document->getPropertyKeys();
 		$this->assertEquals($documentProperties[0], $this->_iterator->key());
 		
-		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $this->_iterator->current());
+		$this->assertInternalType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $this->_iterator->current());
 		$this->assertEquals('MongoId', get_class($this->_iterator->current()));
 		$this->assertFalse($this->_iterator->hasChildren());
 		
@@ -41,18 +40,18 @@ class Shanty_Mongo_Iterator_DefaultTest extends Shanty_Mongo_TestSetup
 		$this->_iterator->next();
 		$this->assertEquals($documentProperties[2], $this->_iterator->key());
 		
-		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $this->_iterator->current());
+		$this->assertInternalType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $this->_iterator->current());
 		$this->assertEquals('My_ShantyMongo_Name', get_class($this->_iterator->current()));
 		
 		$this->_iterator->seek('addresses');
 		$this->assertEquals('addresses', $this->_iterator->key());
 		
-		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $this->_iterator->current());
+		$this->assertInternalType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $this->_iterator->current());
 		$this->assertEquals('Shanty_Mongo_DocumentSet', get_class($this->_iterator->current()));
 		$this->assertTrue($this->_iterator->hasChildren());
 		
 		$addresses = $this->_iterator->getChildren();
-		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $addresses);
+		$this->assertInternalType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $addresses);
 		$this->assertEquals('Shanty_Mongo_Iterator_Default', get_class($addresses));
 		$this->assertEquals(2, count($addresses));
 		

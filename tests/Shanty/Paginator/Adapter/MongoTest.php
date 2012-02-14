@@ -1,7 +1,6 @@
 <?php
 require_once dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR . 'TestSetup.php';
 
-require_once 'PHPUnit/Framework.php';
 require_once 'Shanty/Paginator/Adapter/Mongo.php';
 require_once 'Zend/Paginator.php';
 

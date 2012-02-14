@@ -1,33 +1,5 @@
 <?php
 
-/**
- * Include PHPUnit dependencies
- */
-require_once 'PHPUnit/Runner/Version.php';
-
-$phpunitVersion = PHPUnit_Runner_Version::id();
-if ($phpunitVersion == '@package_version@' || version_compare($phpunitVersion, '3.5.5', '>=')) {
-	if (version_compare($phpunitVersion, '3.6.0', '>=')) {
-		echo 'This verison of PHPUnit is not supported in Zend Framework 1.x unit tests.';
-		exit(1);
-	}
-	require_once 'PHPUnit/Autoload.php'; // >= PHPUnit 3.5.5
-} else {
-	require_once 'PHPUnit/Framework.php'; // < PHPUnit 3.5.5
-}
-
-
-/*
- * Include PHPUnit dependencies
- */
-//require_once 'PHPUnit/Framework.php';
-//require_once 'PHPUnit/Framework/IncompleteTestError.php';
-//require_once 'PHPUnit/Framework/TestCase.php';
-//require_once 'PHPUnit/Framework/TestSuite.php';
-//require_once 'PHPUnit/Runner/Version.php';
-//require_once 'PHPUnit/TextUI/TestRunner.php';
-//require_once 'PHPUnit/Util/Filter.php';
-
 /*
  * Set error reporting to the level
  */

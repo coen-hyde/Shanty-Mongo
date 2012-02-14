@@ -3,3 +3,4 @@
 .project
 .settings
 tests/TestConfiguration.php
+library/Zend

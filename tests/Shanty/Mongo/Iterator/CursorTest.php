@@ -1,7 +1,6 @@
 <?php
 require_once dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR . 'TestSetup.php';
 
-require_once 'PHPUnit/Framework.php';
 require_once 'Shanty/Mongo/Iterator/Cursor.php';
  
 class Shanty_Mongo_Iterator_CursorTest extends Shanty_Mongo_TestSetup
@@ -23,7 +22,7 @@ class Shanty_Mongo_Iterator_CursorTest extends Shanty_Mongo_TestSetup
 	
 	public function testGetInnerIterator()
 	{
-		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $this->_cursor->getInnerIterator());
+		$this->assertInternalType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $this->_cursor->getInnerIterator());
 		$this->assertEquals('MongoCursor', get_class($this->_cursor->getInnerIterator()));
 	}
 	
@@ -52,7 +51,7 @@ class Shanty_Mongo_Iterator_CursorTest extends Shanty_Mongo_TestSetup
 	{
 		$documentSet = $this->_cursor->makeDocumentSet();
 		
-		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $documentSet);
+		$this->assertInternalType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $documentSet);
 		$this->assertEquals('My_ShantyMongo_Users', get_class($documentSet));
 	}
 	
@@ -114,7 +113,7 @@ class Shanty_Mongo_Iterator_CursorTest extends Shanty_Mongo_TestSetup
 		// Magic call returning Shanty_Mongo_Iterator_Cursor for chaining
 		$cursor = $this->_cursor->limit(10)->sort(array('name.first'));
 		
-		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $cursor);
+		$this->assertInternalType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $cursor);
 		$this->assertEquals('Shanty_Mongo_Iterator_Cursor', get_class($cursor));
 		
 		$info = $this->_cursor->info();
