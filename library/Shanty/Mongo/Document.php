@@ -7,8 +7,7 @@ require_once 'Shanty/Mongo/Iterator/Default.php';
  * @category   Shanty
  * @package    Shanty_Mongo
  * @copyright  Shanty Tech Pty Ltd
- * @license    New BSD License
- * @author     Coen Hyde
+ * @license    New BSD License 
  */
 class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAccess, Countable, IteratorAggregate
 {
@@ -132,6 +131,18 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	public function getId()
 	{
 		return $this->_id;
+	}
+	
+	/**
+	 * Set this document's id
+	 * 
+	 * @return MongoId
+	 */
+	public function setId(MongoId $id)
+	{
+		$this->_id = $id;
+		$this->setConfigAttribute('new', false);
+		$this->setCriteria($this->getPathToProperty('_id'), $id);
 	}
 	
 	/**
@@ -641,10 +652,6 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	 */
 	public function setProperty($property, $value)
 	{
-		if (substr($property, 0, 1) == '_') {
-			require_once 'Shanty/Mongo/Exception.php';
-			throw new Shanty_Mongo_Exception("Can not set private property '$property'");
-		}
 		
 		$validators = $this->getValidators($property);
 		
@@ -950,6 +957,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 				return true;
 			}
 		}
+		
 		
 		$result = $this->_getMongoCollection(true)->update($this->getCriteria(), $operations, array('upsert' => true, 'safe' => $safe));
 		$this->_data = array();
