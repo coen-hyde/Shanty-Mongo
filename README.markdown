@@ -503,6 +503,19 @@ To use one of the above hooks simply define a protected method in you document w
 		}
 	}
 
+Running Tests
+----------
+
+Shanty has good test coverage. It's easy to run the tests:
+
+- Make sure you have [PHPUnit](https://github.com/sebastianbergmann/phpunit/) installed. 3.6.2 or newer.
+- Place a copy of the [Zend Framework](http://framework.zend.com/) library in to the Shanty library folder.
+- Set the path to ZF by editing tests/TestConfiguration.php.dist and saving to tests/TestConfiguration.php
+- from command line in Shanty folder run phpunit tests/alltests
+
+All tests should pass!
+
+    
 Special thanks to
 -----------------
 
