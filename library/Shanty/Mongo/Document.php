@@ -967,6 +967,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		$result = $this->_getMongoCollection(true)->update($this->getCriteria(), $operations, array('upsert' => true, 'safe' => $safe));
 		$this->_data = array();
 		$this->_cleanData = $exportData;
+        $this->applyOperationToLocalInstance();
 		$this->purgeOperations(true);
 		
 		// Run post hooks
@@ -1201,48 +1202,55 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		
 		// Mix operation with existing operations if needed
 		switch($operation) {
-            case '$addToSet':
-                if(
-                    /* If we call addToSet to the same property more than once, we need to make sure we are translating to a $each
-                       So we don't just add single values over and over again */
-                    isset($this->_operations[$operation])
-                    && isset($this->_operations[$operation][$path])
-                )
-                {
-                    /* translate from [$addToSet][$property][$value] to [$addToSet][$property][$each][$value] */
-                    if(!isset($this->_operations[$operation][$path]['$each']) || !is_array($this->_operations[$operation][$path]['$each']))
-                        $this->_operations[$operation][$path] = array('$each' => array($this->_operations[$operation][$path]));
-
-                    /* make sure we add the value to the array appropriately */
-                    if(is_array($value))
-                    {
-                        if(isset($value['$each']) && is_array($value['$each']))
-                            $this->_operations['$addToSet'][$path]['$each'] = array_merge($this->_operations['$addToSet'][$path]['$each'], $value['$each']) ;
-                        else if(isset($value['$each']) && !is_array($value['$each']))
-                            $this->_operations['$addToSet'][$path]['$each'][] = $value['$each'];
-                        else
-                            $this->_operations['$addToSet'][$path]['$each'] += $value;
-                    }
-                    else
-                        $this->_operations['$addToSet'][$path]['$each'][] = $value;
-                }
-                else
-                    /* when addToSet is called once, we just add one item
-                       if we call it more than once we need to make sure we are calling a $each to send to mongodb */
-                    $this->_operations[$operation][$path] = $value;
-                break;
-
 			case '$pushAll':
 			case '$pullAll':
 				if (!array_key_exists($path, $this->_operations[$operation])) {
 					break;
 				}
-                $this->_operations[$operation][$path] = array_merge($this->_operations[$operation][$path], $value);
+
+				$value = array_merge($this->_operations[$operation][$path], $value);
 				break;
-		
-            default:
-		        $this->_operations[$operation][$path] = $value;
+		}
+
+		$this->_operations[$operation][$path] = $value;
+	}
+
+    public function applyOperationToLocalInstance()
+                {
+        foreach($this->_operations as $operation => $operation_value)
+        {
+
+            // Mix operation with existing operations if needed
+            switch($operation) {
+                case '$addToSet':
+                    foreach($operation_value as $path => $value)
+                    {
+                        if(!isset($this->_cleanData[$path]))
+                            $this->_cleanData[$path] = array();
+
+                        $this->_cleanData[$path][] = $value;
+                    }
+
+					break;
+                case '$inc':
+                    foreach($operation_value as $path => $value)
+                    {
+                        if(!isset($this->_cleanData[$path]))
+                            $this->_cleanData[$path] = 0;
+
+                        $this->_cleanData[$path] += $value;
+				}
+
+				break;
+                case '$set':
+                    //print "<XMP>";print_r($operation_value);exit;
+                    foreach($operation_value as $path => $value)
+                        $this->_cleanData[$path] = $value;
+
                 break;
+                default:
+                    die('We must add a way to process '.$operation.' back to the base object');
+            }
 		}
 	}
 	
