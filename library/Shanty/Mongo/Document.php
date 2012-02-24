@@ -21,6 +21,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	protected $_data = array();
 	protected $_cleanData = array();
 	protected $_config = array(
+        'fieldLimiting' => false,
 		'new' => true,
 		'connectionGroup' => null,
 		'db' => null,
@@ -808,15 +809,18 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 			$exportData[$property] = $value;
 		}
 		
-		// make sure required properties are not empty
-		$requiredProperties = $this->getPropertiesWithRequirement('Required');
-		foreach ($requiredProperties as $property) {
-			if (!isset($exportData[$property]) || (is_array($exportData[$property]) && empty($exportData[$property]))) {
-				require_once 'Shanty/Mongo/Exception.php';
-				throw new Shanty_Mongo_Exception("Property '{$property}' must not be null.");
-			}
-		}
-		
+        /* if we did field limiting in our query, then we dont need to check requirements, we know we are already breaking them */
+        if(!$this->_config['fieldLimiting'])
+        {
+            // make sure required properties are not empty
+            $requiredProperties = $this->getPropertiesWithRequirement('Required');
+            foreach ($requiredProperties as $property) {
+                if (!isset($exportData[$property]) || (is_array($exportData[$property]) && empty($exportData[$property]))) {
+                    require_once 'Shanty/Mongo/Exception.php';
+                    throw new Shanty_Mongo_Exception("Property '{$property}' must not be null.");
+                }
+            }
+        }
 		return $exportData;
 	}
 	

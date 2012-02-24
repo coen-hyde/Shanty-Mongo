@@ -22,7 +22,8 @@ abstract class Shanty_Mongo_Collection
 	protected static $_cachedCollectionRequirements = array();
 	protected static $_documentSetClass = 'Shanty_Mongo_DocumentSet';
 	protected static $_requireType = true;
-    
+    protected static $_fieldLimiting = false;
+
 	/**
 	 * Get the name of the mongo db
 	 * 
@@ -320,13 +321,57 @@ abstract class Shanty_Mongo_Collection
 	 */
 	public static function find($id, array $fields = array())
 	{
+        if(static::$_requireType)
+        {
+            $inheritance = static::getCollectionInheritance();
+            if (count($inheritance) > 1) {
+                $query['_type'] = $inheritance[0];
+            }
+
+            // If we are selecting specific fields make sure _type is always there
+            if (!empty($fields) && !isset($fields['_type'])) {
+                $fields['_type'] = 1;
+            }
+        }
+
+        if(
+            /* make sure we have fields */
+            count($fields)
+            && (
+                /* if we have more than 1 field, then we are not just looking for _type */
+                count($fields) > 1
+                || (
+                    /* otherwise we need to make sure our 1 field is not _type */
+                    count($fields) == 1
+                    && !isset($fields['_type'])
+                )
+            )
+        )
+            static::$_fieldLimiting = true;
+
 		if (!($id instanceof MongoId)) {
 			$id = new MongoId($id);
 		}
 		
 		$query = array('_id' => $id);
 		
-		return static::one($query, $fields);
+         /* start the query */
+        $key = Shanty_Mongo::getProfiler()->startQuery(
+            array(
+                'database' => static::getDbName(),
+                'collection' => static::getCollectionName(),
+                'query' => $query,
+                'fields' => $fields,
+            )
+        );
+
+        /* run the query to the DB */
+        $results = static::one($query, $fields);
+
+        /* end the query */
+        Shanty_Mongo::getProfiler()->queryEnd($key);
+
+		return $results;
 	}
 	
 	/**
@@ -351,12 +396,35 @@ abstract class Shanty_Mongo_Collection
             }
         }
 
-        $key = Shanty_Mongo::getProfiler()->queryStart(
-            'Database: '.static::getDbName()
-            .' | Query: '.json_encode($query)
-            .' | Fields: '.json_encode($fields)
+        if(
+            /* make sure we have fields */
+            count($fields)
+            && (
+                /* if we have more than 1 field, then we are not just looking for _type */
+                count($fields) > 1
+                || (
+                    /* otherwise we need to make sure our 1 field is not _type */
+                    count($fields) == 1
+                    && !isset($fields['_type'])
+                )
+            )
+        )
+            static::$_fieldLimiting = true;
+
+        /* start the query */
+        $key = Shanty_Mongo::getProfiler()->startQuery(
+            array(
+                'database' => static::getDbName(),
+                'collection' => static::getCollectionName(),
+                'query' => $query,
+                'fields' => $fields,
+            )
         );
+
+        /* run the query to the DB */
 		$data = static::getMongoCollection(false)->findOne($query, $fields);
+
+        /* end the query */
         Shanty_Mongo::getProfiler()->queryEnd($key);
 
 		if (is_null($data)) return null;
@@ -386,23 +454,38 @@ abstract class Shanty_Mongo_Collection
             }
         }
 
-        $key = Shanty_Mongo::getProfiler()->queryStart(
-            'Database: '.static::getDbName()
-            .' | Collection: '.static::getCollectionName()
-            .' | Query: '.json_encode($query)
-            .' | Fields: '.json_encode($fields)
+        if(
+            /* make sure we have fields */
+            count($fields)
+            && (
+                /* if we have more than 1 field, then we are not just looking for _type */
+                count($fields) > 1
+                || (
+                    /* otherwise we need to make sure our 1 field is not _type */
+                    count($fields) == 1
+                    && !isset($fields['_type'])
+                )
+            )
+        )
+            static::$_fieldLimiting = true;
+
+        /* start the query */
+        $key = Shanty_Mongo::getProfiler()->startQuery(
+            array(
+                'database' => static::getDbName(),
+                'collection' => static::getCollectionName(),
+                'query' => $query,
+                'fields' => $fields,
+            )
         );
+
+        /* run the query to the DB */
 		$cursor = static::getMongoCollection(false)->find($query, $fields);
+
+        /* end the query */
         Shanty_Mongo::getProfiler()->queryEnd($key);
         
-		$config = array();
-		$config['connectionGroup'] = static::getConnectionGroupName();
-		$config['db'] = static::getDbName();
-		$config['collection'] = static::getCollectionName();
-		$config['documentClass'] = static::getDocumentClass();
-		$config['documentSetClass'] = static::getDocumentSetClass();
-
-		return new Shanty_Mongo_Iterator_Cursor($cursor, $config);
+		return new Shanty_Mongo_Iterator_Cursor($cursor, static::_createItteratorConfig());
 	}
 
 	/**
@@ -414,14 +497,50 @@ abstract class Shanty_Mongo_Collection
 	 */
 	public static function fetchOne($query = array(), array $fields = array())
 	{
-		$key = Shanty_Mongo::getProfiler()->queryStart(
-            'Database: '.static::getDbName()
-            .' | Collection: '.static::getCollectionName()
-            .' | Query: '.json_encode($query)
-            .' | Fields: '.json_encode($fields)
+        if(static::$_requireType)
+        {
+            $inheritance = static::getCollectionInheritance();
+            if (count($inheritance) > 1) {
+                $query['_type'] = $inheritance[0];
+            }
+
+            // If we are selecting specific fields make sure _type is always there
+            if (!empty($fields) && !isset($fields['_type'])) {
+                $fields['_type'] = 1;
+            }
+        }
+
+        if(
+            /* make sure we have fields */
+            count($fields)
+            && (
+                /* if we have more than 1 field, then we are not just looking for _type */
+                count($fields) > 1
+                || (
+                    /* otherwise we need to make sure our 1 field is not _type */
+                    count($fields) == 1
+                    && !isset($fields['_type'])
+                )
+            )
+        )
+            static::$_fieldLimiting = true;
+
+        /* start the query */
+        $key = Shanty_Mongo::getProfiler()->startQuery(
+            array(
+                'database' => static::getDbName(),
+                'collection' => static::getCollectionName(),
+                'query' => $query,
+                'fields' => $fields,
+            )
         );
+
+        /* run the query to the DB */
         $results = static::one($query, $fields);
+
+        /* end the query */
         Shanty_Mongo::getProfiler()->queryEnd($key);
+
         return $results;
 	}
 	
@@ -434,14 +553,50 @@ abstract class Shanty_Mongo_Collection
 	 */
 	public static function fetchAll($query = array(), array $fields = array())
 	{
-        $key = Shanty_Mongo::getProfiler()->queryStart(
-            'Database: '.static::getDbName()
-            .' | Collection: '.static::getCollectionName()
-            .' | Query: '.json_encode($query)
-            .' | Fields: '.json_encode($fields)
+        if(static::$_requireType)
+        {
+            $inheritance = static::getCollectionInheritance();
+            if (count($inheritance) > 1) {
+                $query['_type'] = $inheritance[0];
+            }
+
+            // If we are selecting specific fields make sure _type is always there
+            if (!empty($fields) && !isset($fields['_type'])) {
+                $fields['_type'] = 1;
+            }
+        }
+
+        if(
+            /* make sure we have fields */
+            count($fields)
+            && (
+                /* if we have more than 1 field, then we are not just looking for _type */
+                count($fields) > 1
+                || (
+                    /* otherwise we need to make sure our 1 field is not _type */
+                    count($fields) == 1
+                    && !isset($fields['_type'])
+                )
+            )
+        )
+            static::$_fieldLimiting = true;
+
+        /* start the query */
+        $key = Shanty_Mongo::getProfiler()->startQuery(
+            array(
+                'database' => static::getDbName(),
+                'collection' => static::getCollectionName(),
+                'query' => $query,
+                'fields' => $fields,
+            )
         );
+
+        /* run the query to the DB */
         $results = static::all($query, $fields);
+
+        /* end the query */
         Shanty_Mongo::getProfiler()->queryEnd($key);
+
 		return $results;
 	}
 	
@@ -453,13 +608,21 @@ abstract class Shanty_Mongo_Collection
 	 */
 	public static function distinct($property)
 	{
-        $key = Shanty_Mongo::getProfiler()->queryStart(
-            'Database: '.static::getDbName()
-            .' | Collection: '.static::getCollectionName()
-            .' | Property: '.print_r($property, true)
+        /* start the query */
+        $key = Shanty_Mongo::getProfiler()->startQuery(
+            array(
+                'database' => static::getDbName(),
+                'collection' => static::getCollectionName(),
+                'property' => $property,
+            )
         );
+
+        /* run the query to the DB */
 		$results = static::getMongoDb(false)->command(array('distinct' => static::getCollectionName(), 'key' => $property));
+
+        /* end the query */
 		Shanty_Mongo::getProfiler()->queryEnd($key);
+
 		return $results['values'];
 	}
 	
@@ -471,15 +634,23 @@ abstract class Shanty_Mongo_Collection
 	 */
 	public static function insert(array $document, array $options = array())
 	{
-        $key = Shanty_Mongo::getProfiler()->queryStart(
-            'Database: '.static::getDbName()
-                .' | Collection: '.static::getCollectionName()
-                .' | Document: '.print_r($document, true)
-                .' | Options: '.print_r($options, true),
+        /* start the query */
+        $key = Shanty_Mongo::getProfiler()->startQuery(
+            array(
+                'database' => static::getDbName(),
+                'collection' => static::getCollectionName(),
+                'document' => $document,
+                'options' => $options,
+            ),
             'insert'
         );
+
+        /* run the query to the DB */
 		$return = static::getMongoCollection(true)->insert($document, $options);
+
+        /* end the query */
         Shanty_Mongo::getProfiler()->queryEnd($key);
+
         return $return;
 	}
 
@@ -491,15 +662,23 @@ abstract class Shanty_Mongo_Collection
 	 */
 	public static function insertBatch(array $documents, array $options = array())
 	{
-        $key = Shanty_Mongo::getProfiler()->queryStart(
-            'Database: '.static::getDbName()
-                .' | Collection: '.static::getCollectionName()
-                .' | Document: '.count($documents)
-                .' | Options: '.print_r($options, true),
+        /* start the query */
+        $key = Shanty_Mongo::getProfiler()->startQuery(
+            array(
+                'database' => static::getDbName(),
+                'collection' => static::getCollectionName(),
+                'document' => $documents,
+                'options' => $options,
+            ),
             'insert'
         );
+
+        /* run the query to the DB */
 		$return = static::getMongoCollection(true)->batchInsert($documents, $options);
+
+        /* end the query */
         Shanty_Mongo::getProfiler()->queryEnd($key);
+
         return $return;
 	}
 	
@@ -512,16 +691,23 @@ abstract class Shanty_Mongo_Collection
 	 */
 	public static function update(array $criteria, array $object, array $options = array())
 	{
-        $key = Shanty_Mongo::getProfiler()->queryStart(
-            'Database: '.static::getDbName()
-                .' | Collection: '.static::getCollectionName()
-                .' | Criteria: '.print_r($criteria, true)
-                .' | Object: '.print_r($object, true)
-                .' | Options: '.print_r($options, true),
+        /* start the query */
+        $key = Shanty_Mongo::getProfiler()->startQuery(
+            array(
+                'database' => static::getDbName(),
+                'collection' => static::getCollectionName(),
+                'object' => $object,
+                'options' => $options,
+            ),
             'update'
         );
+
+        /* run the query to the DB */
 		$return = static::getMongoCollection(true)->update($criteria, $object, $options);
+
+        /* end the query */
         Shanty_Mongo::getProfiler()->queryEnd($key);
+
         return $return;
 	}
 	
@@ -533,17 +719,24 @@ abstract class Shanty_Mongo_Collection
 	 */
 	public static function remove(array $criteria, array $options = array())
 	{
-        $key = Shanty_Mongo::getProfiler()->queryStart(
-            'Database: '.static::getDbName()
-                .' | Collection: '.static::getCollectionName()
-                .' | Criteria: '.print_r($criteria, true)
-                .' | Options: '.print_r($options, true),
+        /* start the query */
+        $key = Shanty_Mongo::getProfiler()->startQuery(
+            array(
+                'database' => static::getDbName(),
+                'collection' => static::getCollectionName(),
+                'criteria' => $criteria,
+                'options' => $options,
+            ),
             'delete'
         );
-        $return = static::getMongoCollection(true)->remove($criteria, $options);
-        Shanty_Mongo::getProfiler()->queryEnd($key);
-		return $return;
 
+        /* run the query to the DB */
+        $return = static::getMongoCollection(true)->remove($criteria, $options);
+
+        /* end the query */
+        Shanty_Mongo::getProfiler()->queryEnd($key);
+
+        return $return;
 	}
 	
 	/**
@@ -551,13 +744,21 @@ abstract class Shanty_Mongo_Collection
 	 */
 	public static function drop()
 	{
-        $key = Shanty_Mongo::getProfiler()->queryStart(
-            'Database: '.static::getDbName()
-                .' | Collection: '.static::getCollectionName(),
-            'drop'
+        /* start the query */
+        $key = Shanty_Mongo::getProfiler()->startQuery(
+            array(
+                'database' => static::getDbName(),
+                'collection' => static::getCollectionName(),
+            ),
+            'delete'
         );
+
+        /* run the query to the DB */
         $return = static::getMongoCollection(true)->drop();
+
+        /* end the query */
         Shanty_Mongo::getProfiler()->queryEnd($key);
+
 		return $return;
 	}
 	
@@ -598,5 +799,18 @@ abstract class Shanty_Mongo_Collection
 	public static function getIndexInfo()
 	{
 		return static::getMongoCollection(false)->getIndexInfo();
+	}
+
+    private static function _createItteratorConfig()
+    {
+        $config = array();
+        $config['fieldLimiting'] = static::$_fieldLimiting;
+        $config['connectionGroup'] = static::getConnectionGroupName();
+        $config['db'] = static::getDbName();
+        $config['collection'] = static::getCollectionName();
+        $config['documentClass'] = static::getDocumentClass();
+        $config['documentSetClass'] = static::getDocumentSetClass();
+
+        return $config;
 	}
 }

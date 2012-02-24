@@ -49,6 +49,16 @@ class Shanty_Mongo_Iterator_Cursor implements OuterIterator
 	}
 	
 	/**
+     * Get the document set class
+     *
+     * @return boolean
+     */
+    public function getDocumentFieldLimiting()
+    {
+        return $this->_config['fieldLimiting'];
+    }
+
+	/**
 	 * Export all data
 	 * 
 	 * @return array
@@ -67,6 +77,7 @@ class Shanty_Mongo_Iterator_Cursor implements OuterIterator
 	public function makeDocumentSet()
 	{
 		$config = array();
+        $config['fieldLimiting'] = $this->_config['fieldLimiting'];
 		$config['new'] = false;
 		$config['hasId'] = false;
 		$config['connectionGroup'] = $this->_config['connectionGroup'];
@@ -93,6 +104,7 @@ class Shanty_Mongo_Iterator_Cursor implements OuterIterator
 		}
 
 		$config                    = array();
+        $config['fieldLimiting']   = $this->_config['fieldLimiting'];
 		$config['new']             = false;
 		$config['hasKey']          = true;
 		$config['connectionGroup'] = $this->_config['connectionGroup'];
@@ -120,12 +132,19 @@ class Shanty_Mongo_Iterator_Cursor implements OuterIterator
 	
 	public function next()
 	{
-        $key = Shanty_Mongo::getProfiler()->queryStart(
-            'Database: '.$this->_config['db']
-            .' | Collection: '.$this->_config['collection']
-            .' | Next'
+        /* start the query */
+        $key = Shanty_Mongo::getProfiler()->startQuery(
+            array(
+                'database' => $this->_config['db'],
+                'collection' => $this->_config['collection'],
+            ),
+            'next'
         );
+
+        /* run the query to the DB */
 		$next = $this->getInnerIterator()->next();
+
+        /* end the query */
         Shanty_Mongo::getProfiler()->queryEnd($key);
         return $next;
 	}
@@ -133,12 +152,19 @@ class Shanty_Mongo_Iterator_Cursor implements OuterIterator
 	public function rewind()
 	{
 
-        $key = Shanty_Mongo::getProfiler()->queryStart(
-            'Database: '.$this->_config['db']
-            .' | Collection: '.$this->_config['collection']
-            .' | Rewind'
+        /* start the query */
+        $key = Shanty_Mongo::getProfiler()->startQuery(
+            array(
+                'database' => $this->_config['db'],
+                'collection' => $this->_config['collection'],
+            ),
+            'rewind'
         );
+
+        /* run the query to the DB */
 		$last = $this->getInnerIterator()->rewind();
+
+        /* end the query */
         Shanty_Mongo::getProfiler()->queryEnd($key);
         return $last;
 	}
