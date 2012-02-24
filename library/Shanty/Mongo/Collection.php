@@ -271,7 +271,10 @@ abstract class Shanty_Mongo_Collection
 			throw new Shanty_Mongo_Exception(get_called_class().'::$_db is null');
 		}
 
-		return static::getConnection($writable)->selectDB(static::getDbName());
+		if ($writable) $connection = Shanty_Mongo::getWriteConnection(static::getConnectionGroupName());
+		else $connection = Shanty_Mongo::getReadConnection(static::getConnectionGroupName());
+
+		return $connection->selectDB(static::getDbName());
 	}
 	
 	/**
@@ -304,6 +307,7 @@ abstract class Shanty_Mongo_Collection
 		}
 		
 		$config = array();
+        $config['fieldLimiting'] = static::$_fieldLimiting;
 		$config['new'] = ($new);
 		$config['hasId'] = true;
 		$config['connectionGroup'] = static::getConnectionGroupName();
@@ -606,19 +610,26 @@ abstract class Shanty_Mongo_Collection
 	 * @param String $property
 	 * @return array
 	 */
-	public static function distinct($property)
+    public static function distinct($property, $query = null)
 	{
         /* start the query */
         $key = Shanty_Mongo::getProfiler()->startQuery(
             array(
                 'database' => static::getDbName(),
                 'collection' => static::getCollectionName(),
+                'query' => $query,
                 'property' => $property,
             )
         );
 
         /* run the query to the DB */
-		$results = static::getMongoDb(false)->command(array('distinct' => static::getCollectionName(), 'key' => $property));
+        $results = static::getMongoDb(false)->command(
+            array(
+                'distinct' => static::getCollectionName(),
+                'key' => $property,
+                'query' => $query
+            )
+        );
 
         /* end the query */
 		Shanty_Mongo::getProfiler()->queryEnd($key);
@@ -812,5 +823,5 @@ abstract class Shanty_Mongo_Collection
         $config['documentSetClass'] = static::getDocumentSetClass();
 
         return $config;
-	}
+    }
 }

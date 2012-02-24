@@ -1,7 +1,6 @@
 <?php
 
 require_once 'Shanty/Mongo/Connection.php';
-require_once 'Shanty/Mongo/Connection/Stack.php';
 
 /**
  * @category   Shanty
@@ -178,9 +177,6 @@ class Shanty_Mongo_Connection_Group
 		
 		$connectionString .= implode(',', $hostStringList);
 
-		// Set database
-		if (isset($connectionOptions['database'])) $connectionString .= '/'.$connectionOptions['database'];
-
 		return $connectionString;
 	}
 	
@@ -214,7 +210,10 @@ class Shanty_Mongo_Connection_Group
 		$hostString .= ':';
 		if (isset($hostOptions['port']) && !is_null($hostOptions['port'])) $hostString .= $hostOptions['port'];
 		else $hostString .= '27017';
-		
+
+		// Set database
+		if (isset($hostOptions['database'])) $hostString .= '/'.$hostOptions['database'];
+
 		return $hostString;
 	}
 }
