@@ -110,9 +110,9 @@ class Shanty_Mongo
 	public static function retrieveRequirement($name, $options = null)
 	{
 		// Requirement is already initialised return it
-		if (array_key_exists($name, static::$_requirements)) {
+		if (isset(static::$_requirements[$name])) {
 			// If requirement does not have options, returned cached instance
-			if (is_null($options))  return static::$_requirements[$name];
+			if (!$options)  return static::$_requirements[$name];
 			
 			$requirementClass = get_class(static::$_requirements[$name]);
 			return new $requirementClass($options);
