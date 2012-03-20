@@ -781,6 +781,16 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	}
 	
 	/**
+    * Determine if the document has a given reference or not
+    *
+    * @Return Boolean
+    */
+    public function hasReference($referenceName)
+    {
+        return !is_null($this->getProperty($referenceName));
+    }
+    
+	/**
 	 * Export all data
 	 * 
 	 * @return array
