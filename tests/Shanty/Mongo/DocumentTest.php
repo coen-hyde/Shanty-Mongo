@@ -20,6 +20,12 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 		$this->_articleBroken = My_ShantyMongo_Article::find('4c04516f1f5f5e21361e3ac2');
 	}
 
+    public function testHasReference()
+    {
+        $this->assertFalse($this->_roger->hasReference('bestFriend'));
+        $this->assertTrue($this->_bob->hasReference('bestFriend'));
+    }
+
 	public function testConstruct()
 	{
 		$student = new My_ShantyMongo_Student();
