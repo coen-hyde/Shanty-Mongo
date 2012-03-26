@@ -77,6 +77,11 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		if ($this->hasKey()) {
 			$this->setCriteria($this->getPathToProperty('_id'), $this->getId());
 		}
+
+                // If has a shard key then add it to the update criteria
+                if ($this->hasShardKey()) {
+			$this->setCriteria($this->getPathToProperty($this->getShardKeyName()), $this->getShardKey());
+		}
 		
 		$this->init();
 	}
@@ -268,6 +273,40 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	{
 		return $this->_config['parentIsDocumentSet'];
 	}
+
+         /*
+         * Determine if this document has a shard key
+         *
+         * @return boolean
+         */
+        public function hasShardKey()
+        {
+            if(!empty($this->_shardKey)){
+                return true;
+            }
+            return false;
+        }
+
+        /*
+         * Get shard key name
+         *
+         * @return string
+         */
+        public function getShardKeyName()
+        {
+            return $this->_shardKey;
+        }
+
+        /*
+         * Get shard key value
+         *
+         * @return mixed
+         */
+        public function getShardKey()
+        {
+            $name = $this->getShardKeyName();
+            return  $this->$name;
+        }
 	
 	/**
 	 * Determine if the document has certain criteria
