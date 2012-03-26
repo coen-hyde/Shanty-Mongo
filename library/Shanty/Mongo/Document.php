@@ -68,6 +68,11 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		if ($this->hasKey()) {
 			$this->setCriteria($this->getPathToProperty('_id'), $this->getId());
 		}
+
+                // If has a shard key then add it to the update criteria
+                if ($this->hasShardKey()) {
+			$this->setCriteria($this->getPathToProperty($this->getShardKeyName()), $this->getShardKey());
+		}
 		
 		$this->init();
 	}
