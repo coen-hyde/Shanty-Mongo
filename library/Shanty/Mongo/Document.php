@@ -618,7 +618,11 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		}
 		else {
 			$className = $this->hasRequirement($property, 'Document');
-			
+
+            /* try and grab the class name from the data first */
+            if(!$className && !empty($data) && isset($data['_type']) && count($data['_type']) >= 1 && class_exists($data['_type'][0]))
+                $className = $data['_type'][0];
+
 			// Load a document anyway so long as $data is not empty
 			if (!$className && !empty($data)) {
 				$className = 'Shanty_Mongo_Document';
