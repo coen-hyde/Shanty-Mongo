@@ -52,6 +52,7 @@ class Shanty_Mongo_TestSetup extends PHPUnit_Framework_TestCase
 		$this->_users = array(
 			'bob' => array(
 				'_id' => new MongoId('4c04516a1f5f5e21361e3ab0'),
+                                '_shardKey' => 'email',
 				'_type' => array(
 					'My_ShantyMongo_Teacher',
 					'My_ShantyMongo_User'

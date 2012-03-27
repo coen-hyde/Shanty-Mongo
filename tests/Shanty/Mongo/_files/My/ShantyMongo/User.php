@@ -30,7 +30,9 @@ class My_ShantyMongo_User extends My_ShantyMongo_Abstract
 		'preSave' => 0,
 		'postSave' => 0
 	);
-	
+
+        public $_shardKey = 'email';
+
 	protected function init()
 	{
 		$this->_hookCounter['init'] += 1;

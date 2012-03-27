@@ -28,6 +28,7 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 		$this->assertTrue($student->isRootDocument());
 		$this->assertTrue($student->isConnected());
 		$this->assertTrue($student->hasKey());
+                $this->assertTrue($student->hasShardKey());
 		$this->assertTrue($student->hasId());
 		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $student->getId());
 		$this->assertEquals('MongoId', get_class($student->getId()));
@@ -42,13 +43,17 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 		
 		$criteria = $student->getCriteria();
 		$this->assertTrue(array_key_exists('_id', $criteria));
-		$this->assertEquals($student->getId()->__toString(), $criteria['_id']->__toString());
+                $this->assertEquals($student->getId()->__toString(), $criteria['_id']->__toString());
+                $shardKeyName = $student->getShardKeyName();
+                $this->assertTrue(array_key_exists($shardKeyName, $criteria));
+                $this->assertEquals($student->getShardKey(), $criteria[$shardKeyName]);
 		
 		$name = new My_ShantyMongo_Name();
 		$this->assertTrue($name->isNewDocument());
 		$this->assertTrue($name->isRootDocument());
 		$this->assertFalse($name->isConnected());
 		$this->assertFalse($name->hasKey());
+                $this->assertFalse($name->hasShardKey());
 		$this->assertFalse($name->hasId());
 		$this->assertEquals(array(), $name->getInheritance());
 		
@@ -86,6 +91,27 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $this->_bob->getId());
 		$this->assertEquals('MongoId', get_class($this->_bob->getId()));
 	}
+
+        public function testHasShardKey()
+        {
+            if(empty($this->_bob->_shardKey)){
+                $this->assertFalse($this->_bob->hasShardKey());
+            }
+            else{
+            $this->assertTrue($this->_bob->hasShardKey());
+            }
+        }
+
+        public function testGetShardKeyName()
+        {
+            $this->assertEquals($this->_bob->_shardKey,$this->_bob->getShardKeyName());
+        }
+
+        public function testGetShardKey()
+        {
+            $shardKeyName = $this->_bob->_shardKey;
+            $this->assertEquals($this->_bob->$shardKeyName,$this->_bob->getShardKey());
+        }
 	
 	public function testGetInheritance()
 	{
