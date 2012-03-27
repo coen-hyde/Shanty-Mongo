@@ -3,3 +3,5 @@
 .project
 .settings
 tests/TestConfiguration.php
+
+atlassian-ide-plugin.xml

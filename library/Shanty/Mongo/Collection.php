@@ -21,8 +21,35 @@ abstract class Shanty_Mongo_Collection
 	protected static $_cachedCollectionInheritance = array();
 	protected static $_cachedCollectionRequirements = array();
 	protected static $_documentSetClass = 'Shanty_Mongo_DocumentSet';
+
+    /**
+     * Set to false if the query you are running doesnt reqire any type of setup on the _type variable
+     *
+     * @var bool
+     */
 	protected static $_requireType = true;
     protected static $_fieldLimiting = false;
+
+	/**
+     * Can be: direct - Top level inheiritance match | all - Match all levels of provided inheirtance | any - Match any inheiritance provided
+     *
+     * @var string
+     */
+    protected static $_inheritanceSearchType = 'direct';
+
+    /**
+     * Any extra inheiritance types can be added to this array
+     *
+     * @var array
+     */
+    protected static $_supplementalInheritance = array();
+
+    /**
+     * Automatically switch to any with supplemental inheritance types
+     *
+     * @var bool
+     */
+    protected static $_inheritanceSearchTypeAutoAny = true;
 
 	/**
 	 * Get the name of the mongo db
@@ -117,7 +144,7 @@ abstract class Shanty_Mongo_Collection
 	/**
 	 * Get the inheritance of this collection
 	 */
-	public static function getCollectionInheritance()
+	public static function getCollectionInheritance($useSupplemental = true)
 	{
 		$calledClass = get_called_class();
 		
@@ -136,6 +163,17 @@ abstract class Shanty_Mongo_Collection
 			array_unshift($inheritance, $calledClass);
 		}
 		
+        /* useful when you refactor the class names in your code and you want _type to carry the old class name in your queries */
+        if(is_array(static::$_supplementalInheritance) && count(static::$_supplementalInheritance) && $useSupplemental)
+        {
+            /* merge the supplementalInheritance to the inheritance array */
+            $inheritance = array_merge($inheritance, static::$_supplementalInheritance);
+
+            /* because of this, we are going to shift the match style to any */
+            if(static::$_inheritanceSearchTypeAutoAny)
+                static::$_inheritanceSearchType = 'any';
+        }
+
 		static::$_cachedCollectionInheritance[$calledClass] = $inheritance;
 		return $inheritance;
 	}
@@ -325,18 +363,7 @@ abstract class Shanty_Mongo_Collection
 	 */
 	public static function find($id, array $fields = array())
 	{
-        if(static::$_requireType)
-        {
-            $inheritance = static::getCollectionInheritance();
-            if (count($inheritance) > 1) {
-                $query['_type'] = $inheritance[0];
-            }
-
-            // If we are selecting specific fields make sure _type is always there
-            if (!empty($fields) && !isset($fields['_type'])) {
-                $fields['_type'] = 1;
-            }
-        }
+        $fields = static::_fieldSetup($fields);
 
         if(
             /* make sure we have fields */
@@ -377,7 +404,65 @@ abstract class Shanty_Mongo_Collection
 
 		return $results;
 	}
-	
+
+    private static function _fieldSetup(array $fields = array())
+    {
+        /* detect if we are doing an exclusionairy field set */
+        $exclusion = false;
+        foreach($fields as $key => $item)
+            if($item < 1)
+            {
+                $exclusion = true;
+                break;
+            }
+
+        /* if type is required and we are not dealing with an exclusion */
+        if(static::$_requireType && !$exclusion)
+        {
+            // If we are selecting specific fields make sure _type is always there
+            if (!empty($fields) && !isset($fields['_type'])) {
+                $fields['_type'] = 1;
+            }
+        }
+        else /* otherwise we just want to make sure type is not excluded */
+        {
+            /* make sure someone cant exclude the _type field */
+            if(isset($fields['_type']) && $fields['_type'] != 1)
+                unset($fields['_type']);
+        }
+
+        return $fields;
+    }
+
+    private static function _querySetup($query)
+    {
+        /* if type is a required field */
+        if(static::$_requireType)
+        {
+            /* get the inheirtance from the collection */
+            if (count($inheritance = static::getCollectionInheritance()) >= 1) {
+
+                /* if we want to match against any inheritance type, then do a $in */
+                if(static::$_inheritanceSearchType == 'any')
+                    $query['_type'] = array('$in' => $inheritance);
+
+                /* otherwise if we want to match against every inheirtance type, then do an all */
+                else if(static::$_inheritanceSearchType == 'all')
+                    $query['_type'] = array('$all' => $inheritance);
+
+                /* otherwise just choose the top inheritance in the chain */
+                else
+                {
+                    reset($inheritance);
+                    $query['_type'] = current($inheritance);
+                }
+
+            }
+        }
+
+        return $query;
+    }
+
 	/**
 	 * Find one document
 	 * 
@@ -387,18 +472,8 @@ abstract class Shanty_Mongo_Collection
 	 */
 	public static function one(array $query = array(), array $fields = array())
 	{
-        if(static::$_requireType)
-        {
-            $inheritance = static::getCollectionInheritance();
-            if (count($inheritance) > 1) {
-                $query['_type'] = $inheritance[0];
-            }
-
-            // If we are selecting specific fields make sure _type is always there
-            if (!empty($fields) && !isset($fields['_type'])) {
-                $fields['_type'] = 1;
-            }
-        }
+        $query = static::_querySetup($query);
+        $fields = static::_fieldSetup($fields);
 
         if(
             /* make sure we have fields */
@@ -445,18 +520,8 @@ abstract class Shanty_Mongo_Collection
 	 */
 	public static function all(array $query = array(), array $fields = array())
 	{
-		if(static::$_requireType)
-        {
-            $inheritance = static::getCollectionInheritance();
-            if (count($inheritance) > 1) {
-                $query['_type'] = $inheritance[0];
-            }
-
-            // If we are selecting specific fields make sure _type is always there
-            if (!empty($fields) && !isset($fields['_type'])) {
-                $fields['_type'] = 1;
-            }
-        }
+        $query = static::_querySetup($query);
+        $fields = static::_fieldSetup($fields);
 
         if(
             /* make sure we have fields */
@@ -501,49 +566,8 @@ abstract class Shanty_Mongo_Collection
 	 */
 	public static function fetchOne($query = array(), array $fields = array())
 	{
-        if(static::$_requireType)
-        {
-            $inheritance = static::getCollectionInheritance();
-            if (count($inheritance) > 1) {
-                $query['_type'] = $inheritance[0];
-            }
-
-            // If we are selecting specific fields make sure _type is always there
-            if (!empty($fields) && !isset($fields['_type'])) {
-                $fields['_type'] = 1;
-            }
-        }
-
-        if(
-            /* make sure we have fields */
-            count($fields)
-            && (
-                /* if we have more than 1 field, then we are not just looking for _type */
-                count($fields) > 1
-                || (
-                    /* otherwise we need to make sure our 1 field is not _type */
-                    count($fields) == 1
-                    && !isset($fields['_type'])
-                )
-            )
-        )
-            static::$_fieldLimiting = true;
-
-        /* start the query */
-        $key = Shanty_Mongo::getProfiler()->startQuery(
-            array(
-                'database' => static::getDbName(),
-                'collection' => static::getCollectionName(),
-                'query' => $query,
-                'fields' => $fields,
-            )
-        );
-
         /* run the query to the DB */
         $results = static::one($query, $fields);
-
-        /* end the query */
-        Shanty_Mongo::getProfiler()->queryEnd($key);
 
         return $results;
 	}
@@ -557,49 +581,9 @@ abstract class Shanty_Mongo_Collection
 	 */
 	public static function fetchAll($query = array(), array $fields = array())
 	{
-        if(static::$_requireType)
-        {
-            $inheritance = static::getCollectionInheritance();
-            if (count($inheritance) > 1) {
-                $query['_type'] = $inheritance[0];
-            }
-
-            // If we are selecting specific fields make sure _type is always there
-            if (!empty($fields) && !isset($fields['_type'])) {
-                $fields['_type'] = 1;
-            }
-        }
-
-        if(
-            /* make sure we have fields */
-            count($fields)
-            && (
-                /* if we have more than 1 field, then we are not just looking for _type */
-                count($fields) > 1
-                || (
-                    /* otherwise we need to make sure our 1 field is not _type */
-                    count($fields) == 1
-                    && !isset($fields['_type'])
-                )
-            )
-        )
-            static::$_fieldLimiting = true;
-
-        /* start the query */
-        $key = Shanty_Mongo::getProfiler()->startQuery(
-            array(
-                'database' => static::getDbName(),
-                'collection' => static::getCollectionName(),
-                'query' => $query,
-                'fields' => $fields,
-            )
-        );
 
         /* run the query to the DB */
         $results = static::all($query, $fields);
-
-        /* end the query */
-        Shanty_Mongo::getProfiler()->queryEnd($key);
 
 		return $results;
 	}
@@ -612,6 +596,8 @@ abstract class Shanty_Mongo_Collection
 	 */
     public static function distinct($property, $query = null)
 	{
+        $query = static::_querySetup($query);
+
         /* start the query */
         $key = Shanty_Mongo::getProfiler()->startQuery(
             array(
@@ -656,6 +642,10 @@ abstract class Shanty_Mongo_Collection
             'insert'
         );
 
+        /* make sure type is attached */
+        if(!isset($document['_type']))
+            $document['_type'] = static::getCollectionInheritance(false);
+
         /* run the query to the DB */
 		$return = static::getMongoCollection(true)->insert($document, $options);
 
@@ -683,6 +673,11 @@ abstract class Shanty_Mongo_Collection
             ),
             'insert'
         );
+
+        /* make sure type is attached */
+        foreach($documents as $key => $document)
+            if(!isset($document['_type']))
+                $documents[$key]['_type'] = static::getCollectionInheritance(false);
 
         /* run the query to the DB */
 		$return = static::getMongoCollection(true)->batchInsert($documents, $options);

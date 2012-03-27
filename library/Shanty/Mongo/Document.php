@@ -75,7 +75,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		// Create document id if one is required
 		if ($this->isNewDocument() && ($this->hasKey() || (isset($this->_config['hasId']) && $this->_config['hasId']))) {
 			$this->_data['_id'] = new MongoId();
-			$this->_data['_type'] = static::getCollectionInheritance();
+			$this->_data['_type'] = static::getCollectionInheritance(false);
 		}
 		
 		// If has key then add it to the update criteria

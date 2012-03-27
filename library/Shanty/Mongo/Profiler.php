@@ -14,6 +14,9 @@ class Shanty_Mongo_Profiler extends Zend_Db_Profiler
 {
     public function startQuery($config, $queryType = null)
     {
+        if(!$this->_enabled)
+            return;
+
         $string = array();
         foreach($config as $key => $item)
         {
