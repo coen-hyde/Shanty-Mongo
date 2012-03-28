@@ -131,11 +131,60 @@ Just as with finding a single document you can limit the fields that Shanty Mong
             'name.first' => 'Bob'
         ),
         array(
-            'name' => 1, 'email' => 1
+            'name' => 1,
+            'email' => 1
         )
     );
 
 This will return only the name and email address for all users.
+
+$users = User::all(
+        array(
+            'name.first' => 'Bob'
+        ),
+        array(
+            'name' => 0,
+            'email' => 0
+        )
+    );
+
+This will return all users with the first name of Bob and exclude the name and email fields.
+
+*Please note, you can never exclude the _type field from the result returned from MongoDB*
+
+### Using Skip, Limit, Sort etc
+
+Since the shanty mongo cursor returned by the all method is a subclass of MongoCursor you have all the functionality that is usually available to you as if you were querying mongodb directy. eg
+
+    $users = User::all()->skip(10)->limit(5);
+
+Or
+
+    $users = User::all();
+
+    if($page == 2)
+        $users->skip(10)->limit(5);
+
+This will skip the first 10 users and limit the result set to 5 users. Even though it may appear as though we are fetching all the users then skipping and limiting the result set on the php end, this is not the case. The nice thing about the way the Mongo implements cursors is that no results are fetched from the database until the method getNext is called, directly or indirectly. This means that the above skip and limit will only fetch 5 users from the database.
+
+    $users = User::all()->sort(
+        array(
+            'name' => 1
+        )
+    );
+
+Or
+
+    $users = User::all();
+
+    if($sort == 'name' && $sort_direction == 'asc')
+        $users->sort(
+            array(
+                'name' => 1
+            )
+        );
+
+This query for all users and sort them by name ASC.  To sort by DESC order, use a -1
 
 ### Adding requirements
 
@@ -354,13 +403,7 @@ We could have also added the new document to the document set like this
 
 This method may be preferred in certain circumstances
 
-### Using Skip, Limit, Sort etc
 
-Since the shanty mongo cursor returned by the all method is a subclass of MongoCursor you have all the functionality that is usually available to you as if you were querying mongodb directy. eg
-
-    $users = User::all()->skip(10)->limit(5);
-
-This will skip the first 10 users and limit the result set to 5 users. Even though it may appear as though we are fetching all the users then skipping and limiting the result set on the php end, this is not the case. The nice thing about the way the Mongo implements cursors is that no results are fetched from the database until the method getNext is called, directly or indirectly. This means that the above skip and limit will only fetch 5 users from the database.
 
 ### Deleting documents
 
