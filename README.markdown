@@ -138,7 +138,7 @@ Just as with finding a single document you can limit the fields that Shanty Mong
 
 This will return only the name and email address for all users.
 
-$users = User::all(
+    $users = User::all(
         array(
             'name.first' => 'Bob'
         ),
