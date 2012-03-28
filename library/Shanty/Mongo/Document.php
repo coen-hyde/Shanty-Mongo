@@ -630,6 +630,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
             )
                 $className = $data['_type'][0];
 
+            // Only failover to this if all else fails
 			// Load a document anyway so long as $data is not empty
 			if (!$className && !empty($data)) {
 				$className = 'Shanty_Mongo_Document';
@@ -1281,6 +1282,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
                     }
 
 					break;
+
                 case '$inc':
                     foreach($operation_value as $path => $value)
                     {
@@ -1291,11 +1293,17 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 				}
 
 				break;
+
                 case '$set':
-                    //print "<XMP>";print_r($operation_value);exit;
                     foreach($operation_value as $path => $value)
                         $this->_cleanData[$path] = $value;
 
+                    break;
+
+                case '$unset':
+                    foreach(array_keys($operation_value) as $path)
+                        if(isset($this->_cleanData[$path]))
+                            unset($this->_cleanData[$path]);
                 break;
                 default:
                     //die('We must add a way to process '.$operation.' back to the base object');

@@ -10,7 +10,68 @@ class Shanty_Mongo_ConnectionTest extends Shanty_Mongo_TestSetup
 	{
 		parent::setUp();
 	}
-	
+
+    public function testGetMasterServerInfo()
+    {
+        $infoArray = array(
+            'version',
+            'gitVersion',
+            'sysInfo',
+            'versionArray',
+            'bits',
+            'debug',
+            'maxBsonObjectSize',
+            'ok'
+        );
+
+        /* the info is always different, we just care that we get the right keys back */
+        $this->assertEquals($infoArray, array_keys(My_ShantyMongo_User::getMasterServerInfo()));
+    }
+
+    public function testGetSlaveServerInfo()
+    {
+        $infoArray = array(
+            'version',
+            'gitVersion',
+            'sysInfo',
+            'versionArray',
+            'bits',
+            'debug',
+            'maxBsonObjectSize',
+            'ok'
+        );
+
+        /* the info is always different, we just care that we get the right keys back */
+        $this->assertEquals($infoArray, array_keys(My_ShantyMongo_User::getSlaveServerInfo()));
+    }
+
+    public function testGetServerInfo()
+    {
+        $infoArray = array(
+            'master',
+            'slave',
+        );
+
+        $serverInfo = My_ShantyMongo_User::getServerInfo();
+
+        /* the info is always different, we just care that we get the right keys back */
+        $this->assertEquals($infoArray, array_keys($serverInfo));
+
+        $infoArray = array(
+            'version',
+            'gitVersion',
+            'sysInfo',
+            'versionArray',
+            'bits',
+            'debug',
+            'maxBsonObjectSize',
+            'ok'
+        );
+
+        $this->assertEquals($infoArray, array_keys($serverInfo['slave']));
+        $this->assertEquals($infoArray, array_keys($serverInfo['master']));
+    }
+
 	public function testGetAvailableOptions()
 	{
 		$options = array(

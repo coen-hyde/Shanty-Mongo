@@ -23,6 +23,13 @@ abstract class Shanty_Mongo_Collection
 	protected static $_documentSetClass = 'Shanty_Mongo_DocumentSet';
 
     /**
+     * Container for holding server info that only needs to be queried for once
+     *
+     * @var array
+     */
+    protected static $_serverInfo = array();
+
+    /**
      * Set to false if the query you are running doesnt reqire any type of setup on the _type variable
      *
      * @var bool
@@ -50,6 +57,64 @@ abstract class Shanty_Mongo_Collection
      * @var bool
      */
     protected static $_inheritanceSearchTypeAutoAny = true;
+
+	/**
+     * Get info about the read/write (master) server
+     *
+     * @static
+     * @return array
+     */
+    public static function getWriteServerInfo()
+    {
+        return static::getMasterServerInfo();
+    }
+
+    /**
+     * Get info about the read/write (master) server
+     *
+     * @static
+     * @return array
+     */
+    public static function getMasterServerInfo()
+    {
+        return Shanty_Mongo::getWriteConnection(static::$_connectionGroup)->getServerInfo();
+    }
+
+    /**
+     * Get info about the read only (slave) server
+     *
+     * @static
+     * @return array
+     */
+    public static function getReadServerInfo()
+    {
+        return static::getSlaveServerInfo();
+    }
+
+    /**
+     * Get info about the read only (slave) server
+     *
+     * @static
+     * @return array
+     */
+    public static function getSlaveServerInfo()
+    {
+        return Shanty_Mongo::getReadConnection(static::$_connectionGroup)->getServerInfo();
+    }
+
+    /**
+     * Combine master and slave information into one returnable server array
+     *
+     * @static
+     * @return array
+     */
+    public static function getServerInfo()
+    {
+        return array(
+            'master' => static::getMasterServerInfo(),
+            'slave' => static::getSlaveServerInfo()
+        );
+    }
 
 	/**
 	 * Get the name of the mongo db
