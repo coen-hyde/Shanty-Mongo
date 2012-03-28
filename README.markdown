@@ -114,15 +114,26 @@ Find all users and print their names
 		print($user->name->full()."<br />\n");
 	}
 
-All also accepts queries.
+**All also accepts queries.**
 
 Find all users with the first name Bob
 
-	$users = User::all(array('name.first' => 'Bob'));
+	$users = User::all(
+	    array(
+	        'name.first' => 'Bob'
+        )
+    );
 
 Just as with finding a single document you can limit the fields that Shanty Mongo will pull down.
 
-    $users = User::all(array(), array('name' => 1, 'email' => 1);
+    $users = User::all(
+        array(
+            'name.first' => 'Bob'
+        ),
+        array(
+            'name' => 1, 'email' => 1
+        )
+    );
 
 This will return only the name and email address for all users.
 
