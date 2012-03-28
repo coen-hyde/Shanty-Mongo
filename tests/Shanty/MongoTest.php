@@ -1,7 +1,7 @@
 <?php
 require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'Mongo' . DIRECTORY_SEPARATOR . 'TestSetup.php';
 
-require_once 'PHPUnit/Framework.php';
+//require_once 'PHPUnit/Framework.php';
 require_once 'Shanty/Mongo.php';
 require_once 'Zend/Config.php';
 

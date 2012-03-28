@@ -620,7 +620,14 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 			$className = $this->hasRequirement($property, 'Document');
 
             /* try and grab the class name from the data first */
-            if(!$className && !empty($data) && isset($data['_type']) && count($data['_type']) >= 1 && class_exists($data['_type'][0]))
+            if(
+                !$className
+                && !empty($data)
+                && isset($data['_type'])
+                && count($data['_type']) >= 1
+                && class_exists($data['_type'][0])
+                && is_subclass_of($data['_type'][0], 'Shanty_Mongo_Document')
+            )
                 $className = $data['_type'][0];
 
 			// Load a document anyway so long as $data is not empty
@@ -989,15 +996,22 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 				return true;
 			}
 		}
+
         $result = $this->_getMongoCollection(true)->update($this->getCriteria(), $operations, array('upsert' => true, 'save' => $safe));
-        $last_error = $this->_getMongoDb(true)->command(array('getlasterror' => 1));
+
+        if($safe)
+            $last_error = $this->_getMongoDb(true)->command(array('getlasterror' => 1));
+        else
+            $last_error = array();
+
 		$this->_data = array();
 		$this->_cleanData = $exportData;
         $this->applyOperationToLocalInstance();
 		$this->purgeOperations(true);
-		
+
+
         //update _id if needed
-        if (!empty($last_error['upserted'])) {
+        if (isset($last_error['upserted']) && !empty($last_error['upserted'])) {
             $this->_cleanData['_id'] = $last_error['upserted'];
             $this->setCriteria('_id', $this->_cleanData['_id']);
         }
@@ -1052,7 +1066,11 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		else {
 			$result = $mongoCollection->remove($this->getCriteria(), array('justOne' => true, 'save' => $safe));
 		}
-		
+
+        /* ensures that safe is going to happen no matter what */
+        if($safe)
+            $this->_getMongoDb(true)->command(array('getlasterror' => 1));
+
 		// Execute post delete hook
 		$this->postDelete();
 		
@@ -1280,7 +1298,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 
                 break;
                 default:
-                    die('We must add a way to process '.$operation.' back to the base object');
+                    //die('We must add a way to process '.$operation.' back to the base object');
             }
 		}
 	}

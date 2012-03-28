@@ -1,7 +1,7 @@
 <?php
 require_once dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR . 'TestSetup.php';
 
-require_once 'PHPUnit/Framework.php';
+//require_once 'PHPUnit/Framework.php';
 require_once 'Shanty/Mongo/Iterator/Cursor.php';
  
 class Shanty_Mongo_Iterator_CursorTest extends Shanty_Mongo_TestSetup
@@ -13,6 +13,7 @@ class Shanty_Mongo_Iterator_CursorTest extends Shanty_Mongo_TestSetup
 		parent::setUp();
 		
 		$config = array();
+        $config['fieldLimiting'] = false;
 		$config['connectionGroup'] = 'connectionGroup';
 		$config['db'] = TESTS_SHANTY_MONGO_DB;
 		$config['collection'] = 'user';

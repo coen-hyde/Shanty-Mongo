@@ -5,3 +5,5 @@
 tests/TestConfiguration.php
 
 atlassian-ide-plugin.xml
+
+tests/test.php

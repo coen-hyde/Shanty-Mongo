@@ -1,7 +1,7 @@
 <?php
 require_once dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR . 'TestSetup.php';
 
-require_once 'PHPUnit/Framework.php';
+//require_once 'PHPUnit/Framework.php';
 require_once 'Shanty/Mongo/Iterator/Default.php';
  
 class Shanty_Mongo_Iterator_DefaultTest extends Shanty_Mongo_TestSetup

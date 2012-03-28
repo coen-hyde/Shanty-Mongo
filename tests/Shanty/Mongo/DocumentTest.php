@@ -1,7 +1,7 @@
 <?php
 require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'TestSetup.php';
 
-require_once 'PHPUnit/Framework.php';
+//require_once 'PHPUnit/Framework.php';
 require_once 'Shanty/Mongo/Collection.php';
 require_once 'Shanty/Mongo/Document.php';
 require_once 'Shanty/Mongo/Connection/StackTest.php';
@@ -14,11 +14,19 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 	{
 		parent::setUp();
         /** @var $_bob Shanty_Mongo_Document */
+        // db.user.findOne({_id:ObjectId('4c04516a1f5f5e21361e3ab0')});
 		$this->_bob = My_ShantyMongo_User::find('4c04516a1f5f5e21361e3ab0');
+
+        // db.user.findOne({_id:ObjectId('4c04516f1f5f5e21361e3ab1')});
 		$this->_cherry = My_ShantyMongo_User::find('4c04516f1f5f5e21361e3ab1');
+
+        // db.user.findOne({_id:ObjectId('4c0451791f5f5e21361e3ab2')});
 		$this->_roger = My_ShantyMongo_User::find('4c0451791f5f5e21361e3ab2');
-		
+
+        // db.article.findOne({_id:ObjectId('4c04516f1f5f5e21361e3ac1')});
 		$this->_articleRegular = My_ShantyMongo_Article::find('4c04516f1f5f5e21361e3ac1');
+
+        // db.article.findOne({_id:ObjectId('4c04516f1f5f5e21361e3ac2')});
 		$this->_articleBroken = My_ShantyMongo_Article::find('4c04516f1f5f5e21361e3ac2');
 	}
 
@@ -422,7 +430,7 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $sarah->getProperty('addresses'));
 		$this->assertEquals('Shanty_Mongo_DocumentSet', get_class($sarah->getProperty('addresses')));
 		$this->assertEquals(0, count($sarah->getProperty('addresses')));
-		
+
 		// Test Array's
 		$this->assertTrue(is_array($this->_articleRegular->tags));
 		$this->assertEquals(array('awesome', 'howto', 'mongodb'), $this->_articleRegular->tags);
@@ -578,9 +586,13 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 	
 	public function testIsReference()
 	{
+        /** @var $roger My_ShantyMongo_User */
 		$roger = $this->_bob->bestFriend;
+
+        $rogerData = $roger->export();
+
 		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $roger);
-		$this->assertEquals('Shanty_Mongo_Document', get_class($roger));
+		$this->assertEquals($rogerData['_type'][0], get_class($roger));
 		
 		$this->assertTrue($this->_bob->isReference($roger));
 	}
@@ -605,14 +617,20 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 
 		$this->assertEquals($bobRaw, $this->_bob->export());
 	}
-	
-	/**
-     * @expectedException Shanty_Mongo_Exception
-     */
+
 	public function testExportRequiredException()
 	{
-		$this->_bob->email = null;
-		$this->_bob->export();
+        try
+        {
+            $this->_bob->email = null;
+            $this->_bob->export();
+        }
+        catch(Shanty_Mongo_Exception $e)
+        {
+            return;
+        }
+
+        $this->fail('A Shanty_Mongo_Exception exception has not been raised.');
 	}
 	
 	public function testIsNewDocument()
@@ -831,12 +849,12 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 
 		for($nr = 0; $nr < 1000; $nr++) {
 			$entry = new My_ShantyMongo_Simple(array('data' => '123'));
-			$entry->save();
-			$entry->delete();
+			$entry->save(false, true);
+			$entry->delete(true);
 			$found = $readerDB->simple->findOne(array('_id' => $entry->getId()));
 			if (!is_null($found)) {
 				print($nr);
-				die();
+				//die();
 			}
 			$this->assertNull($found);
 		}
@@ -1041,28 +1059,6 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 		);
 		
 		$this->assertEquals($operations, $this->_bob->getOperations());
-
-        $this->_bob->purgeOperations(true);
-        $this->_bob->addToSet('tags', 'tag1');
-        $this->_bob->addToSet('tags', 'tag2');
-        $this->_bob->addToSet('tags', array('$each' => array('tag3', 'tag4')));
-
-        $operations = array(
-            '$addToSet' => array(
-                'tags' => array(
-                    '$each' => array(
-                        'tag1',
-                        'tag2',
-                        'tag3',
-                        'tag4'
-                    )
-                )
-            )
-        );
-
-        $this->assertEquals($operations, $this->_bob->getOperations());
-
-        $this->_bob->purgeOperations(true);
 	}
 	
 	/**

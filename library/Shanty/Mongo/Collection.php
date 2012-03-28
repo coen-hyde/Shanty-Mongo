@@ -363,44 +363,14 @@ abstract class Shanty_Mongo_Collection
 	 */
 	public static function find($id, array $fields = array())
 	{
-        $fields = static::_fieldSetup($fields);
-
-        if(
-            /* make sure we have fields */
-            count($fields)
-            && (
-                /* if we have more than 1 field, then we are not just looking for _type */
-                count($fields) > 1
-                || (
-                    /* otherwise we need to make sure our 1 field is not _type */
-                    count($fields) == 1
-                    && !isset($fields['_type'])
-                )
-            )
-        )
-            static::$_fieldLimiting = true;
-
 		if (!($id instanceof MongoId)) {
 			$id = new MongoId($id);
 		}
-		
+
 		$query = array('_id' => $id);
-		
-         /* start the query */
-        $key = Shanty_Mongo::getProfiler()->startQuery(
-            array(
-                'database' => static::getDbName(),
-                'collection' => static::getCollectionName(),
-                'query' => $query,
-                'fields' => $fields,
-            )
-        );
 
         /* run the query to the DB */
         $results = static::one($query, $fields);
-
-        /* end the query */
-        Shanty_Mongo::getProfiler()->queryEnd($key);
 
 		return $results;
 	}
