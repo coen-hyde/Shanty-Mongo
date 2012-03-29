@@ -23,13 +23,6 @@ abstract class Shanty_Mongo_Collection
 	protected static $_documentSetClass = 'Shanty_Mongo_DocumentSet';
 
     /**
-     * Container for holding server info that only needs to be queried for once
-     *
-     * @var array
-     */
-    protected static $_serverInfo = array();
-
-    /**
      * Set to false if the query you are running doesnt reqire any type of setup on the _type variable
      *
      * @var bool
@@ -435,9 +428,7 @@ abstract class Shanty_Mongo_Collection
 		$query = array('_id' => $id);
 
         /* run the query to the DB */
-        $results = static::one($query, $fields);
-
-		return $results;
+        return static::one($query, $fields);
 	}
 
     private static function _fieldSetup(array $fields = array())
@@ -602,9 +593,7 @@ abstract class Shanty_Mongo_Collection
 	public static function fetchOne($query = array(), array $fields = array())
 	{
         /* run the query to the DB */
-        $results = static::one($query, $fields);
-
-        return $results;
+        return static::one($query, $fields);
 	}
 	
 	/**
@@ -616,11 +605,8 @@ abstract class Shanty_Mongo_Collection
 	 */
 	public static function fetchAll($query = array(), array $fields = array())
 	{
-
         /* run the query to the DB */
-        $results = static::all($query, $fields);
-
-		return $results;
+        return static::all($query, $fields);
 	}
 	
 	/**
@@ -698,8 +684,13 @@ abstract class Shanty_Mongo_Collection
 	 */
 	public static function insertBatch(array $documents, array $options = array())
 	{
+        /* make sure type is attached */
+        foreach($documents as $key => $document)
+            if(!isset($document['_type']))
+                $documents[$key]['_type'] = static::getCollectionInheritance(false);
+
         /* start the query */
-        $key = Shanty_Mongo::getProfiler()->startQuery(
+        $profileKey = Shanty_Mongo::getProfiler()->startQuery(
             array(
                 'database' => static::getDbName(),
                 'collection' => static::getCollectionName(),
@@ -709,16 +700,11 @@ abstract class Shanty_Mongo_Collection
             'insert'
         );
 
-        /* make sure type is attached */
-        foreach($documents as $key => $document)
-            if(!isset($document['_type']))
-                $documents[$key]['_type'] = static::getCollectionInheritance(false);
-
         /* run the query to the DB */
 		$return = static::getMongoCollection(true)->batchInsert($documents, $options);
 
         /* end the query */
-        Shanty_Mongo::getProfiler()->queryEnd($key);
+        Shanty_Mongo::getProfiler()->queryEnd($profileKey);
 
         return $return;
 	}
