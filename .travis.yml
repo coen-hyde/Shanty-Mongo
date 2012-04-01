@@ -4,7 +4,7 @@ php:
 
 before_script:
     - wget http://framework.zend.com/releases/ZendFramework-1.11.11/ZendFramework-1.11.11-minimal.tar.gz
-    - tar xvfz ZendFramework-1.11.11-minimal.tar.gz
+    - tar xfz ZendFramework-1.11.11-minimal.tar.gz
     - sed "s,Zend Framework path here,`pwd`/ZendFramework-1.11.11-minimal/library," tests/TestConfiguration.php.dist > tests/TestConfiguration.php
 
-script: phpunit --coverage-text --bootstrap tests/TestHelper.php tests/AllTests.php
+script: phpunit --bootstrap tests/TestHelper.php tests/AllTests.php
