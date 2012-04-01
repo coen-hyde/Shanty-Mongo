@@ -33,6 +33,10 @@ class Shanty_Mongo_Connection extends Mongo
 		
 		$this->_connectionInfo = array_merge($options, $connectionInfo);
 
+        if(isset($options['slaveOkay']) && $options['slaveOkay'] == true)
+            /* if this is not set, we can not write to slaves */
+            MongoCursor::$slaveOkay = true;
+
 		return parent::__construct($connectionString, $options);
 	}
 
