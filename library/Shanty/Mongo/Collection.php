@@ -28,6 +28,19 @@ abstract class Shanty_Mongo_Collection
      * @var bool
      */
 	protected static $_requireType = true;
+
+    /**
+     * Enforce converting any _id field to a MongoId field
+     *
+     * @var bool
+     */
+    protected static $_enforceMongoIdType = true;
+
+    /**
+     * Field that is autmatically controlled via a select statement to make export() ignore requirements if we did any field limiting in our query
+     *
+     * @var bool
+     */
     protected static $_fieldLimiting = false;
 
 	/**
@@ -50,6 +63,20 @@ abstract class Shanty_Mongo_Collection
      * @var bool
      */
     protected static $_inheritanceSearchTypeAutoAny = true;
+
+    /**
+     * Stores the last query
+     *
+     * @var array
+     */
+    protected static $_lastQuery = array();
+
+    /**
+     * Stores the last field query
+     *
+     * @var array
+     */
+    protected static $_lastFields = array();
 
 	/**
      * Get info about the read/write (master) server
@@ -180,15 +207,40 @@ abstract class Shanty_Mongo_Collection
 	 * 
 	 * @return string
 	 */
-	public static function getDocumentClass()
+	public static function getDocumentClass($useTest = true)
 	{
-		if (!static::isDocumentClass()) {
+		if (!static::isDocumentClass() && $useTest) {
 			throw new Shanty_Mongo_Exception(get_called_class().' is not a document. Please extend Shanty_Mongo_Document');
 		}
 		
 		return get_called_class();
 	}
-	
+
+    /**
+     * Is this parent class a document class
+     *
+     * @return boolean
+     */
+    public static function isParentDocumentClass()
+    {
+        return is_subclass_of(get_parent_class(static::getDocumentClass(false)), 'Shanty_Mongo_Document')
+            || get_parent_class(static::getDocumentClass(false)) ==  'Shanty_Mongo_Document';
+    }
+
+    /**
+     * Get the name of the document class
+     *
+     * @return string
+     */
+    public static function getParentDocumentClass($useTest = true)
+    {
+        if (!static::isParentDocumentClass() && $useTest) {
+            throw new Shanty_Mongo_Exception(get_parent_class(static::getDocumentClass(false)).' is not a document. Please extend Shanty_Mongo_Document');
+        }
+
+        return get_parent_class(static::getDocumentClass(false));
+    }
+
 	/**
 	 * Get the name of the document set class
 	 * 
@@ -204,14 +256,15 @@ abstract class Shanty_Mongo_Collection
 	 */
 	public static function getCollectionInheritance($useSupplemental = true)
 	{
-		$calledClass = get_called_class();
+		$calledClass = static::getDocumentClass(false);
 		
 		// Have we already computed this collections inheritance?
 		if (array_key_exists($calledClass, static::$_cachedCollectionInheritance)) {
 			return static::$_cachedCollectionInheritance[$calledClass];
 		}
-		
-		$parentClass = get_parent_class($calledClass);
+
+        /** @var $parentClass Shanty_Mongo_Document */
+		$parentClass = static::getParentDocumentClass(false);
 		
 		if (is_null($parentClass::getCollectionName())) {
 			$inheritance = array($calledClass);
@@ -244,30 +297,33 @@ abstract class Shanty_Mongo_Collection
 	 */
 	public static function getCollectionRequirements($inherited = true)
 	{
-		$calledClass = get_called_class();
+        /** @var $calledClass Shanty_Mongo_Document */
+		$calledClass = static::getDocumentClass(false);
 		
 		// Return if we only need direct requirements. ie no inherited requirements
 		if (!$inherited || $calledClass === __CLASS__) {
 			$reflector = new ReflectionProperty($calledClass, '_requirements');
 			if ($reflector->getDeclaringClass()->getName() !== $calledClass) return array();
-	
+
 			return static::makeRequirementsTidy($calledClass::$_requirements);
 		}
 		
-		// Have we already computed this collections requirements?
-		if (array_key_exists($calledClass, self::$_cachedCollectionRequirements)) {
+		// Have we already computed this collections requirements? Then return from the cache
+		if (isset(self::$_cachedCollectionRequirements[$calledClass])){
 			return self::$_cachedCollectionRequirements[$calledClass];
 		}
 		
-		// Get parent collections requirements
-		$parentClass = get_parent_class($calledClass);
+		/** @var $parentClass Shanty_Mongo_Collection */
+		$parentClass = static::getParentDocumentClass(false);
 		$parentRequirements = $parentClass::getCollectionRequirements();
 		
 		// Merge those requirements with this collections requirements
-		$requirements = static::mergeRequirements($parentRequirements, $calledClass::getCollectionRequirements(false));
-		self::$_cachedCollectionRequirements[$calledClass] = $requirements;
+        self::$_cachedCollectionRequirements[$calledClass] = static::mergeRequirements(
+            $parentRequirements,
+            $calledClass::getCollectionRequirements(false)
+        );
 		
-		return $requirements;
+		return self::$_cachedCollectionRequirements[$calledClass];
 	}
 	
 	/**
@@ -302,42 +358,39 @@ abstract class Shanty_Mongo_Collection
 	 */
 	public static function mergeRequirements($requirements1, $requirements2)
 	{
-		$requirements = $requirements1; 
-		
 		foreach ($requirements2 as $property => $requirementList) {
-			if (!array_key_exists($property, $requirements)) {
-				$requirements[$property] = $requirementList;
+            // use isset rather than array_search for speed
+			if (!isset($requirements1[$property])) {
+				$requirements1[$property] = $requirementList;
 				continue;
 			}
 			
 			foreach ($requirementList as $requirement => $options) {
 				// Find out if this is a Document or DocumentSet requirement
-				$matches = array();
-				preg_match("/^(Document|DocumentSet)(?::[A-Za-z][\w\-]*)?$/", $requirement, $matches);
-				
-				if (empty($matches)) {
-					$requirements[$property][$requirement] = $options;
-					continue;
-				}
+                if (!preg_match("/^(Document|DocumentSet)(?::[A-Za-z][\w\-]*)?$/", $requirement, $matches)) {
+                    $requirements1[$property][$requirement] = $options;
+                    continue;
+                }
 
-				// If requirement exists in existing requirements then unset it and replace it with the new requirements
-				foreach ($requirements[$property] as $innerRequirement => $innerOptions) {
-					$innerMatches = array();
-					
-					preg_match("/^{$matches[1]}(:[A-Za-z][\w\-]*)?/", $innerRequirement, $innerMatches);
-					
-					if (empty($innerMatches)) {
-						continue;
-					}
-					
-					unset($requirements[$property][$innerRequirement]);
-					$requirements[$property][$requirement] = $options;
-					break;
-				}
-			}
+                // If requirement exists in existing requirements then unset it and replace it with the new requirements
+                foreach (array_keys($requirements1[$property]) as $innerRequirement) {
+                    if (!preg_match("/^{$matches[1]}(:[A-Za-z][\w\-]*)?/", $innerRequirement, $innerMatches)) {
+                        continue;
+                    }
+
+                    //drop any other requirements that were set and over ride them with the doc requirements
+                    unset($requirements1[$property][$innerRequirement]);
+
+                    //set the primary doc requirement
+                    $requirements1[$property][$requirement] = $options;
+
+                    // since array_keys are unique, no need to continue once a match is found
+                    break;
+                }
+            }
 		}
 		
-		return $requirements;
+		return $requirements1;
 	}
 
 	/*
@@ -364,7 +417,7 @@ abstract class Shanty_Mongo_Collection
 	{
 		if (!static::hasDbName()) {
 			require_once 'Shanty/Mongo/Exception.php';
-			throw new Shanty_Mongo_Exception(get_called_class().'::$_db is null');
+			throw new Shanty_Mongo_Exception(static::getDocumentClass().'::$_db is null');
 		}
 
 		if ($writable) $connection = Shanty_Mongo::getWriteConnection(static::getConnectionGroupName());
@@ -395,7 +448,12 @@ abstract class Shanty_Mongo_Collection
 	 */
 	public static function create(array $data = array(), $new = true)
 	{
-		if (isset($data['_type']) && is_array($data['_type']) && class_exists($data['_type'][0]) && is_subclass_of($data['_type'][0], 'Shanty_Mongo_Document')) {
+		if (
+            isset($data['_type'])
+            && is_array($data['_type'])
+            && class_exists($data['_type'][0])
+            && is_subclass_of($data['_type'][0], 'Shanty_Mongo_Document')
+        ) {
 			$documentClass = $data['_type'][0];
 		}
 		else {
@@ -421,17 +479,21 @@ abstract class Shanty_Mongo_Collection
 	 */
 	public static function find($id, array $fields = array())
 	{
-		if (!($id instanceof MongoId)) {
-			$id = new MongoId($id);
-		}
-
 		$query = array('_id' => $id);
 
         /* run the query to the DB */
         return static::one($query, $fields);
 	}
 
-    private static function _fieldSetup(array $fields = array())
+    /**
+     * Make sure our fields for exclusion are being setup properly, we can not an inclusion and exclusion together so
+     * we make sure we dont do an exclusion and force an inclusion on _type and _id and we never exclude _type and _id
+     *
+     * @static
+     * @param array $fields
+     * @return array
+     */
+    protected static function _fieldSetup(array $fields = array())
     {
         /* detect if we are doing an exclusionairy field set */
         $exclusion = false;
@@ -455,12 +517,41 @@ abstract class Shanty_Mongo_Collection
             /* make sure someone cant exclude the _type field */
             if(isset($fields['_type']) && $fields['_type'] != 1)
                 unset($fields['_type']);
+
+            /* make sure someone cant exclude the _type field */
+            if(isset($fields['_id']) && $fields['_id'] != 1)
+                unset($fields['_id']);
         }
+
+        if(
+            /* make sure we have fields */
+            count($fields)
+            && (
+                /* if we have more than 1 field, then we are not just looking for _type */
+                count($fields) > 1
+                || (
+                    /* otherwise we need to make sure our 1 field is not _type */
+                    count($fields) == 1
+                    && !isset($fields['_type'])
+                )
+            )
+        )
+            static::$_fieldLimiting = true;
+
+        static::$_lastFields = $fields;
 
         return $fields;
     }
 
-    private static function _querySetup($query)
+    /**
+     * Setup the query in a uniform way across all and one.  Verify that _type is being set with the proper
+     * inheritance, and _id is transformed to a MongoId if $_enforceMongoIdType is set to true
+     *
+     * @static
+     * @param $query
+     * @return array
+     */
+    protected static function _querySetup($query)
     {
         /* if type is a required field */
         if(static::$_requireType)
@@ -482,9 +573,16 @@ abstract class Shanty_Mongo_Collection
                     reset($inheritance);
                     $query['_type'] = current($inheritance);
                 }
-
             }
         }
+
+        if(static::$_enforceMongoIdType)
+        {
+            if(isset($query['_id']) && !($query['_id'] instanceof MongoId))
+                $query['_id'] = new MongoId($query['_id']);
+        }
+
+        static::$_lastQuery = $query;
 
         return $query;
     }
@@ -500,21 +598,6 @@ abstract class Shanty_Mongo_Collection
 	{
         $query = static::_querySetup($query);
         $fields = static::_fieldSetup($fields);
-
-        if(
-            /* make sure we have fields */
-            count($fields)
-            && (
-                /* if we have more than 1 field, then we are not just looking for _type */
-                count($fields) > 1
-                || (
-                    /* otherwise we need to make sure our 1 field is not _type */
-                    count($fields) == 1
-                    && !isset($fields['_type'])
-                )
-            )
-        )
-            static::$_fieldLimiting = true;
 
         /* start the query */
         $key = Shanty_Mongo::getProfiler()->startQuery(
@@ -548,21 +631,6 @@ abstract class Shanty_Mongo_Collection
 	{
         $query = static::_querySetup($query);
         $fields = static::_fieldSetup($fields);
-
-        if(
-            /* make sure we have fields */
-            count($fields)
-            && (
-                /* if we have more than 1 field, then we are not just looking for _type */
-                count($fields) > 1
-                || (
-                    /* otherwise we need to make sure our 1 field is not _type */
-                    count($fields) == 1
-                    && !isset($fields['_type'])
-                )
-            )
-        )
-            static::$_fieldLimiting = true;
 
         /* start the query */
         $key = Shanty_Mongo::getProfiler()->startQuery(
@@ -618,6 +686,7 @@ abstract class Shanty_Mongo_Collection
     public static function distinct($property, $query = null)
 	{
         $query = static::_querySetup($query);
+        static::$_lastFields = array();
 
         /* start the query */
         $key = Shanty_Mongo::getProfiler()->startQuery(
@@ -663,8 +732,8 @@ abstract class Shanty_Mongo_Collection
             'insert'
         );
 
-        /* make sure type is attached */
-        if(!isset($document['_type']))
+        /* make sure type is attached && only run this if we are enforcing a type for this document */
+        if(static::$_requireType && !isset($document['_type']))
             $document['_type'] = static::getCollectionInheritance(false);
 
         /* run the query to the DB */
@@ -684,10 +753,12 @@ abstract class Shanty_Mongo_Collection
 	 */
 	public static function insertBatch(array $documents, array $options = array())
 	{
-        /* make sure type is attached */
-        foreach($documents as $key => $document)
-            if(!isset($document['_type']))
-                $documents[$key]['_type'] = static::getCollectionInheritance(false);
+        /* only run this if we are enforcing a type for this document */
+        if(static::$_requireType)
+            /* make sure type is attached */
+            foreach($documents as $key => $document)
+                if(!isset($document['_type']))
+                    $documents[$key]['_type'] = static::getCollectionInheritance(false);
 
         /* start the query */
         $profileKey = Shanty_Mongo::getProfiler()->startQuery(
@@ -716,13 +787,17 @@ abstract class Shanty_Mongo_Collection
 	 * @param $object
 	 * @param $options
 	 */
-	public static function update(array $criteria, array $object, array $options = array())
+	public static function update(array $query, array $object, array $options = array())
 	{
+        $query = static::_querySetup($query);
+        static::$_lastFields = array();
+
         /* start the query */
         $key = Shanty_Mongo::getProfiler()->startQuery(
             array(
                 'database' => static::getDbName(),
                 'collection' => static::getCollectionName(),
+                'query' => $query,
                 'object' => $object,
                 'options' => $options,
             ),
@@ -730,7 +805,7 @@ abstract class Shanty_Mongo_Collection
         );
 
         /* run the query to the DB */
-		$return = static::getMongoCollection(true)->update($criteria, $object, $options);
+		$return = static::getMongoCollection(true)->update($query, $object, $options);
 
         /* end the query */
         Shanty_Mongo::getProfiler()->queryEnd($key);
@@ -746,13 +821,9 @@ abstract class Shanty_Mongo_Collection
 	 */
 	public static function remove(array $query, array $options = array())
 	{
-        // if you want to remove a document by MongoId
-        if (array_key_exists('_id', $query) && !($query["_id"] instanceof MongoId)) {
-            $query["_id"] = new MongoId($query["_id"]);
-        }
-        
         $query = static::_querySetup($query);
-        
+        static::$_lastFields = array();
+
         /* start the query */
         $key = Shanty_Mongo::getProfiler()->startQuery(
             array(
@@ -846,5 +917,50 @@ abstract class Shanty_Mongo_Collection
         $config['documentSetClass'] = static::getDocumentSetClass();
 
         return $config;
+    }
+
+    /**
+     * Get the last query used to pull back records
+     *
+     * @static
+     * @param bool $json return the query in JSON format
+     * @return array|string
+     */
+    public static function getLastQuery($json = false)
+    {
+        if($json)
+            return json_encode(static::$_lastQuery);
+        else
+            return static::$_lastQuery;
+    }
+
+    /**
+     * Get the last fields used for limiting or requireing
+     *
+     * @static
+     * @param bool $json return the query in JSON format
+     * @return array|string
+     */
+    public static function getLastFields($json = false)
+    {
+        if($json)
+            return json_encode(static::$_lastFields);
+        else
+            return static::$_lastFields;
+    }
+
+    /**
+     * Get both fields and query in a combined array
+     *
+     * @static
+     * @param $json
+     * @return array|string
+     */
+    public static function getLastQueryCombined($json)
+    {
+        if($json)
+            return json_encode(array('query' => static::$_lastQuery, 'fields' => static::$_lastFields));
+        else
+            return array('query' => static::$_lastQuery, 'fields' => static::$_lastFields);
     }
 }
