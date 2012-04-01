@@ -744,21 +744,28 @@ abstract class Shanty_Mongo_Collection
 	 * @param array $criteria
 	 * @param unknown_type $justone
 	 */
-	public static function remove(array $criteria, array $options = array())
+	public static function remove(array $query, array $options = array())
 	{
+        // if you want to remove a document by MongoId
+        if (array_key_exists('_id', $query) && !($query["_id"] instanceof MongoId)) {
+            $query["_id"] = new MongoId($query["_id"]);
+        }
+        
+        $query = static::_querySetup($query);
+        
         /* start the query */
         $key = Shanty_Mongo::getProfiler()->startQuery(
             array(
                 'database' => static::getDbName(),
                 'collection' => static::getCollectionName(),
-                'criteria' => $criteria,
+                'query' => $query,
                 'options' => $options,
             ),
             'delete'
         );
 
         /* run the query to the DB */
-        $return = static::getMongoCollection(true)->remove($criteria, $options);
+        $return = static::getMongoCollection(true)->remove($query, $options);
 
         /* end the query */
         Shanty_Mongo::getProfiler()->queryEnd($key);

@@ -47,7 +47,7 @@ class Shanty_Mongo_Connection_GroupTest extends Shanty_Mongo_TestSetup
 		$this->assertEquals(0, count($this->_group->getSlaves()));
 		
 		$writeConnection = $this->_group->getWriteConnection();
-		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $writeConnection);
+		$this->assertInternalType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $writeConnection);
 		
 		$writeConnectionInfo = $writeConnection->getConnectionInfo();
 		$this->assertEquals('mongodb://localhost:27017', $writeConnectionInfo['connectionString']);

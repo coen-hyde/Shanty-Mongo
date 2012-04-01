@@ -137,7 +137,7 @@ class Shanty_Mongo_Connection_StackTest extends Shanty_Mongo_TestSetup
 		
 		$counter = 0;
 		foreach ($this->_stack as $node) {
-			$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $node);
+			$this->assertInternalType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $node);
 			$counter += 1;
 		}
 		

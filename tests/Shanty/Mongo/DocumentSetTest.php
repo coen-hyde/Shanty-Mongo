@@ -1,7 +1,6 @@
 <?php
 require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'TestSetup.php';
 
-//require_once 'PHPUnit/Framework.php';
 require_once 'Shanty/Mongo/Collection.php';
 require_once 'Shanty/Mongo/DocumentSet.php';
  
@@ -30,12 +29,12 @@ class Shanty_Mongo_DocumentSetTest extends Shanty_Mongo_TestSetup
 	public function testGetProperty()
 	{
 		// Make sure the DocumentSet is sound
-		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $this->_bob->addresses);
+		$this->assertInternalType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $this->_bob->addresses);
 		$this->assertEquals('Shanty_Mongo_DocumentSet', get_class($this->_bob->addresses));
 		$this->assertEquals(2, count($this->_bob->addresses));
 		
 		// Test basic get
-		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $this->_bob->addresses[0]);
+		$this->assertInternalType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $this->_bob->addresses[0]);
 		$this->assertEquals('Shanty_Mongo_Document', get_class($this->_bob->addresses[0]));
 		$this->assertEquals('19 Hill St', $this->_bob->addresses[0]->street);
 		$this->assertEquals('default', $this->_bob->addresses[0]->getConfigAttribute('connectionGroup'));
@@ -54,13 +53,16 @@ class Shanty_Mongo_DocumentSetTest extends Shanty_Mongo_TestSetup
 		$this->assertNull($this->_bob->addresses[404]);
 		
 		// Test known references
-		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $this->_article->contributors);
+		$this->assertInternalType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $this->_bob->friends[1]);
+		$this->assertEquals('My_ShantyMongo_ArtStudent', get_class($this->_bob->friends[1]));
+
+		$this->assertInternalType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $this->_article->contributors);
 		$this->assertEquals('My_ShantyMongo_Users', get_class($this->_article->contributors));
 		$this->assertEquals(2, count($this->_article->contributors));
 		
 		$user = $this->_article->contributors[0];
-		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $user);
-		$this->assertEquals('My_ShantyMongo_User', get_class($user));
+		$this->assertInternalType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $user);
+		$this->assertEquals('My_ShantyMongo_Student', get_class($user));
 		$this->assertEquals('Cherry Jones', $user->name->full());
 		
 		$this->assertEquals('default', $user->getConfigAttribute('connectionGroup'));
@@ -76,12 +78,12 @@ class Shanty_Mongo_DocumentSetTest extends Shanty_Mongo_TestSetup
 		$this->assertNull($this->_bob->friends[2]);
 		
 		// Test unknown references
-		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $this->_article->relatedArticles);
+		$this->assertInternalType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $this->_article->relatedArticles);
 		$this->assertEquals('Shanty_Mongo_DocumentSet', get_class($this->_article->relatedArticles));
 		$this->assertEquals(1, count($this->_article->relatedArticles));
 		
 		$article = $this->_article->relatedArticles[0];
-		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $article);
+		$this->assertInternalType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $article);
 		$this->assertEquals('My_ShantyMongo_Article', get_class($article));
 		$this->assertEquals('How to use Bend Space and Time', $article->title);
 	}
@@ -94,7 +96,7 @@ class Shanty_Mongo_DocumentSetTest extends Shanty_Mongo_TestSetup
 		$address->state = 'Middle Earth';
 		$address->postcode = '21342';
 		
-		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $address);
+		$this->assertInternalType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $address);
 		$this->assertEquals('Shanty_Mongo_Document', get_class($address));
 		$this->assertTrue($address->isNewDocument());
 		$this->assertFalse($address->hasId());
@@ -185,8 +187,8 @@ class Shanty_Mongo_DocumentSetTest extends Shanty_Mongo_TestSetup
 		$objStorage->attach($this->_bob->friends[0]);
 		$this->_article->contributors[5] = $this->_bob->friends[0];
 		$this->assertFalse($this->_article->contributors[5]->isNewDocument());
-		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $this->_article->contributors[5]);
-		$this->assertEquals('My_ShantyMongo_User', get_class($this->_article->contributors[5]));
+		$this->assertInternalType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $this->_article->contributors[5]);
+		$this->assertEquals('My_ShantyMongo_Student', get_class($this->_article->contributors[5]));
 		$this->assertTrue($objStorage->contains($this->_article->contributors[5]));
 		$this->assertEquals('default', $this->_article->contributors[5]->getConfigAttribute('connectionGroup'));
 		$this->assertEquals(TESTS_SHANTY_MONGO_DB, $this->_article->contributors[5]->getConfigAttribute('db'));
@@ -197,6 +199,7 @@ class Shanty_Mongo_DocumentSetTest extends Shanty_Mongo_TestSetup
 			'_id' => array('Validator:MongoId' => null),
 			'_type' => array('Array' => null),
 			'name' => array('Document:My_ShantyMongo_Name' => null, 'Required' => null),
+			'concession' => array('Required' => null),
 			'email' => array('Required' => null, 'Validator:EmailAddress' => null),
 			'addresses' => array('DocumentSet' => null),
 			'addresses.$.street' => array('Required' => null),
@@ -321,7 +324,7 @@ class Shanty_Mongo_DocumentSetTest extends Shanty_Mongo_TestSetup
 		$objStorage = new SplObjectStorage();
 		$objStorage->attach($address);
 		$this->_bob->addresses->addDocument($address);
-		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $this->_bob->addresses[2]);
+		$this->assertInternalType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $this->_bob->addresses[2]);
 		$this->assertEquals('Shanty_Mongo_Document', get_class($this->_bob->addresses[2]));
 		$this->assertTrue($objStorage->contains($this->_bob->addresses[2]));
 	}
@@ -405,7 +408,7 @@ class Shanty_Mongo_DocumentSetTest extends Shanty_Mongo_TestSetup
 	{
 		// Test get new document
 		$newAddress = $this->_bob->addresses->new();
-		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $newAddress);
+		$this->assertInternalType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $newAddress);
 		$this->assertEquals('Shanty_Mongo_Document', get_class($newAddress));
 	}
 	

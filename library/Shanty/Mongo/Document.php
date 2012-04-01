@@ -43,11 +43,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 
 		$this->_config = array_merge($this->_config, $config);
 		$this->_references = new SplObjectStorage();
-		
-		// Store data
-		if ($this->isNewDocument()) $this->_data = $data;
-		else $this->_cleanData = $data;
-		
+
 		// If not connected and this is a new root document, figure out the db and collection
 		if ($this->isNewDocument() && $this->isRootDocument() && !$this->isConnected()) {
 			$this->setConfigAttribute('connectionGroup', static::getConnectionGroupName());
@@ -71,7 +67,17 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		
 		// apply requirements requirement modifiers
 		$this->applyRequirements($this->_config['requirementModifiers'], false);
-		
+
+		// Store data
+		$this->_cleanData = $data;
+
+		// Initialize input data
+		if ($this->isNewDocument() && is_array($data)) {
+			foreach ($data as $key => $value) {
+				$this->getProperty($key);
+			}
+		}
+
 		// Create document id if one is required
 		if ($this->isNewDocument() && ($this->hasKey() || (isset($this->_config['hasId']) && $this->_config['hasId']))) {
 			$this->_data['_id'] = new MongoId();
@@ -489,20 +495,20 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		
 		return $properties;
 	}
-	
+
 	/**
 	 * Load the requirements as validators or filters for a given property,
 	 * and cache them as validators or filters, respectively.
-	 * 
+	 *
 	 * @param String $property Name of property
-	 * @return boolean whether or not cache was used.
+	 * @return boolean whether or not cache was used. 
 	 */
 	public function loadRequirements($property)
 	{
 		if (isset($this->_validators[$property]) || isset($this->_filters[$property])) {
 			return true;
 		}
-		
+
 		$validators = new Zend_Validate;
 		$filters = new Zend_Filter;
 
@@ -518,7 +524,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 				$validators->addValidator($req);
 			} else if ($req instanceof Zend_Filter_Interface) {
 				$filters->addFilter($req);
-		}
+			}
 		}
 		$this->_filters[$property] = $filters;
 		$this->_validators[$property] = $validators;
@@ -547,8 +553,9 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	{
 		$this->loadRequirements($property);
 		return $this->_filters[$property];
-    }
-
+	}
+	
+	
 	/**
 	 * Test if a value is valid against a property
 	 * 
@@ -573,7 +580,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		if (array_key_exists($property, $this->_data)) {
 			return $this->_data[$property];
 		}
-		
+
 		// Fetch clean data for this property
 		if (array_key_exists($property, $this->_cleanData)) {
 			$data = $this->_cleanData[$property];
@@ -581,7 +588,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		else {
 			$data = array();
 		}
-		
+
 		// If data is not an array then we can do nothing else with it
 		if (!is_array($data)) {
 			$this->_data[$property] = $data;
@@ -796,6 +803,16 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		return $this->_references->contains($document);
 	}
 	
+	/**
+    * Determine if the document has a given reference or not
+    *
+    * @Return Boolean
+    */
+    public function hasReference($referenceName)
+    {
+        return !is_null($this->getProperty($referenceName));
+    }
+    
 	/**
 	 * Export all data
 	 * 

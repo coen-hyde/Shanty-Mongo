@@ -186,16 +186,16 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 		$connection = new Shanty_Mongo_Connection('localhost');
 		Shanty_Mongo::addSlave($connection);
 
-		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, My_ShantyMongo_User::getConnection());
+		$this->assertInternalType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, My_ShantyMongo_User::getConnection());
 		$this->assertEquals(TESTS_SHANTY_MONGO_CONNECTIONSTRING, My_ShantyMongo_User::getConnection()->getActualConnectionString());
 
-		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, My_ShantyMongo_User::getConnection(false));
+		$this->assertInternalType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, My_ShantyMongo_User::getConnection(false));
 		$this->assertEquals('localhost', My_ShantyMongo_User::getConnection(false)->getActualConnectionString());
 	}
 
 	public function testGetMongoDb()
 	{
-		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, My_ShantyMongo_User::getMongoDb());
+		$this->assertInternalType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, My_ShantyMongo_User::getMongoDb());
 		$this->assertEquals(TESTS_SHANTY_MONGO_DB, My_ShantyMongo_User::getMongoDb()->__toString());
 	}
 	
@@ -209,7 +209,7 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 	
 	public function testGetMongoCollection()
 	{
-		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, My_ShantyMongo_User::getMongoCollection());
+		$this->assertInternalType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, My_ShantyMongo_User::getMongoCollection());
 		$this->assertEquals(TESTS_SHANTY_MONGO_DB.'.user', My_ShantyMongo_User::getMongoCollection()->__toString());
 	}
 	
@@ -225,7 +225,7 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 	{
 		$document = My_ShantyMongo_User::create();
 		
-		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $document);
+		$this->assertInternalType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $document);
 		$this->assertEquals('My_ShantyMongo_User', get_class($document));
 		$this->assertEquals('user', $document->getConfigAttribute('collection'));
 		$this->assertTrue($document->isNewDocument());
@@ -239,7 +239,7 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 	{
 		$cherry = My_ShantyMongo_User::find('4c04516f1f5f5e21361e3ab1');
 
-		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $cherry);
+		$this->assertInternalType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $cherry);
 		$this->assertEquals('My_ShantyMongo_Student', get_class($cherry));
 		$this->assertEquals('Cherry', $cherry->name->first);
 		$this->assertEquals($this->_users['cherry'], $cherry->export());
@@ -248,7 +248,7 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 		
 		$cherry = My_ShantyMongo_User::find(new MongoId('4c04516f1f5f5e21361e3ab1'));
 
-		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $cherry);
+		$this->assertInternalType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $cherry);
 		$this->assertEquals('My_ShantyMongo_Student', get_class($cherry));
 		$this->assertEquals('Cherry', $cherry->name->first);
 		$this->assertEquals($this->_users['cherry'], $cherry->export());
@@ -258,7 +258,7 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 	{
 		$roger = My_ShantyMongo_User::one(array('name.first' => 'Roger'));
 
-		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $roger);
+		$this->assertInternalType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $roger);
 		$this->assertEquals('My_ShantyMongo_ArtStudent', get_class($roger));
 		$this->assertEquals('Roger', $roger->name->first);
 		$this->assertEquals($this->_users['roger'], $roger->export());
@@ -280,7 +280,7 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 	{
 		$roger = My_ShantyMongo_User::fetchOne(array('name.first' => 'Roger'), array('name' => 1, 'email' => 1));
 
-		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $roger);
+		$this->assertInternalType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $roger);
 		$this->assertEquals('My_ShantyMongo_ArtStudent', get_class($roger));
 		$this->assertEquals(array('_id', '_type', 'name', 'email'), $roger->getPropertyKeys());
 		$this->assertEquals('Roger', $roger->name->first);
@@ -291,7 +291,7 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 	{
 		$users = My_ShantyMongo_User::all();
 		
-		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $users);
+		$this->assertInternalType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $users);
 		$this->assertEquals('Shanty_Mongo_Iterator_Cursor', get_class($users));
 		$this->assertEquals(3, $users->count());
 		$this->assertEquals('4c04516a1f5f5e21361e3ab0', $users->getNext()->getId()->__toString());
@@ -300,7 +300,7 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 		
 		$males = My_ShantyMongo_User::all(array('sex' => 'M'));
 		
-		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $males);
+		$this->assertInternalType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $males);
 		$this->assertEquals('Shanty_Mongo_Iterator_Cursor', get_class($males));
 		$this->assertEquals(2, $males->count());
 		$this->assertEquals('4c04516a1f5f5e21361e3ab0', $males->getNext()->getId()->__toString());
@@ -327,13 +327,13 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 	{
 		$users = My_ShantyMongo_User::fetchAll();
 		
-		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $users);
+		$this->assertInternalType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $users);
 		$this->assertEquals('Shanty_Mongo_Iterator_Cursor', get_class($users));
 		$this->assertEquals(3, $users->count());
 		
 		$males = My_ShantyMongo_User::fetchAll(array('sex' => 'M'), array('name' => 1, 'email' => 1));
 		
-		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $males);
+		$this->assertInternalType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $males);
 		$this->assertEquals('Shanty_Mongo_Iterator_Cursor', get_class($males));
 		$this->assertEquals(2, $males->count());
 		$firstUser = $males->getNext();
@@ -363,7 +363,7 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 		
 		$user = My_ShantyMongo_User::find('4c04d5101f5f5e21361e3ab5');
 		
-		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $user);
+		$this->assertInternalType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $user);
 		$this->assertEquals('My_ShantyMongo_User', get_class($user));
 		$this->assertEquals('Sarah', $user->name->first);
 		

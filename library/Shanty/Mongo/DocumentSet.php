@@ -92,8 +92,11 @@ class Shanty_Mongo_DocumentSet extends Shanty_Mongo_Document
 		}
 		
 		// get the document class
-		$className = $this->hasRequirement(self::DYNAMIC_INDEX, 'Document');
-		$document = new $className($data, $config);
+		$documentClass = $this->hasRequirement(self::DYNAMIC_INDEX, 'Document');
+		if (isset($data['_type']) && !empty($data['_type'][0])) {
+			$documentClass = $data['_type'][0];
+		}
+		$document = new $documentClass($data, $config);
 		
 		// if this document was a reference then remember that
 		if ($reference) {
