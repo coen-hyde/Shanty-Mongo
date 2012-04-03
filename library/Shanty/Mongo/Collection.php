@@ -578,8 +578,27 @@ abstract class Shanty_Mongo_Collection
 
         if(static::$_enforceMongoIdType)
         {
-            if(isset($query['_id']) && !($query['_id'] instanceof MongoId))
+            /* if we are dealing with a string, then convert it, otherwise someone already has a different intent */
+            if(isset($query['_id']) && !is_array($query['_id']) && !$query['_id'] instanceof MongoId)
                 $query['_id'] = new MongoId($query['_id']);
+            else if(isset($query['_id']) && is_array($query['_id']))
+                /* otherwise if we have an operator, take care of the sub arrays */
+                foreach($query['_id'] as $operator => $ids)
+                {
+                    /* works on $in, $all, $nin, etc */
+                    if(is_array($ids))
+                        foreach($ids as $index => $id)
+                            if(is_string($id) && !$id instanceof MongoId)
+                                $ids[$index] = new MongoId($id);
+
+                    /* works well with $ne operator */
+                    elseif(is_string($ids) && !$ids instanceof MongoId)
+                        $ids = new MongoId($ids);
+
+                    $query['_id'][$operator] = $ids;
+                }
+
+
         }
 
         static::$_lastQuery = $query;
@@ -956,7 +975,7 @@ abstract class Shanty_Mongo_Collection
      * @param $json
      * @return array|string
      */
-    public static function getLastQueryCombined($json)
+    public static function getLastQueryCombined($json = false)
     {
         if($json)
             return json_encode(array('query' => static::$_lastQuery, 'fields' => static::$_lastFields));
