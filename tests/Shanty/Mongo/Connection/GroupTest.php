@@ -189,7 +189,7 @@ class Shanty_Mongo_Connection_GroupTest extends Shanty_Mongo_TestSetup
 			),
 			'database' => 'shanty-mongo'
 		);
-		$this->assertEquals("mongodb://{$options['hosts'][0]['host']}:27017,{$options['hosts'][1]['host']}:27018,{$options['hosts'][2]['host']}:27017/shanty-mongo", $this->_group->formatConnectionString($options));
+		$this->assertEquals("mongodb://{$options['hosts'][0]['host']}:27017,{$options['hosts'][1]['host']}:27018,{$options['hosts'][2]['host']}:27017", $this->_group->formatConnectionString($options));
 	}
 	
 	public function testFormatHostString()

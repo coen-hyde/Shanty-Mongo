@@ -18,7 +18,8 @@ class Shanty_Mongo_Connection extends Mongo
 	);
 	
 	protected $_connectionInfo = array();
-	
+	protected $_serverInfo = array();
+
 	public function __construct($connectionString = null, array $options = array())
 	{
 		Shanty_Mongo::init();
@@ -32,8 +33,21 @@ class Shanty_Mongo_Connection extends Mongo
 		
 		$this->_connectionInfo = array_merge($options, $connectionInfo);
 
+        if(isset($options['slaveOkay']) && $options['slaveOkay'] == true)
+            /* if this is not set, we can not write to slaves */
+            MongoCursor::$slaveOkay = true;
+
 		return parent::__construct($connectionString, $options);
 	}
+
+    public function getServerInfo()
+    {
+        if(empty($this->_serverInfo))
+            /* must run as an admin command */
+            $this->_serverInfo = $this->selectDB('admin')->command(array('buildinfo' => 1));
+
+        return $this->_serverInfo;
+    }
 
 	/**
 	 * Get some info about this connection
@@ -49,7 +63,7 @@ class Shanty_Mongo_Connection extends Mongo
 	 * Get the actual connection string used for this connection. This differs from __toString in
 	 * that __toString returns a string representation of the connection, not the connection string used
 	 *
-	 * @return array
+	 * @return string
 	 */
 	public function getActualConnectionString()
 	{

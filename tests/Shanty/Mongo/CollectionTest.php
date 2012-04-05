@@ -1,6 +1,7 @@
 <?php
 require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'TestSetup.php';
 
+//require_once 'PHPUnit/Framework.php';
 require_once 'Shanty/Mongo/Collection.php';
  
 class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
@@ -436,47 +437,94 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 	
 	public function testGetIndexInfo()
 	{
-		$indexInfo = array(
-			array(
-				'name' => '_id_',
-				'ns' => 'shanty-mongo-testing.user',
-				'key' => array(
-					'_id' => 1
-				),
-				'v' => 1
-			)
-		);
-		
+        /* as of mongod-2.x v=1 for indexes */
+        $serverInfo = My_ShantyMongo_Admin::getMongoDb(true)->command(array('buildinfo' => 1));
+
+        if((int)$serverInfo['versionArray'][0] == 2)
+            $indexInfo = array(
+                array(
+                    'v' => 1,
+                    'key' => array(
+                        '_id' => 1
+                    ),
+                    'ns' => 'shanty-mongo-testing.user',
+                    'name' => '_id_',
+                )
+            );
+        else
+            $indexInfo = array(
+                array(
+                    'name' => '_id_',
+                    'ns' => 'shanty-mongo-testing.user',
+                    'key' => array(
+                        '_id' => 1
+                    ),
+                    'v' => 0
+                )
+            );
+
+
 		$this->assertEquals($indexInfo, My_ShantyMongo_User::getIndexInfo());
 	}
 	
 	public function testEnsureIndex()
 	{
-		My_ShantyMongo_User::ensureIndex(array('name.first' => 1), array('safe' => true));
-		
-		$indexInfo = array(
-			array(
-				'name' => '_id_',
-				'ns' => 'shanty-mongo-testing.user',
-				'key' => array(
-					'_id' => 1
-				),
-				'v' => 1
-			),
-			array(
-				'_id' => new MongoId(),
-				'ns' => 'shanty-mongo-testing.user',
-				'key' => array(
-					'name.first' => 1
-				),
-				'name' => 'name_first_1',
-				'v' => 1
-			)
-		);
+        My_ShantyMongo_User::ensureIndex(array('name.first' => 1), array('safe' => true));
+
+        /* as of mongod-2.x v=1 for indexes */
+        $serverInfo = My_ShantyMongo_Admin::getMongoDb(true)->command(array('buildinfo' => 1));
+
+        if((int)$serverInfo['versionArray'][0] == 2)
+            $indexInfo = array(
+                array(
+                    'v' => 1,
+                    'key' => array(
+                        '_id' => 1
+                    ),
+                    'ns' => 'shanty-mongo-testing.user',
+                    'name' => '_id_',
+                ),
+                array(
+                    'v' => 1,
+                    'key' => array(
+                        'name.first' => 1
+                    ),
+                    'ns' => 'shanty-mongo-testing.user',
+                    'name' => 'name_first_1',
+                    '_id' => new MongoId(),
+                )
+            );
+        else
+            $indexInfo = array(
+                array(
+                    'name' => '_id_',
+                    'ns' => 'shanty-mongo-testing.user',
+                    'key' => array(
+                        '_id' => 1
+                    ),
+                    'v' => 0
+                ),
+                array(
+                    '_id' => new MongoId(),
+                    'ns' => 'shanty-mongo-testing.user',
+                    'key' => array(
+                        'name.first' => 1
+                    ),
+                    'name' => 'name_first_1',
+                    'v' => 0
+                )
+            );
 		
 		$retrievedIndexInfo = My_ShantyMongo_User::getIndexInfo();
 
 		$this->assertEquals($indexInfo[0], $retrievedIndexInfo[0]);
+
+        if((int)$serverInfo['versionArray'][0] == 1)
+        {
+		    $this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $retrievedIndexInfo[1]['_id']);
+		    $this->assertEquals('MongoId', get_class($retrievedIndexInfo[1]['_id']));
+        }
+
 		$this->assertEquals($indexInfo[1]['ns'], $retrievedIndexInfo[1]['ns']);
 		$this->assertEquals($indexInfo[1]['key'], $retrievedIndexInfo[1]['key']);
 		$this->assertEquals($indexInfo[1]['name'], $retrievedIndexInfo[1]['name']);
@@ -489,17 +537,32 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 	{
 		My_ShantyMongo_User::ensureIndex(array('name.first' => 1), array('safe' => true));
 		My_ShantyMongo_User::deleteIndex('name.first');
-		
-		$indexInfo = array(
-			array(
-				'name' => '_id_',
-				'ns' => 'shanty-mongo-testing.user',
-				'key' => array(
-					'_id' => 1
-				),
-				'v' => 1
-			)
-		);
+
+        /* as of mongod-2.x v=1 for indexes */
+        $serverInfo = My_ShantyMongo_Admin::getMongoDb(true)->command(array('buildinfo' => 1));
+
+        if((int)$serverInfo['versionArray'][0] == 2)
+            $indexInfo = array(
+                array(
+                    'v' => 1,
+                    'key' => array(
+                        '_id' => 1
+                    ),
+                    'ns' => 'shanty-mongo-testing.user',
+                    'name' => '_id_',
+                )
+            );
+        else
+            $indexInfo = array(
+                array(
+                    'name' => '_id_',
+                    'ns' => 'shanty-mongo-testing.user',
+                    'key' => array(
+                        '_id' => 1
+                    ),
+                    'v' => 0
+                )
+            );
 		
 		$this->assertEquals($indexInfo, My_ShantyMongo_User::getIndexInfo());
 	}
@@ -512,16 +575,31 @@ class Shanty_Mongo_CollectionTest extends Shanty_Mongo_TestSetup
 		My_ShantyMongo_User::ensureIndex(array('name.first' => 1), array('safe' => true));
 		My_ShantyMongo_User::deleteIndexes();
 		
-		$indexInfo = array(
-			array(
-				'name' => '_id_',
-				'ns' => 'shanty-mongo-testing.user',
-				'key' => array(
-					'_id' => 1
-				),
-				'v' => 1
-			)
-		);
+		/* as of mongod-2.x v=1 for indexes */
+        $serverInfo = My_ShantyMongo_Admin::getMongoDb(true)->command(array('buildinfo' => 1));
+
+        if((int)$serverInfo['versionArray'][0] == 2)
+            $indexInfo = array(
+                array(
+                    'v' => 1,
+                    'key' => array(
+                        '_id' => 1
+                    ),
+                    'ns' => 'shanty-mongo-testing.user',
+                    'name' => '_id_',
+                )
+            );
+        else
+            $indexInfo = array(
+                array(
+                    'name' => '_id_',
+                    'ns' => 'shanty-mongo-testing.user',
+                    'key' => array(
+                        '_id' => 1
+                    ),
+                    'v' => 0
+                )
+            );
 		
 		$this->assertEquals($indexInfo, My_ShantyMongo_User::getIndexInfo());
 	}

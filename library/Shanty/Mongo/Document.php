@@ -1,6 +1,5 @@
 <?php
 require_once 'Shanty/Mongo/Exception.php';
-require_once 'Shanty/Mongo/Collection.php';
 require_once 'Shanty/Mongo/Iterator/Default.php';
 
 /**
@@ -23,6 +22,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	protected $_data = array();
 	protected $_cleanData = array();
 	protected $_config = array(
+        'fieldLimiting' => false,
 		'new' => true,
 		'connectionGroup' => null,
 		'db' => null,
@@ -40,7 +40,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	{
 		// Make sure mongo is initialised
 		Shanty_Mongo::init();
-		
+
 		$this->_config = array_merge($this->_config, $config);
 		$this->_references = new SplObjectStorage();
 
@@ -50,7 +50,18 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 			$this->setConfigAttribute('db', static::getDbName());
 			$this->setConfigAttribute('collection', static::getCollectionName());
 		}
-		
+
+        /* allows for this object to be created by itself without the need to be overridden */
+        if(!$this->getConfigAttribute('db') && isset($config['db']))
+            $this->setConfigAttribute('db', $config['db']);
+
+        if(!$this->getConfigAttribute('connectionGroup') && isset($config['connectionGroup']))
+            $this->setConfigAttribute('connectionGroup', $config['connectionGroup']);
+
+        if(!$this->getConfigAttribute('collection') && isset($config['collection']))
+            $this->setConfigAttribute('collection', $config['collection']);
+
+
 		// Get collection requirements
 		$this->_docRequirements = static::getCollectionRequirements();
 		
@@ -70,7 +81,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		// Create document id if one is required
 		if ($this->isNewDocument() && ($this->hasKey() || (isset($this->_config['hasId']) && $this->_config['hasId']))) {
 			$this->_data['_id'] = new MongoId();
-			$this->_data['_type'] = static::getCollectionInheritance();
+			$this->_data['_type'] = static::getCollectionInheritance(false);
 		}
 		
 		// If has key then add it to the update criteria
@@ -519,10 +530,10 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		$this->_validators[$property] = $validators;
 		return false;
 	}
-	
+
 	/**
 	 * Get all validators attached to a property
-	 * 
+	 *
 	 * @param String $property Name of property
 	 * @return Zend_Validate
 	 **/
@@ -614,7 +625,19 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		}
 		else {
 			$className = $this->hasRequirement($property, 'Document');
-			
+
+            /* try and grab the class name from the data first */
+            if(
+                !$className
+                && !empty($data)
+                && isset($data['_type'])
+                && count($data['_type']) >= 1
+                && class_exists($data['_type'][0])
+                && is_subclass_of($data['_type'][0], 'Shanty_Mongo_Document')
+            )
+                $className = $data['_type'][0];
+
+            // Only failover to this if all else fails
 			// Load a document anyway so long as $data is not empty
 			if (!$className && !empty($data)) {
 				$className = 'Shanty_Mongo_Document';
@@ -823,6 +846,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 				}
 				
 				$data = $value->export();
+
 				if (!empty($data)) {
 					$exportData[$property] = $data;
 				}
@@ -832,15 +856,18 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 			$exportData[$property] = $value;
 		}
 		
-		// make sure required properties are not empty
-		$requiredProperties = $this->getPropertiesWithRequirement('Required');
-		foreach ($requiredProperties as $property) {
-			if (!isset($exportData[$property]) || (is_array($exportData[$property]) && empty($exportData[$property]))) {
-				require_once 'Shanty/Mongo/Exception.php';
-				throw new Shanty_Mongo_Exception("Property '{$property}' must not be null.");
-			}
-		}
-		
+        /* if we did field limiting in our query, then we dont need to check requirements, we know we are already breaking them */
+        if(!$this->_config['fieldLimiting'])
+        {
+            // make sure required properties are not empty
+            $requiredProperties = $this->getPropertiesWithRequirement('Required');
+            foreach ($requiredProperties as $property) {
+                if (!isset($exportData[$property]) || (is_array($exportData[$property]) && empty($exportData[$property]))) {
+                    require_once 'Shanty/Mongo/Exception.php';
+                    throw new Shanty_Mongo_Exception("Property '{$property}' must not be null.");
+                }
+            }
+        }
 		return $exportData;
 	}
 	
@@ -894,6 +921,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	 */
 	public function processChanges(array $data = array())
 	{
+        
 		foreach ($data as $property => $value) {
 			if ($property === '_id') continue;
 			
@@ -909,10 +937,17 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 				$newValue['$id'] = $newValue['$id']->__toString();
 				$oldValue['$id'] = $oldValue['$id']->__toString();
 			}
-			
-			if ($newValue !== $oldValue) {
+
+            /* arrays do not work the same way in evaluations */
+            if(is_array($oldValue) && is_array($newValue))
+            {
+                if(json_encode($oldValue) !== json_encode($newValue))
+                    $this->addOperation('$set', $property, $newValue);
+
+            }
+			elseif ($newValue !== $oldValue)
 				$this->addOperation('$set', $property, $value);
-			}
+
 		}
 		
 		foreach ($this->_cleanData as $property => $value) {
@@ -921,7 +956,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 			$this->addOperation('$unset', $property, 1);
 		}
 	}
-	
+
 	/**
 	 * Save this document
 	 * 
@@ -979,12 +1014,25 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 				return true;
 			}
 		}
-		
-		$result = $this->_getMongoCollection(true)->update($this->getCriteria(), $operations, array('upsert' => true, 'safe' => $safe));
+
+        $result = $this->_getMongoCollection(true)->update($this->getCriteria(), $operations, array('upsert' => true, 'save' => $safe));
+
+        if($safe)
+            $last_error = $this->_getMongoDb(true)->command(array('getlasterror' => 1));
+        else
+            $last_error = array();
+
 		$this->_data = array();
 		$this->_cleanData = $exportData;
+        $this->applyOperationToLocalInstance();
 		$this->purgeOperations(true);
-		
+
+
+        //update _id if needed
+        if (isset($last_error['upserted']) && !empty($last_error['upserted'])) {
+            $this->_cleanData['_id'] = $last_error['upserted'];
+            $this->setCriteria('_id', $this->_cleanData['_id']);
+        }
 		// Run post hooks
 		if ($this->isNewDocument()) $this->postInsert();
 		else $this->postUpdate();
@@ -1031,12 +1079,16 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		$this->preDelete();
 		
 		if (!$this->isRootDocument()) {
-			$result = $mongoCollection->update($this->getCriteria(), array('$unset' => array($this->getPathToDocument() => 1)), array('safe' => $safe));
+			$result = $mongoCollection->update($this->getCriteria(), array('$unset' => array($this->getPathToDocument() => 1)), array('save' => $safe));
 		}
 		else {
-			$result = $mongoCollection->remove($this->getCriteria(), array('justOne' => true, 'safe' => $safe));
+			$result = $mongoCollection->remove($this->getCriteria(), array('justOne' => true, 'save' => $safe));
 		}
-		
+
+        /* ensures that safe is going to happen no matter what */
+        if($safe)
+            $this->_getMongoDb(true)->command(array('getlasterror' => 1));
+
 		// Execute post delete hook
 		$this->postDelete();
 		
@@ -1222,12 +1274,58 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 				if (!array_key_exists($path, $this->_operations[$operation])) {
 					break;
 				}
-				
+
 				$value = array_merge($this->_operations[$operation][$path], $value);
 				break;
 		}
-		
+
 		$this->_operations[$operation][$path] = $value;
+	}
+
+    public function applyOperationToLocalInstance()
+                {
+        foreach($this->_operations as $operation => $operation_value)
+        {
+
+            // Mix operation with existing operations if needed
+            switch($operation) {
+                case '$addToSet':
+                    foreach($operation_value as $path => $value)
+                    {
+                        if(!isset($this->_cleanData[$path]))
+                            $this->_cleanData[$path] = array();
+
+                        $this->_cleanData[$path][] = $value;
+                    }
+
+					break;
+
+                case '$inc':
+                    foreach($operation_value as $path => $value)
+                    {
+                        if(!isset($this->_cleanData[$path]))
+                            $this->_cleanData[$path] = 0;
+
+                        $this->_cleanData[$path] += $value;
+				}
+
+				break;
+
+                case '$set':
+                    foreach($operation_value as $path => $value)
+                        $this->_cleanData[$path] = $value;
+
+                    break;
+
+                case '$unset':
+                    foreach(array_keys($operation_value) as $path)
+                        if(isset($this->_cleanData[$path]))
+                            unset($this->_cleanData[$path]);
+                break;
+                default:
+                    //die('We must add a way to process '.$operation.' back to the base object');
+            }
+		}
 	}
 	
 	/**

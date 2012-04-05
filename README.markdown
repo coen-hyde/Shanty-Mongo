@@ -36,6 +36,10 @@ Use Zend's autoloader and add the library folder to your include path
 
 If you are connecting to localhost without any authentication then no need to worry about connections any further. Shanty Mongo will connect automatically on the first request if no connections have previously been added.
 
+-Call Model_My_ClassName::getServerInfo() to get an array of information about the server you are connecting to
+-Call Model_My_ClassName::getMasterServerInfo() || Model_My_ClassName::getWriteServerInfo() to get an array of information about the primary write server you are connecting to
+-Call Model_My_ClassName::getSlaveServerInfo() || Model_My_ClassName::getReadServerInfo() to get an array of information about the primary read server you are connecting to
+
 #### Advanced connections
 
 For information on how to configure master/slave setups, weighted connections and multiple connection goups see the [wiki](http://wiki.github.com/coen-hyde/Shanty-Mongo/connections)
@@ -56,9 +60,8 @@ To define a document and the collection that the document will be saved to, exte
 	$user->name = 'Bob';
 	$user->save();
 
-	// Or you can pass an array of data to the constructor as so.
-	// Please be aware passing data into the constructor by passes filtering and validation
-	// It assumes you are passing in a raw 'json' document from mongo
+Or you can pass an array of data to the constructor as so
+
 	$data = array(
 	    'name' => 'Bob'
 	);
@@ -66,11 +69,122 @@ To define a document and the collection that the document will be saved to, exte
 	$user = new User($data);
 	$user->save();
 
+Or you can call an insert statically from your code
+
+	User::insert(
+        array(
+            'name' => 'Bob'
+        )
+	);
+
 ### Find a document
 
-	$user = User::find($id);
+Using find($id)
 
-$id can either be a string representation of the document id or an instance of MongoId. 
+	$user = User::find(
+	    $id
+    );
+    // $id can either be a string representation of the document id or an instance of MongoId.
+
+Using one($query = array(), $fields = array())
+
+    $user = User::one(
+        array(
+            '_id' => new MongoId($id)
+        )
+    );
+
+Using fetchOne($query = array(), $fields = array())
+
+    $user = User::fetchOne(
+        array(
+            '_id' => new MongoId($id)
+        )
+    );
+
+### Fetching multiple documents
+
+We can fetch multiple documents by calling all. All will return a Shanty_Mongo_Iterator_Cursor that has all the functionality of MongoCursor
+
+Find all users and print their names
+
+	$users = User::all();
+
+	foreach ($users as $user) {
+		print($user->name->full()."<br />\n");
+	}
+
+**All also accepts queries.**
+
+Find all users with the first name Bob
+
+	$users = User::all(
+	    array(
+	        'name.first' => 'Bob'
+        )
+    );
+
+Just as with finding a single document you can limit the fields that Shanty Mongo will pull down.
+
+    $users = User::all(
+        array(
+            'name.first' => 'Bob'
+        ),
+        array(
+            'name' => 1,
+            'email' => 1
+        )
+    );
+
+This will return only the name and email address for all users.
+
+    $users = User::all(
+        array(
+            'name.first' => 'Bob'
+        ),
+        array(
+            'name' => 0,
+            'email' => 0
+        )
+    );
+
+This will return all users with the first name of Bob and exclude the name and email fields.
+
+*Please note, you can never exclude the _type field from the result returned from MongoDB*
+
+### Using Skip, Limit, Sort etc
+
+Since the shanty mongo cursor returned by the all method is a subclass of MongoCursor you have all the functionality that is usually available to you as if you were querying mongodb directy. eg
+
+    $users = User::all()->skip(10)->limit(5);
+
+Or
+
+    $users = User::all();
+
+    if($page == 2)
+        $users->skip(10)->limit(5);
+
+This will skip the first 10 users and limit the result set to 5 users. Even though it may appear as though we are fetching all the users then skipping and limiting the result set on the php end, this is not the case. The nice thing about the way the Mongo implements cursors is that no results are fetched from the database until the method getNext is called, directly or indirectly. This means that the above skip and limit will only fetch 5 users from the database.
+
+    $users = User::all()->sort(
+        array(
+            'name' => 1
+        )
+    );
+
+Or
+
+    $users = User::all();
+
+    if($sort == 'name' && $sort_direction == 'asc')
+        $users->sort(
+            array(
+                'name' => 1
+            )
+        );
+
+This query for all users and sort them by name ASC.  To sort by DESC order, use a -1
 
 ### Adding requirements
 
@@ -289,37 +403,7 @@ We could have also added the new document to the document set like this
 
 This method may be preferred in certain circumstances
 
-### Fetching multiple documents
 
-We can fetch multiple documents by calling all. All will return a Shanty_Mongo_Iterator_Cursor that has all the functionality of MongoCursor
-
-Find all users and print their names
-
-	$users = User::all();
-	
-	foreach ($users as $user) {
-		print($user->name->full()."<br />\n");
-	}
-	
-All also accepts queries.
-
-Find all users with the first name Bob
-
-	$users = User::all(array('name.first' => 'Bob'));
-
-Just as with finding a single document you can limit the fields that Shanty Mongo will pull down.
-
-    $users = User::all(array(), array('name' => 1, 'email' => 1);
-
-This will return only the name and email address for all users.
-
-### Using Skip, Limit, Sort etc
-
-Since the shanty mongo cursor returned by the all method is a subclass of MongoCursor you have all the functionality that is usually available to you as if you were querying mongodb directy. eg
-
-    $users = User::all()->skip(10)->limit(5);
-
-This will skip the first 10 users and limit the result set to 5 users. Even though it may appear as though we are fetching all the users then skipping and limiting the result set on the php end, this is not the case. The nice thing about the way the Mongo implements cursors is that no results are fetched from the database until the method getNext is called, directly or indirectly. This means that the above skip and limit will only fetch 5 users from the database.
 
 ### Deleting documents
 
@@ -503,19 +587,6 @@ To use one of the above hooks simply define a protected method in you document w
 		}
 	}
 
-Running Tests
-----------
-
-Shanty has good test coverage. It's easy to run the tests:
-
-- Make sure you have [PHPUnit](https://github.com/sebastianbergmann/phpunit/) installed. 3.6.2 or newer.
-- Place a copy of the [Zend Framework](http://framework.zend.com/) library in to the Shanty library folder.
-- Set the path to ZF by editing tests/TestConfiguration.php.dist and saving to tests/TestConfiguration.php
-- from command line in Shanty folder run phpunit tests/alltests
-
-All tests should pass!
-
-    
 Special thanks to
 -----------------
 

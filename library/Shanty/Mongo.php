@@ -19,7 +19,7 @@ class Shanty_Mongo
 	protected static $_requirementCreators = array();
 	protected static $_validOperations = array('$set', '$unset', '$push', '$pushAll', '$pull', '$pullAll', '$addToSet', '$pop', '$inc');
 	protected static $_initialised = false;
-	
+	protected static $_profiler = false;
 	/**
 	 * Initialise Shanty_Mongo. In particular all the requirements.
 	 */
@@ -27,7 +27,11 @@ class Shanty_Mongo
 	{
 		// If requirements are not empty then we have already initialised requirements
 		if (static::$_initialised) return;
-		
+
+        // setup the query profiler
+        if(!static::$_profiler)
+            static::$_profiler = new Shanty_Mongo_Profiler(false);
+        
 		// Custom validators
 		static::storeRequirement('Validator:Array', new Shanty_Mongo_Validate_Array());
 		static::storeRequirement('Validator:MongoId', new Shanty_Mongo_Validate_Class('MongoId'));
@@ -131,7 +135,33 @@ class Shanty_Mongo
 		
 		return $requirement;
 	}
-	
+
+    /**
+     * Get the query profiler for use
+     *
+     * @static
+     * @return bool
+     */
+    public static function getProfiler()
+    {
+        if(!static::$_profiler)
+            static::$_profiler = new Shanty_Mongo_Profiler(false);
+        
+        return static::$_profiler;
+    }
+
+    /** Enable or Disable the query profiler
+     * @static
+     * @param bool $profiler toggle the profiler
+     */
+    public static function setProfilerEnabled($profiler = false)
+    {
+        if(!static::$_profiler)
+            static::$_profiler = new Shanty_Mongo_Profiler(false);
+        
+        static::$_profiler->setEnabled($profiler);
+    }
+
 	/**
 	 * Add requirements to use in validation of document properties
 	 *

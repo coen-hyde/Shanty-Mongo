@@ -8,15 +8,24 @@ require_once 'Shanty/Mongo/Connection/GroupTest.php';
  
 class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 {
+
 	public function setUp()
 	{
 		parent::setUp();
-		
+        /** @var $_bob Shanty_Mongo_Document */
+        // db.user.findOne({_id:ObjectId('4c04516a1f5f5e21361e3ab0')});
 		$this->_bob = My_ShantyMongo_User::find('4c04516a1f5f5e21361e3ab0');
+
+        // db.user.findOne({_id:ObjectId('4c04516f1f5f5e21361e3ab1')});
 		$this->_cherry = My_ShantyMongo_User::find('4c04516f1f5f5e21361e3ab1');
+
+        // db.user.findOne({_id:ObjectId('4c0451791f5f5e21361e3ab2')});
 		$this->_roger = My_ShantyMongo_User::find('4c0451791f5f5e21361e3ab2');
-		
+
+        // db.article.findOne({_id:ObjectId('4c04516f1f5f5e21361e3ac1')});
 		$this->_articleRegular = My_ShantyMongo_Article::find('4c04516f1f5f5e21361e3ac1');
+
+        // db.article.findOne({_id:ObjectId('4c04516f1f5f5e21361e3ac2')});
 		$this->_articleBroken = My_ShantyMongo_Article::find('4c04516f1f5f5e21361e3ac2');
 	}
 
@@ -451,7 +460,7 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 		$this->assertInternalType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $sarah->getProperty('addresses'));
 		$this->assertEquals('Shanty_Mongo_DocumentSet', get_class($sarah->getProperty('addresses')));
 		$this->assertEquals(0, count($sarah->getProperty('addresses')));
-		
+
 		// Test Array's
 		$this->assertTrue(is_array($this->_articleRegular->tags));
 		$this->assertEquals(array('awesome', 'howto', 'mongodb'), $this->_articleRegular->tags);
@@ -607,9 +616,13 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 	
 	public function testIsReference()
 	{
+        /** @var $roger My_ShantyMongo_User */
 		$roger = $this->_bob->bestFriend;
-		$this->assertInternalType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $roger);
-		$this->assertEquals('Shanty_Mongo_Document', get_class($roger));
+
+        $rogerData = $roger->export();
+
+		$this->assertType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $roger);
+		$this->assertEquals($rogerData['_type'][0], get_class($roger));
 		
 		$this->assertTrue($this->_bob->isReference($roger));
 	}
@@ -634,14 +647,20 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 
 		$this->assertEquals($bobRaw, $this->_bob->export());
 	}
-	
-	/**
-     * @expectedException Shanty_Mongo_Exception
-     */
+
 	public function testExportRequiredException()
 	{
-		$this->_bob->email = null;
-		$this->_bob->export();
+        try
+        {
+            $this->_bob->email = null;
+            $this->_bob->export();
+        }
+        catch(Shanty_Mongo_Exception $e)
+        {
+            return;
+        }
+
+        $this->fail('A Shanty_Mongo_Exception exception has not been raised.');
 	}
 	
 	public function testIsNewDocument()
@@ -860,12 +879,12 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 
 		for($nr = 0; $nr < 1000; $nr++) {
 			$entry = new My_ShantyMongo_Simple(array('data' => '123'));
-			$entry->save();
-			$entry->delete();
+			$entry->save(false, true);
+			$entry->delete(true);
 			$found = $readerDB->simple->findOne(array('_id' => $entry->getId()));
 			if (!is_null($found)) {
 				print($nr);
-				die();
+				//die();
 			}
 			$this->assertNull($found);
 		}
@@ -1084,7 +1103,7 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 				'addresses' => 1
 			)
 		);
-		
+
 		$this->assertEquals($operations, $this->_bob->getOperations());
 	}
 	

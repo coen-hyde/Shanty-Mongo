@@ -3,4 +3,7 @@
 .project
 .settings
 tests/TestConfiguration.php
-library/Zend
+
+atlassian-ide-plugin.xml
+
+tests/test.php

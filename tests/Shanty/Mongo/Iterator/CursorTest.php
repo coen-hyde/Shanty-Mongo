@@ -12,6 +12,7 @@ class Shanty_Mongo_Iterator_CursorTest extends Shanty_Mongo_TestSetup
 		parent::setUp();
 		
 		$config = array();
+        $config['fieldLimiting'] = false;
 		$config['connectionGroup'] = 'connectionGroup';
 		$config['db'] = TESTS_SHANTY_MONGO_DB;
 		$config['collection'] = 'user';

@@ -3,19 +3,6 @@ require_once dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR . 'TestHelper.php'
 
 require_once 'Shanty/Mongo.php';
 
-//require_once 'Shanty/Mongo/Connection.php';
-//require_once 'Shanty/Mongo/CollectionTest.php';
-//require_once 'Shanty/Mongo/ConnectionTest.php';
-//require_once 'Shanty/Mongo/DocumentTest.php';
-//require_once 'Shanty/Mongo/DocumentSetTest.php';
-//require_once 'Shanty/Mongo/Iterator/CursorTest.php';
-//require_once 'Shanty/Mongo/Iterator/DefaultTest.php';
-//require_once 'Shanty/Mongo/Validate/ArrayTest.php';
-//require_once 'Shanty/Mongo/Validate/ClassTest.php';
-//require_once 'Shanty/Mongo/Validate/StubTrueTest.php';
-//require_once 'Shanty/Mongo/Connection/StackTest.php';
-//require_once 'Shanty/Mongo/Connection/GroupTest.php';
-
 require_once 'Zend/Validate.php';
 require_once 'Zend/Validate/EmailAddress.php';
 require_once 'Zend/Validate/InArray.php';
@@ -39,6 +26,7 @@ class Shanty_TestSetup extends PHPUnit_Framework_TestCase
 		$this->_useMyIncludePath();
 
 		require_once 'My/ShantyMongo/Country.php';
+        require_once 'My/ShantyMongo/Admin.php';
 		require_once 'My/ShantyMongo/User.php';
 		require_once 'My/ShantyMongo/Users.php';
 		require_once 'My/ShantyMongo/Name.php';
@@ -57,6 +45,9 @@ class Shanty_TestSetup extends PHPUnit_Framework_TestCase
 		$this->_connection->selectDb(TESTS_SHANTY_MONGO_DB)->selectCollection('article')->drop();
 		$this->_connection->selectDb(TESTS_SHANTY_MONGO_DB)->selectCollection('simple')->drop();
 		$this->_connection->selectDb(TESTS_SHANTY_MONGO_DB)->selectCollection('country')->drop();
+
+
+
 		$this->populateDb();
 	}
 
@@ -140,6 +131,7 @@ class Shanty_TestSetup extends PHPUnit_Framework_TestCase
 		$this->_articles = array(
 			'regular' => array(
 				'_id' => new MongoId('4c04516f1f5f5e21361e3ac1'),
+                '_type' => array('My_ShantyMongo_Article'),
 				'title' => 'How to use Shanty Mongo',
 				'author' => MongoDBRef::create('user', new MongoId('4c04516a1f5f5e21361e3ab0')),
 				'editor' => MongoDBRef::create('user', new MongoId('4c04516f1f5f5e21361e3ab1')),
@@ -154,6 +146,7 @@ class Shanty_TestSetup extends PHPUnit_Framework_TestCase
 			),
 			'broken' => array(
 				'_id' => new MongoId('4c04516f1f5f5e21361e3ac2'),
+                '_type' => array('My_ShantyMongo_Article'),
 				'title' => 'How to use Bend Space and Time',
 				'author' => MongoDBRef::create('user', new MongoId('broken_reference')),
 				'tags' => array('physics', 'hard', 'cool')
