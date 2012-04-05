@@ -662,7 +662,7 @@ abstract class Shanty_Mongo_Collection
         );
 
         /* run the query to the DB */
-		$cursor = static::getMongoCollection(false)->find($query, $fields);
+		$cursor = static::getMongoCollection(false)->find($query)->fields($fields);
 
         /* end the query */
         Shanty_Mongo::getProfiler()->queryEnd($key);
