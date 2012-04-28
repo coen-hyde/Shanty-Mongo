@@ -44,7 +44,7 @@ class Shanty_Mongo_DocumentSet extends Shanty_Mongo_Document
 		
 		// Make sure we are not trying to create a document that is supposed to be saved as a reference
 		if ($new && $this->hasRequirement(static::DYNAMIC_INDEX, 'AsReference')) {
-			require_once 'Shanty/Mongo/Exception.php';
+			require_once dirname(__FILE__) . '/../../Shanty/Mongo/Exception.php';
 			throw new Shanty_Mongo_Exception("Can not create a new document from documentset where document must be saved as a reference");
 		}
 
@@ -123,7 +123,7 @@ class Shanty_Mongo_DocumentSet extends Shanty_Mongo_Document
 		
 		// Make sure index is numeric
 		if (!$new && !is_numeric($index)) {
-			require_once 'Shanty/Mongo/Exception.php';
+			require_once dirname(__FILE__) . '/../../Shanty/Mongo/Exception.php';
 			throw new Shanty_Mongo_Exception("Index must be numeric '{$index}' given");
 		}
 		
@@ -142,7 +142,7 @@ class Shanty_Mongo_DocumentSet extends Shanty_Mongo_Document
 		$validators = $this->getValidators(self::DYNAMIC_INDEX);
 		
 		if (!$validators->isValid($document)) {
-			require_once 'Shanty/Mongo/Exception.php';
+			require_once dirname(__FILE__) . '/../../Shanty/Mongo/Exception.php';
 			throw new Shanty_Mongo_Exception(implode($validators->getMessages(), "\n"));
 		}
 		
@@ -255,7 +255,7 @@ class Shanty_Mongo_DocumentSet extends Shanty_Mongo_Document
 				return $this->getProperty();
 		}
 		
-		require_once 'Shanty/Mongo/Exception.php';
+		require_once dirname(__FILE__) .  '/../../Shanty/Mongo/Exception.php';
 		throw new Shanty_Mongo_Exception("Captured in __call. Method $name does not exist.");
 	}
 }

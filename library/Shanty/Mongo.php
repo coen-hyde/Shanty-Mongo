@@ -1,9 +1,9 @@
 <?php
 
-require_once 'Shanty/Mongo/Validate/Array.php';
-require_once 'Shanty/Mongo/Validate/Class.php';
-require_once 'Shanty/Mongo/Validate/StubTrue.php';
-require_once 'Shanty/Mongo/Connection/Group.php';
+require_once dirname(__FILE__) . '/../Shanty/Mongo/Validate/Array.php';
+require_once dirname(__FILE__) . '/../Shanty/Mongo/Validate/Class.php';
+require_once dirname(__FILE__) . '/../Shanty/Mongo/Validate/StubTrue.php';
+require_once dirname(__FILE__) . '/../Shanty/Mongo/Connection/Group.php';
 
 /**
  * @category   Shanty
@@ -120,7 +120,7 @@ class Shanty_Mongo
 		
 		// Attempt to create requirement
 		if (!$requirement = static::createRequirement($name, $options)) {
-			require_once 'Shanty/Mongo/Exception.php';
+			require_once dirname(__FILE__) . '/../Shanty/Mongo/Exception.php';
 			throw new Shanty_Mongo_Exception("No requirement exists for '{$name}'");
 		}
 		
@@ -299,7 +299,7 @@ class Shanty_Mongo
 		}
 		
 		if (!$connection = $connectionGroup->getWriteConnection($connectionGroupName)) {
-			require_once 'Shanty/Mongo/Exception.php';
+			require_once dirname(__FILE__) . '/../Shanty/Mongo/Exception.php';
 			throw new Shanty_Mongo_Exception("No write connection available for the '{$connectionGroupName}' connection group");
 		}
 		
@@ -322,7 +322,7 @@ class Shanty_Mongo
 		}
 		
 		if (!$connection = $connectionGroup->getReadConnection($connectionGroupName)) {
-			require_once 'Shanty/Mongo/Exception.php';
+			require_once dirname() . '/../Shanty/Mongo/Exception.php';
 			throw new Shanty_Mongo_Exception("No read connection available for the '{$connectionGroupName}' connection group");
 		}
 		

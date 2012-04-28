@@ -1,6 +1,6 @@
 <?php
 
-require_once 'Shanty/Mongo.php';
+require_once dirname(__FILE__) .  '/../../Shanty/Mongo.php';
 
 /**
  * @category   Shanty
