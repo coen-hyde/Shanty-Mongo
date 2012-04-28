@@ -1,9 +1,9 @@
 <?php
 
-require_once 'Shanty/Mongo/Document.php';
+require_once dirname(__FILE__) . '/../../Shanty/Mongo/Document.php';
 
-require_once 'Shanty/Mongo/Exception.php';
-require_once 'Shanty/Mongo/Iterator/Cursor.php';
+require_once dirname(__FILE__) . '/../../Shanty/Mongo/Exception.php';
+require_once dirname(__FILE__) . '/../../Shanty/Mongo/Iterator/Cursor.php';
 
 /**
  * @category   Shanty
@@ -265,7 +265,7 @@ abstract class Shanty_Mongo_Collection
 	public static function getMongoDb($writable = true)
 	{
 		if (!static::hasDbName()) {
-			require_once 'Shanty/Mongo/Exception.php';
+			require_once dirname(__FILE__) . '/../../Shanty/Mongo/Exception.php';
 			throw new Shanty_Mongo_Exception(get_called_class().'::$_db is null');
 		}
 

@@ -1,7 +1,7 @@
 <?php
-require_once 'Shanty/Mongo/Exception.php';
-require_once 'Shanty/Mongo/Collection.php';
-require_once 'Shanty/Mongo/Iterator/Default.php';
+require_once dirname(__FILE__) . '/../../Shanty/Mongo/Exception.php';
+require_once dirname(__FILE__) . '/../../Shanty/Mongo/Collection.php';
+require_once dirname(__FILE__) . '/../../Shanty/Mongo/Iterator/Default.php';
 
 /**
  * @category   Shanty
@@ -314,7 +314,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	public function _getMongoDb($writable = true)
 	{
 		if (is_null($this->getConfigAttribute('db'))) {
-			require_once 'Shanty/Mongo/Exception.php';
+			require_once dirname(__FILE__) . '/../../Shanty/Mongo/Exception.php';
 			throw new Shanty_Mongo_Exception('Can not fetch instance of MongoDb. Document is not connected to a db.');
 		}
 		
@@ -333,7 +333,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	public function _getMongoCollection($writable = true)
 	{
 		if (is_null($this->getConfigAttribute('collection'))) {
-			require_once 'Shanty/Mongo/Exception.php';
+			require_once dirname(__FILE__) . '/../../Shanty/Mongo/Exception.php';
 			throw new Shanty_Mongo_Exception('Can not fetch instance of MongoCollection. Document is not connected to a collection.');
 		}
 		
@@ -383,12 +383,12 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 					
 					if (!empty($matches)) {
 						if (!class_exists($matches[1])) {
-							require_once 'Shanty/Mongo/Exception.php';
+							require_once dirname(__FILE__) . '/../../Shanty/Mongo/Exception.php';
 							throw new Shanty_Mongo_Exception("$requirement class of '{$matches[1]}' does not exist");
 						}
 						
 						if (!is_subclass_of($matches[1], $standardClass)) {
-							require_once 'Shanty/Mongo/Exception.php';
+							require_once dirname(__FILE__) . '/../../Shanty/Mongo/Exception.php';
 							throw new Shanty_Mongo_Exception("$requirement of '{$matches[1]}' sub is not a class of $standardClass does not exist");
 						}
 						
@@ -661,7 +661,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	public function setProperty($property, $value)
 	{
 		if (substr($property, 0, 1) == '_') {
-			require_once 'Shanty/Mongo/Exception.php';
+			require_once dirname(__FILE__) . '/../../Shanty/Mongo/Exception.php';
 			throw new Shanty_Mongo_Exception("Can not set private property '$property'");
 		}
 		
@@ -669,7 +669,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		
 		// Throw exception if value is not valid
 		if (!is_null($value) && !$validators->isValid($value)) {
-			require_once 'Shanty/Mongo/Exception.php';
+			require_once dirname(__FILE__) . '/../../Shanty/Mongo/Exception.php';
 			throw new Shanty_Mongo_Exception(implode($validators->getMessages(), "\n"));
 		}
 		
@@ -757,12 +757,12 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	public function createReference()
 	{
 		if (!$this->isRootDocument()) {
-			require_once 'Shanty/Mongo/Exception.php';
+			require_once dirname(__FILE__) . '/../../Shanty/Mongo/Exception.php';
 			throw new Shanty_Mongo_Exception('Can not create reference. Document is not a root document');
 		}
 		
 		if (!$this->isConnected()) {
-			require_once 'Shanty/Mongo/Exception.php';
+			require_once dirname(__FILE__) . '/../../Shanty/Mongo/Exception.php';
 			throw new Shanty_Mongo_Exception('Can not create reference. Document does not connected to a db and collection');
 		}
 		
@@ -836,7 +836,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		$requiredProperties = $this->getPropertiesWithRequirement('Required');
 		foreach ($requiredProperties as $property) {
 			if (!isset($exportData[$property]) || (is_array($exportData[$property]) && empty($exportData[$property]))) {
-				require_once 'Shanty/Mongo/Exception.php';
+				require_once dirname(__FILE__) . '/../../Shanty/Mongo/Exception.php';
 				throw new Shanty_Mongo_Exception("Property '{$property}' must not be null.");
 			}
 		}
@@ -932,12 +932,12 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	public function save($entierDocument = false, $safe = true)
 	{
 		if (!$this->isConnected()) {
-			require_once 'Shanty/Mongo/Exception.php';
+			require_once dirname(__FILE__) . '/../../Shanty/Mongo/Exception.php';
 			throw new Shanty_Mongo_Exception('Can not save documet. Document is not connected to a db and collection');
 		}
 		
 		if ($this->isLocked()) {
-			require_once 'Shanty/Mongo/Exception.php';
+			require_once dirname(__FILE__) . '/../../Shanty/Mongo/Exception.php';
 			throw new Shanty_Mongo_Exception('Can not save documet. Document is locked.');
 		}
 		
@@ -1016,12 +1016,12 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	public function delete($safe = true)
 	{
 		if (!$this->isConnected()) {
-			require_once 'Shanty/Mongo/Exception.php';
+			require_once dirname(__FILE__) . '/../../Shanty/Mongo/Exception.php';
 			throw new Shanty_Mongo_Exception('Can not delete document. Document is not connected to a db and collection');
 		}
 	
 		if ($this->isLocked()) {
-			require_once 'Shanty/Mongo/Exception.php';
+			require_once dirname(__FILE__) . '/../../Shanty/Mongo/Exception.php';
 			throw new Shanty_Mongo_Exception('Can not save documet. Document is locked.');
 		}
 		
@@ -1198,7 +1198,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	{
 		// Make sure the operation is valid
 		if (!Shanty_Mongo::isValidOperation($operation)) {
-			require_once 'Shanty/Mongo/Exception.php';
+			require_once dirname(__FILE__) . '/../../Shanty/Mongo/Exception.php';
 			throw new Shanty_Mongo_Exception("'{$operation}' is not valid operation");
 		}
 		

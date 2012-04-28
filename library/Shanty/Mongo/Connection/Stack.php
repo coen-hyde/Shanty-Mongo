@@ -143,7 +143,7 @@ class Shanty_Mongo_Connection_Stack implements SeekableIterator, Countable, Arra
 	public function seek($position)
 	{
 		if (!is_numeric($position)) {
-			require_once 'Shanty/Mongo/Exception.php';
+			require_once dirname(__FILE__) . '/../../../Shanty/Mongo/Exception.php';
 			throw new Shanty_Mongo_Exception("Position must be numeric");
 		}
 		
@@ -237,7 +237,7 @@ class Shanty_Mongo_Connection_Stack implements SeekableIterator, Countable, Arra
 	public function offsetSet($offset, $connection)
 	{
 		if (!is_numeric($offset)) {
-			require_once 'Shanty/Mongo/Exception.php';
+			require_once dirname(__FILE__) . '/../../../Shanty/Mongo/Exception.php';
 			throw new Shanty_Mongo_Exception("Offset must be numeric");
 		}
 		
