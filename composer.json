@@ -21,7 +21,6 @@
     ],
     "require": {
         "php": ">=5.3"
-        // Zend Framework v1.x - not in Packagist
     },
     "autoload": {
         "psr-0": { "Shanty": "library/" }
