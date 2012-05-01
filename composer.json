@@ -8,15 +8,15 @@
     "authors": [
         {
             "name": "Coen Hyde",
-            "homepage": "http://coenhyde.com",
+            "homepage": "http://coenhyde.com"
         },
 	{
             "name": "Tom Holder",
-            "homepage": "http://www.simpleweb.co.uk",
+            "homepage": "http://www.simpleweb.co.uk"
         },
 	{
             "name": "Johnson Page",
-            "homepage": "http://johnsonpage.org",
+            "homepage": "http://johnsonpage.org"
         }
     ],
     "require": {
