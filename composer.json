@@ -8,9 +8,16 @@
     "authors": [
         {
             "name": "Coen Hyde",
-            "email": "coen.hyde@gmail.com",
             "homepage": "http://coenhyde.com",
-        }
+        },
+	{
+            "name": "Tom Holder",
+            "homepage": "http://www.simpleweb.co.uk",
+        },
+	{
+            "name": "Johnson Page",
+            "homepage": "http://johnsonpage.org",
+        },
     ],
     "require": {
         "php": ">=5.3"
