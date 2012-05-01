@@ -17,7 +17,7 @@
 	{
             "name": "Johnson Page",
             "homepage": "http://johnsonpage.org",
-        },
+        }
     ],
     "require": {
         "php": ">=5.3"
