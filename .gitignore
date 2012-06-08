@@ -4,3 +4,4 @@
 .settings
 tests/TestConfiguration.php
 library/Zend
+.DS_Store
