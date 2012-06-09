@@ -322,8 +322,9 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		else $connection = Shanty_Mongo::getReadConnection($this->getConfigAttribute('connectionGroup'));
 		
 		$temp = $connection->selectDB($this->getConfigAttribute('db'));
-		
-		$temp->w = 2;
+
+		# Tells replica set how many nodes must have the data before success
+//		$temp->w = 2;
 		
 		return $temp;
 	}
