@@ -332,7 +332,12 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		if ($writable) $connection = Shanty_Mongo::getWriteConnection($this->getConfigAttribute('connectionGroup'));
 		else $connection = Shanty_Mongo::getReadConnection($this->getConfigAttribute('connectionGroup'));
 		
-		return $connection->selectDB($this->getConfigAttribute('db'));
+		$temp = $connection->selectDB($this->getConfigAttribute('db'));
+
+		# Tells replica set how many nodes must have the data before success
+//		$temp->w = 2;
+		
+		return $temp;
 	}
 	
 	/**
@@ -987,15 +992,38 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 			}
 		}
 		
+		$result = false;
 		
-		$result = $this->_getMongoCollection(true)->update($this->getCriteria(), $operations, array('upsert' => true, 'safe' => $safe));
+		if($this->isNewDocument())
+		{
+			$result = $this->_getMongoCollection(true)->update($this->getCriteria(), $operations, array('upsert' => true, 'safe' => $safe));
+			$this->_cleanData = $exportData;
+		}
+		else
+		{
+			$newversion = $this->_getMongoDb(true)->command(
+				array(
+						'findandmodify' => $this->getConfigAttribute('collection'), 
+						'query' => $this->getCriteria(), 
+						'update'=>$operations,
+						'new'=>true )
+						);
+
+			if(isset($newversion['value']))
+				$this->_cleanData = $newversion['value'];
+
+			if($newversion['ok'] == 1)
+				$result = true;
+		}
+
 		$this->_data = array();
-		$this->_cleanData = $exportData;
 		$this->purgeOperations(true);
 		
 		// Run post hooks
-		if ($this->isNewDocument()) $this->postInsert();
-		else $this->postUpdate();
+		if ($this->isNewDocument()) 
+			$this->postInsert();
+		else 
+			$this->postUpdate();
 		
 		$this->postSave();
 		

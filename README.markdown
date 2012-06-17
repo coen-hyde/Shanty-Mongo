@@ -1,6 +1,8 @@
 Shanty Mongo
 ============
 
+[![Build Status](https://secure.travis-ci.org/coen-hyde/Shanty-Mongo.png?branch=master)](http://travis-ci.org/coen-hyde/Shanty-Mongo)
+
 Summary
 -------
 
