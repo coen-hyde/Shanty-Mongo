@@ -529,8 +529,11 @@ Project Organisers
 ------------------
 
 [tholder](http://github.com/tholder)
+
 [jwpage](http://github.com/jwpage)settermjd
+
 [settermjd](http://github.com/settermjd)
+
 [coen-hyde](http://github.com/coen-hyde)
 
 Special thanks to
