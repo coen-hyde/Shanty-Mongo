@@ -49,6 +49,7 @@ class Shanty_TestSetup extends PHPUnit_Framework_TestCase
 		require_once 'My/ShantyMongo/InvalidDocument.php';
 		require_once 'My/ShantyMongo/Simple.php';
 		require_once 'My/ShantyMongo/SimpleWithExport.php';
+		require_once 'My/ShantyMongo/SimpleSubDocWithExport.php';
 
 		$this->_connection = new Shanty_Mongo_Connection(TESTS_SHANTY_MONGO_CONNECTIONSTRING);
 		$this->_connection->connect();
