@@ -514,14 +514,6 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 	/**
      * @expectedException Shanty_Mongo_Exception
      */
-	public function testSetPropertyPrivateProperty()
-	{
-		$this->_bob->_private = 'invalid email';
-	}
-	
-	/**
-     * @expectedException Shanty_Mongo_Exception
-     */
 	public function testSetPropertyInvalidValueException()
 	{
 		$this->_bob->email = 'invalid email';
@@ -794,6 +786,33 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 		);
 		
 		$this->assertEquals($userRaw, $this->_userCollection->findOne(array('_id' => new MongoId($userId->__toString()))));
+	}
+	
+	public function testReplaceDocument()
+	{
+		$user = new My_ShantyMongo_User();
+		$user->email = 'email@domain.com';
+		$user->sex = 'F';
+		$user->name->first = 'Madeline';
+		$user->name->last = 'Veenstra';
+		$user->save();
+		
+		//Test original document is as expected.
+		$userId = $user->getId();
+		$userRow = $this->_userCollection->findOne(array('_id' => new MongoId($userId->__toString())));
+		$this->assertEquals('email@domain.com', $userRow['email']);
+		
+		$replacementUser = new My_ShantyMongo_User();
+		$replacementUser->setId($userId);
+		$replacementUser->email = 'email@anotherdomain.com';
+		$replacementUser->sex = 'M';
+		$replacementUser->name->first = 'Dave';
+		$replacementUser->name->last = 'Smithers';
+		$replacementUser->save();
+		
+		//Test replaced document is as expected.
+		$userReplacementDoc = $this->_userCollection->findOne(array('_id' => new MongoId($userId->__toString())));
+		$this->assertEquals('email@anotherdomain.com', $userReplacementDoc['email']);
 	}
 
 	public function testSaveSafe() {
