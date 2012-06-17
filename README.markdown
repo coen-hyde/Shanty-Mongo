@@ -530,7 +530,7 @@ Project Organisers
 
 [tholder](http://github.com/tholder)
 
-[jwpage](http://github.com/jwpage)settermjd
+[jwpage](http://github.com/jwpage)
 
 [settermjd](http://github.com/settermjd)
 
