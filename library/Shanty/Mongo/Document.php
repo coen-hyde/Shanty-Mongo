@@ -852,7 +852,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 				throw new Shanty_Mongo_Exception("Property '{$property}' must not be null.");
 			}
 		}
-		
+				
 		return $exportData;
 	}
 	
@@ -935,6 +935,23 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	}
 	
 	/**
+	 * Removes any properties that have been flagged as ignore in properties.
+	 *
+	 * @return array
+	 * @author Tom Holder
+	 **/
+	private function removeIgnoredProperties($exportData)
+	{
+		// remove ignored properties
+		$ignoreProperties = $this->getPropertiesWithRequirement('Ignore');
+		foreach ($ignoreProperties as $property) {
+			unset($exportData[$property]);
+		}
+		
+		return $exportData;
+	}
+	
+	/**
 	 * Save this document
 	 * 
 	 * @param boolean $entierDocument Force the saving of the entier document, instead of just the changes
@@ -959,7 +976,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		
 		$this->preSave();
 		
-		$exportData = $this->export();
+		$exportData = $this->removeIgnoredProperties($this->export());
 		
 		if ($this->isRootDocument() && ($this->isNewDocument() || $entierDocument)) {
 			// Save the entier document
