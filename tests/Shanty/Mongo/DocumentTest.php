@@ -1218,4 +1218,24 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 	    $exportedData = $article->export();
 	    $this->assertEquals('102 reasons mongo is the bomb digidy', $exportedData['relatedArticles'][0]['title']);
 	}
+	
+	/**
+	 * Test for Ignore requirement.
+	 *
+	 * @return void
+	 * @author Tom Holder
+	 **/
+	public function testIgnoreRequirement()
+	{
+		
+		$doc = new My_ShantyMongo_SimpleWithExport();
+		$doc->field1 = 'Some Data';
+		$doc->save();
+		$id = $doc->getId();
+		
+		$savedDoc = My_ShantyMongo_SimpleWithExport::find($id);
+		
+		$this->assertNull($savedDoc->myIgnoredProperty);
+		$this->assertEquals('some data', $savedDoc->myUnignoredProperty);
+	}
 }

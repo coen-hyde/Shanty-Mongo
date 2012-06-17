@@ -101,6 +101,9 @@ To use a filter add a requirement with the prefix 'Filter:' followed by the name
 - Required  
   Ensures that a property exists. Unlike most validators that run when a property is set, Required is run when a document is saved.
 
+- Ignore  
+  Will prevent a property/field being saved to Mongo. Allows overriding export() function and adding own computed data without persisting back to db.
+
 - AsReference  
   Will save a document as a reference
 
