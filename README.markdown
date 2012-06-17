@@ -6,7 +6,7 @@ Shanty Mongo
 Summary
 -------
 
-Shanty Mongo is a prototype mongodb adapter for the Zend Framework. It's intention is to make working with mongodb documents as natural and as simple as possible. In particular allowing embedded documents to also have custom document classes.
+Shanty Mongo is MongoDB library for the Zend Framework. It's intention is to make working with MongoDB documents as natural and as simple as possible. In particular allowing embedded documents to also have custom document classes.
 
 Requirements
 ------------
@@ -520,16 +520,29 @@ Shanty has good test coverage. It's easy to run the tests:
 
 All tests should pass!
 
-    
+Community
+---------
+
+[Shanty Mongo Google Group](https://groups.google.com/forum/?fromgroups#!forum/shanty-mongo)
+
+Project Organisers
+------------------
+
+[tholder](http://github.com/tholder)
+
+[jwpage](http://github.com/jwpage)
+
+[settermjd](http://github.com/settermjd)
+
+[coen-hyde](http://github.com/coen-hyde)
+
 Special thanks to
 -----------------
 
-[stunti](http://github.com/stunti) for bug fixes
+[tonymillion](https://github.com/tonymillion)
+
+[stunti](http://github.com/stunti)
+
 [sh](http://github.com/sh) for Shanty_Paginator
 
 Mongoid for inspiration
- 
-Contact
--------
-
-coen.hyde at gmail dot com
