@@ -1254,8 +1254,15 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 		$id = $doc->getId();
 		
 		$savedDoc = My_ShantyMongo_SimpleWithExport::find($id);		
-		$this->assertNull($savedDoc->myIgnoredProperty);
-		$this->assertEquals('some data', $savedDoc->myUnignoredProperty);		
+		$this->assertNull($savedDoc->subDoc->myIgnoredProperty);
+		$this->assertEquals('sub document data', $savedDoc->subDoc->myUnignoredProperty);
+		
+		$savedDoc->field3 = 'some more data';
+		$savedDoc->save();
+		
+		$savedAgainDoc = My_ShantyMongo_SimpleWithExport::find($id);
+		$this->assertNull($savedAgainDoc->subDoc->myIgnoredProperty);
+		$this->assertEquals('sub document data', $savedAgainDoc->subDoc->myUnignoredProperty);
 		
 	}
 }

@@ -937,18 +937,23 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	/**
 	 * Removes any properties that have been flagged as ignore in properties.
 	 *
-	 * @return array
+	 * @return void
 	 * @author Tom Holder
 	 **/
-	private function removeIgnoredProperties($exportData)
+	public function removeIgnoredProperties(&$exportData)
 	{
 		// remove ignored properties
 		$ignoreProperties = $this->getPropertiesWithRequirement('Ignore');
+		
+		foreach ($this->_data as $property => $document) {
+			if (!($document instanceof Shanty_Mongo_Document)) continue;
+			
+			$document->removeIgnoredProperties($exportData[$property]);
+		}
+			
 		foreach ($ignoreProperties as $property) {
 			unset($exportData[$property]);
 		}
-		
-		return $exportData;
 	}
 	
 	/**
@@ -976,7 +981,10 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		
 		$this->preSave();
 		
-		$exportData = $this->removeIgnoredProperties($this->export());
+		$exportData = $this->export();
+		
+		//Remove data with Ignore requirement.
+		$this->removeIgnoredProperties($exportData);
 		
 		if ($this->isRootDocument() && ($this->isNewDocument() || $entierDocument)) {
 			// Save the entier document
