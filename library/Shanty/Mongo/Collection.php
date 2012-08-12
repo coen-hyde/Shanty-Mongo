@@ -250,8 +250,7 @@ abstract class Shanty_Mongo_Collection
 	 */
 	public static function getConnection($writable = true)
 	{
-		if ($writable) $connection = Shanty_Mongo::getWriteConnection(static::getConnectionGroupName());
-		else $connection = Shanty_Mongo::getReadConnection(static::getConnectionGroupName());
+		$connection = Shanty_Mongo::getConnectionForGroup(static::getConnectionGroupName());
 
 		return $connection;
 	}

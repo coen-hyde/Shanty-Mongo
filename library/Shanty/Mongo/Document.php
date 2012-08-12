@@ -318,13 +318,9 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 			throw new Shanty_Mongo_Exception('Can not fetch instance of MongoDb. Document is not connected to a db.');
 		}
 		
-		if ($writable) $connection = Shanty_Mongo::getWriteConnection($this->getConfigAttribute('connectionGroup'));
-		else $connection = Shanty_Mongo::getReadConnection($this->getConfigAttribute('connectionGroup'));
+		$connection = Shanty_Mongo::getConnectionForGroup($this->getConfigAttribute('connectionGroup'));
 		
 		$temp = $connection->selectDB($this->getConfigAttribute('db'));
-		
-		$temp->w = 2;
-		
 		return $temp;
 	}
 	

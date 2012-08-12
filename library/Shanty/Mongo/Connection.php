@@ -27,7 +27,7 @@ class Shanty_Mongo_Connection extends Mongo
 		if (is_null($connectionString)) $connectionString = '127.0.0.1';
 
 		// Force mongo to connect only when we need to
-		$options['connect'] = false;
+		//$options['connect'] = false;
 		$connectionInfo = self::parseConnectionString($connectionString);
 		
 		$this->_connectionInfo = array_merge($options, $connectionInfo);
@@ -63,7 +63,8 @@ class Shanty_Mongo_Connection extends Mongo
 	 */
 	public function getDatabase()
 	{
-		if (!isset($this->_connectionInfo['database'])) return null;
+		if (!isset($this->_connectionInfo['database'])) 
+			return null;
 
 		return $this->_connectionInfo['database'];
 	}
