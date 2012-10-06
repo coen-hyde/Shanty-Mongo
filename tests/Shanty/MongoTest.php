@@ -261,7 +261,21 @@ class Shanty_MongoTest extends Shanty_Mongo_TestSetup
 		$this->assertEquals('Zend_Validate_Hostname', get_class($requirement));
 		$this->assertFalse($requirement->isValid('shantymongo.org'));
 	}
-	
+
+	public function testCustomValidator()
+	{
+		$requirement = Shanty_Mongo::createRequirement('Validator:Zend_Validate_EmailAddress');
+		$this->assertInternalType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $requirement);
+		$this->assertEquals('Zend_Validate_EmailAddress', get_class($requirement));
+	}
+
+	public function testCustomFilter()
+	{
+		$requirement = Shanty_Mongo::createRequirement('Filter:Zend_Filter_Alpha');
+		$this->assertInternalType(PHPUnit_Framework_Constraint_IsType::TYPE_OBJECT, $requirement);
+		$this->assertEquals('Zend_Filter_Alpha', get_class($requirement));
+	}
+
 	public static function validOperations()
 	{
 		return array(

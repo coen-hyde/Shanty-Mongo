@@ -41,8 +41,14 @@ class Shanty_Mongo
 		
 		// Requirement creator for validators
 		static::storeRequirementCreator('/^Validator:([A-Za-z]+[\w\-:]*)$/', function($data, $options = null) {
-			$instanceClass = 'Zend_Validate_'.$data[1];
-			if (!class_exists($instanceClass)) return null;
+			$instanceClass = $data[1];
+			if (!class_exists($instanceClass)) {
+				$instanceClass = 'Zend_Validate_'.$instanceClass;
+				if (!class_exists($instanceClass)) {
+					return null;
+				}
+			}
+
 			
 			if (!is_null($options)) $validator = new $instanceClass($options);
 			else $validator = new $instanceClass();
@@ -54,8 +60,13 @@ class Shanty_Mongo
 		
 		// Requirement creator for filters
 		static::storeRequirementCreator('/^Filter:([A-Za-z]+[\w\-:]*)$/', function($data, $options = null) {
-			$instanceClass = 'Zend_Filter_'.$data[1];
-			if (!class_exists($instanceClass)) return null;
+			$instanceClass = $data[1];
+			if (!class_exists($instanceClass)) {
+				$instanceClass = 'Zend_Filter_'.$instanceClass;
+				if (!class_exists($instanceClass)) {
+					return null;
+				}
+			}
 			
 			if (!is_null($options)) $validator = new $instanceClass($options);
 			else $validator = new $instanceClass();
