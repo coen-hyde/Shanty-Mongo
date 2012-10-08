@@ -5,10 +5,10 @@ php:
 
 before_script:
     # Fetch ZF
-    - wget http://framework.zend.com/releases/ZendFramework-1.11.11/ZendFramework-1.11.11-minimal.tar.gz
-    - tar xfz ZendFramework-1.11.11-minimal.tar.gz
+    - wget http://packages.zendframework.com/releases/ZendFramework-1.12.0/ZendFramework-1.12.0-minimal.tar.gz
+    - tar xfz ZendFramework-1.12.0-minimal.tar.gz
     # Create TestConfiguration file with ZF path
-    - sed "s,Zend Framework path here,`pwd`/ZendFramework-1.11.11-minimal/library," tests/TestConfiguration.php.dist > tests/TestConfiguration.php
+    - sed "s,Zend Framework path here,`pwd`/ZendFramework-1.12.0-minimal/library," tests/TestConfiguration.php.dist > tests/TestConfiguration.php
     # Install MongoDB driver
     - wget http://pecl.php.net/get/mongo-1.2.9.tgz
     - tar xfz mongo-1.2.9.tgz
