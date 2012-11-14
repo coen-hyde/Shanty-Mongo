@@ -1241,6 +1241,9 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 		$savedDoc->field2 = 'more data';
 		$savedDoc->save();
 		
+		// Test setting an ignored property
+		$savedDoc->myIgnoredProperty = "foo";
+
 		$savedAgainDoc = My_ShantyMongo_SimpleWithExport::find($id);
 		$this->assertNull($savedAgainDoc->myIgnoredProperty);
 		$this->assertEquals('some data', $savedAgainDoc->myUnignoredProperty);
