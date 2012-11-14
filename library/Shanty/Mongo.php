@@ -38,6 +38,7 @@ class Shanty_Mongo
 		// Stubs
 		static::storeRequirement('Required', new Shanty_Mongo_Validate_StubTrue());
 		static::storeRequirement('AsReference', new Shanty_Mongo_Validate_StubTrue());
+		static::storeRequirement('Ignore', new Shanty_Mongo_Validate_StubTrue());
 		
 		// Requirement creator for validators
 		static::storeRequirementCreator('/^Validator:([A-Za-z]+[\w\-:]*)$/', function($data, $options = null) {
