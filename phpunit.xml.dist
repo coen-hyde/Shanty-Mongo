@@ -1,0 +1,11 @@
+<phpunit bootstrap="tests/bootstrap.php">
+    <php>
+        <const name="TESTS_SHANTY_MONGO_CONNECTIONSTRING" value="127.0.0.1" />
+        <const name="TESTS_SHANTY_MONGO_DB" value="shanty-mongo-testing" />
+    </php>
+    <filter>
+        <whitelist>
+            <directory suffix=".php">library</directory>
+        </whitelist>
+    </filter>
+</phpunit>

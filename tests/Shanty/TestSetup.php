@@ -1,6 +1,4 @@
 <?php
-require_once dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR . 'TestHelper.php';
-
 require_once 'Shanty/Mongo.php';
 
 //require_once 'Shanty/Mongo/Connection.php';
