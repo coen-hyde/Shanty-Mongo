@@ -4,7 +4,7 @@
     "keywords": ["zend", "mongodb", "orm", "nosql"],
     "homepage": "https://github.com/coen-hyde/Shanty-Mongo",
     "type": "library",
-    "license": "New BSD",
+    "license": "BSD-3-Clause",
     "authors": [
         {
             "name": "Coen Hyde",
