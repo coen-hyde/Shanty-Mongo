@@ -24,5 +24,6 @@
     },
     "autoload": {
         "psr-0": { "Shanty": "library/" }
-    }
+    },
+    "include-path": [ "library/" ]
 }
