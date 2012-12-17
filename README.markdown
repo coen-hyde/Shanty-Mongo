@@ -513,10 +513,10 @@ Running Tests
 
 Shanty has good test coverage. It's easy to run the tests:
 
-- Make sure you have [PHPUnit](https://github.com/sebastianbergmann/phpunit/) installed. 3.6.2 or newer.
-- Place a copy of the [Zend Framework](http://framework.zend.com/) library in to the Shanty library folder.
-- Set the path to ZF by editing tests/TestConfiguration.php.dist and saving to tests/TestConfiguration.php
-- from command line in Shanty folder run phpunit tests/alltests
+- Run `composer install --dev`
+- Run `./vendor/bin/phpunit`
+
+If needed, you can change the MongoDB connection string, or the database name by editing the `phpunit.xml.dist` file.
 
 All tests should pass!
 
