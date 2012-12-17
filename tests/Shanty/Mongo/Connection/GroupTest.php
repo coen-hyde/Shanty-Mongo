@@ -152,7 +152,6 @@ class Shanty_Mongo_Connection_GroupTest extends Shanty_Mongo_TestSetup
 	public function testGetWriteConnection()
 	{
 		$master = $this->getMock('Shanty_Mongo_Connection', array('connect'));
-		$master->expects($this->once())->method('connect');
 		$this->_group->addMaster($master);
 		$this->assertEquals($master, $this->_group->getWriteConnection());
 	}
@@ -161,14 +160,12 @@ class Shanty_Mongo_Connection_GroupTest extends Shanty_Mongo_TestSetup
 	{
 		// Test no slaves, only master
 		$master = $this->getMock('Shanty_Mongo_Connection', array('connect'));
-		$master->expects($this->once())->method('connect');
 		$this->_group->addMaster($master);
 		
 		$this->assertEquals($master, $this->_group->getReadConnection());
 		
 		// Test slaves plus master
 		$slave = $this->getMock('Shanty_Mongo_Connection', array('connect'));
-		$slave->expects($this->once())->method('connect');
 		$this->_group->addSlave($slave);
 		
 		$this->assertEquals($slave, $this->_group->getReadConnection());
