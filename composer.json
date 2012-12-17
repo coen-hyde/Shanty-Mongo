@@ -22,6 +22,10 @@
     "require": {
         "php": ">=5.3"
     },
+    "require-dev": {
+        "digital-canvas/zend-framework": "1.12.0",
+        "phpunit/phpunit": "~3.7.0"
+    },
     "autoload": {
         "psr-0": { "Shanty": "library/" }
     },
