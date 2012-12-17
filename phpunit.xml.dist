@@ -1,4 +1,18 @@
-<phpunit bootstrap="tests/bootstrap.php">
+<phpunit 
+    colors="true" 
+    bootstrap="tests/bootstrap.php"
+>
+    <testsuites>
+        <testsuite name="Shanty Mongo Suite">
+            <directory>./tests</directory>
+        </testsuite>
+        <testsuite name="Paginator Suite">
+            <directory>./tests/Shanty/Paginator</directory>
+        </testsuite>
+        <testsuite name="Mongo Suite">
+            <directory>./tests/Shanty/Mongo</directory>
+        </testsuite>
+    </testsuites>
     <php>
         <const name="TESTS_SHANTY_MONGO_CONNECTIONSTRING" value="127.0.0.1" />
         <const name="TESTS_SHANTY_MONGO_DB" value="shanty-mongo-testing" />
