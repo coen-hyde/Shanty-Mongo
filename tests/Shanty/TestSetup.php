@@ -134,7 +134,7 @@ class Shanty_TestSetup extends PHPUnit_Framework_TestCase
 		$this->_userCollection = $this->_connection->selectDb(TESTS_SHANTY_MONGO_DB)->selectCollection('user');
 
 		foreach ($this->_users as $user) {
-			$this->_userCollection->insert($user, true);
+			$this->_userCollection->insert($user, array('safe' => true));
 		}
 
 		$this->_articles = array(
@@ -163,7 +163,7 @@ class Shanty_TestSetup extends PHPUnit_Framework_TestCase
 		$this->_articleCollection = $this->_connection->selectDb(TESTS_SHANTY_MONGO_DB)->selectCollection('article');
 
 		foreach ($this->_articles as $article) {
-			$this->_articleCollection->insert($article, true);
+			$this->_articleCollection->insert($article, array('safe' => true));
 		}
 
 		// Insert some countries
