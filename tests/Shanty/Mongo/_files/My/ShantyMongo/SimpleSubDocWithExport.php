@@ -9,8 +9,8 @@ class My_ShantyMongo_SimpleSubDocWithExport extends My_ShantyMongo_Abstract
 		'subDoc' => array('Document:My_ShantyMongo_SimpleSubDocWithExport')
 	);
 	
-	public function export() {
-		$data = parent::export();
+	public function export($skipRequired = false) {
+		$data = parent::export($skipRequired);
 		$data['myIgnoredProperty'] = 'sub document data';
 		$data['myUnignoredProperty'] = 'sub document data';
 		return $data;

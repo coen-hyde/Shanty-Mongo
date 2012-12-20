@@ -180,10 +180,10 @@ class Shanty_Mongo_DocumentSet extends Shanty_Mongo_Document
 	 * 
 	 * @return array
 	 */
-	public function export()
+	public function export($skipRequired = false)
 	{
 		// Since this is an array, fill in empty index's with null
-		$exportData = parent::export();
+		$exportData = parent::export($skipRequired);
 		
 		// Fix PHP "max(): Array must contain at least one element" bug
         // if DocumentSet has no data

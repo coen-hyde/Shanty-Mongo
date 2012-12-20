@@ -12,8 +12,8 @@ class My_ShantyMongo_SimpleWithExport extends My_ShantyMongo_Abstract
 	protected static $_db = TESTS_SHANTY_MONGO_DB;
 	protected static $_collection = 'simple';
 	
-	public function export() {
-		$data = parent::export();
+	public function export($skipRequired = false) {
+		$data = parent::export($skipRequired);
 		$data['myIgnoredProperty'] = 'some data';
 		$data['myUnignoredProperty'] = 'some data';
 		return $data;
