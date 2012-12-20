@@ -807,7 +807,7 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 	 * 
 	 * @return array
 	 */
-	public function export()
+	public function export($skipRequired = false)
 	{
 		$exportData = $this->_cleanData;
 		
@@ -843,14 +843,18 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 			
 			$exportData[$property] = $value;
 		}
-		
-		// make sure required properties are not empty
-		$requiredProperties = $this->getPropertiesWithRequirement('Required');
-		foreach ($requiredProperties as $property) {
-			if (!isset($exportData[$property]) || (is_array($exportData[$property]) && empty($exportData[$property]))) {
-				require_once 'Shanty/Mongo/Exception.php';
-				throw new Shanty_Mongo_Exception("Property '{$property}' must not be null.");
+
+		if (!$skipRequired) {
+
+			// make sure required properties are not empty
+			$requiredProperties = $this->getPropertiesWithRequirement('Required');
+			foreach ($requiredProperties as $property) {
+				if (!isset($exportData[$property]) || (is_array($exportData[$property]) && empty($exportData[$property]))) {
+					require_once 'Shanty/Mongo/Exception.php';
+					throw new Shanty_Mongo_Exception("Property '{$property}' must not be null.");
+				}
 			}
+
 		}
 				
 		return $exportData;

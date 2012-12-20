@@ -635,6 +635,12 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 		$this->_bob->email = null;
 		$this->_bob->export();
 	}
+
+	public function testExportSkipRequired()
+	{
+		$this->_bob->email = null;
+		$this->_bob->export(true);
+	}
 	
 	public function testIsNewDocument()
 	{
