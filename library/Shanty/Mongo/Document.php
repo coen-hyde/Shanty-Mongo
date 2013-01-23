@@ -1049,15 +1049,17 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		$this->purgeOperations(true);
 		
 		// Run post hooks
-		if ($this->isNewDocument()) 
+		if ($this->isNewDocument()) {
+			// This is not a new document anymore
+			$this->setConfigAttribute('new', false);
+
 			$this->postInsert();
-		else 
+		}
+		else {
 			$this->postUpdate();
+		}
 		
 		$this->postSave();
-		
-		// This is not a new document anymore
-		$this->setConfigAttribute('new', false);
 		
 		return $result;
 	}
