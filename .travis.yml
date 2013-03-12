@@ -6,9 +6,6 @@ php:
 
 before_script:
     # Install MongoDB driver
-    - wget http://pecl.php.net/get/mongo-1.2.9.tgz
-    - tar xfz mongo-1.2.9.tgz
-    - sh -c "cd mongo-1.2.9 && phpize && ./configure && make && sudo make install"
-    - echo "extension=mongo.so" >> `php --ini | grep "Loaded Configuration" | sed -e "s|.*:\s*||"`
+    - echo "extension = mongo.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
     # Install dev requirements
     - composer install --dev
