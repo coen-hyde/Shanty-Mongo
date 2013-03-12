@@ -8,4 +8,4 @@ before_script:
     # Install MongoDB driver
     - echo "extension = mongo.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
     # Install dev requirements
-    - composer install --dev
+    - composer install --dev --prefer-source
