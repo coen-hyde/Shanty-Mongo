@@ -92,7 +92,7 @@ class Shanty_TestSetup extends PHPUnit_Framework_TestCase
 				'friends' => array(
 					MongoDBRef::create('user', new MongoId('4c04516f1f5f5e21361e3ab1')),
 					MongoDBRef::create('user', new MongoId('4c0451791f5f5e21361e3ab2')),
-					MongoDBRef::create('user', new MongoId('broken reference'))
+					MongoDBRef::create('user', new MongoId('000000000000000000000000')),
 				),
 				'faculty' => 'Maths',
 				'email' => 'bob.jones@domain.com',
@@ -155,7 +155,7 @@ class Shanty_TestSetup extends PHPUnit_Framework_TestCase
 			'broken' => array(
 				'_id' => new MongoId('4c04516f1f5f5e21361e3ac2'),
 				'title' => 'How to use Bend Space and Time',
-				'author' => MongoDBRef::create('user', new MongoId('broken_reference')),
+				'author' => MongoDBRef::create('user', new MongoId('000000000000000000000000')),
 				'tags' => array('physics', 'hard', 'cool')
 			)
 		);
