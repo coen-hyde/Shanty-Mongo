@@ -20,7 +20,7 @@ class Shanty_Mongo_Connection_GroupTest extends Shanty_Mongo_TestSetup
 	public function testAddConnectionsNewGroupWithConnections()
 	{
 		$connections = array(
-			'master' => array('host' => 'localhost', 'timeout' => 300),
+			'master' => array('host' => 'localhost', 'connectTimeoutMS' => 300),
 			'slave' => array('host' => '127.0.0.1'),
 		);
 		
@@ -33,7 +33,7 @@ class Shanty_Mongo_Connection_GroupTest extends Shanty_Mongo_TestSetup
 		
 		$masterInfo = $masters[0]->getConnectionInfo();
 		$this->assertEquals('mongodb://localhost:27017', $masterInfo['connectionString']);
-		$this->assertEquals(300, $masterInfo['timeout']);
+		$this->assertEquals(300, $masterInfo['connectTimeoutMS']);
 		
 		$slave1Info = $slaves[0]->getConnectionInfo();
 		$this->assertEquals('mongodb://127.0.0.1:27017', $slave1Info['connectionString']);

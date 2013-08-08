@@ -14,7 +14,7 @@ class Shanty_Mongo_ConnectionTest extends Shanty_Mongo_TestSetup
 	{
 		$options = array(
 			'persist',
-			'timeout',
+			'connectTimeoutMS',
 			'replicaSet'
 		);
 		$this->assertEquals($options, Shanty_Mongo_Connection::getAvailableOptions());

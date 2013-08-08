@@ -13,7 +13,7 @@ class Shanty_Mongo_Connection extends Mongo
 {
 	static protected $_availableOptions = array(
 		'persist',
-		'timeout',
+		'connectTimeoutMS',
 		'replicaSet'
 	);
 	
