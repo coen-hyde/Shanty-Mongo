@@ -951,7 +951,8 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 		
 		foreach ($this->_data as $property => $document) {
 			if (!($document instanceof Shanty_Mongo_Document)) continue;
-			
+			if ($this->isReference($document) || $this->hasRequirement($property, 'AsReference')) continue;
+
 			$document->removeIgnoredProperties($exportData[$property]);
 		}
 			

@@ -1274,4 +1274,29 @@ class Shanty_Mongo_DocumentTest extends Shanty_Mongo_TestSetup
 		$this->assertEquals('sub document data', $savedAgainDoc->subDoc->myUnignoredProperty);
 		
 	}
+
+	/**
+	* This is to test a really obscure issue where DBRefs get save with null fields.
+	**/
+	public function testCleanDbRef()
+	{
+		$user = new My_ShantyMongo_User();
+		$user->name = new My_ShantyMongo_Name(array('first' => 'Tom', 'last' => 'Holder'));
+		$user->email = 'someone@domain.com';
+		$user->sex = 'M';
+		$user->save();
+
+		$var = $user->name->first;
+
+		$article = new My_ShantyMongo_Article();
+		$article->title = 'DBRefs should be clean';
+		$article->author = $user;
+		$article->save();
+
+		$article = My_ShantyMongo_Article::find($article->getId());
+		$exportedArticle = $article->export();
+
+		//This key shouldn't be left behind on field which should be a DBRef.
+		$this->assertArrayNotHasKey('name', $exportedArticle['author']);
+	}
 }
