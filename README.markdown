@@ -1,3 +1,8 @@
+RETIRED 
+=======
+
+This Library has be retired until further notice. There are a number of critical bugs that this library contains. They can be fixed but I don't have the time at the moment and I feel it is irresponsible to let people continue to use this libary knowing the issues they may experience. I welcome pull requests! With tests of course!
+
 Shanty Mongo
 ============
 
