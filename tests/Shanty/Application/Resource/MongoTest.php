@@ -33,12 +33,9 @@ class Shanty_Application_Resource_MongoTest extends PHPUnit_Framework_TestCase {
         $application = new Zend_Application('SingleHost', $config);
         $application->bootstrap();
         
-        $connectionInfo = Shanty_Mongo::getWriteConnection()
-                                      ->getConnectionInfo();
+        $connection = Shanty_Mongo::getWriteConnection();
         
-        self::assertArrayHasKey('hosts', $connectionInfo);
-        $hosts = $connectionInfo['hosts'];
-        
+        $hosts = $connection->getHosts();
         self::assertCount(1, $hosts);
         self::assertEquals($config->resources->mongo->host, $hosts[0]['host']);
         self::assertEquals($config->resources->mongo->port, $hosts[0]['port']);
@@ -53,15 +50,11 @@ class Shanty_Application_Resource_MongoTest extends PHPUnit_Framework_TestCase {
         $application = new Zend_Application('SingleMasterSingleSlave', $config);
         $application->bootstrap();
         
-        $readConnectionInfo = Shanty_Mongo::getReadConnection()
-                                          ->getConnectionInfo();
-        $writeConnectionInfo = Shanty_Mongo::getWriteConnection()
-                                           ->getConnectionInfo();
+        $readConnection = Shanty_Mongo::getReadConnection();
+        $writeConnection = Shanty_Mongo::getWriteConnection();
         
-        
-        self::assertEquals($config->resources->mongo->slave->database, $readConnectionInfo['database']);
-        self::assertArrayHasKey('hosts', $readConnectionInfo);
-        $hosts = $readConnectionInfo['hosts'];
+        self::assertEquals($config->resources->mongo->slave->database, $readConnection->getDatabase());
+        $hosts = $readConnection->getHosts();
         
         self::assertCount(1, $hosts);
         self::assertEquals($config->resources->mongo->slave->host, $hosts[0]['host']);

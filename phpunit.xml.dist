@@ -12,6 +12,9 @@
         <testsuite name="Mongo Suite">
             <directory>./tests/Shanty/Mongo</directory>
         </testsuite>
+        <testsuite name="Application Resource Suite">
+            <directory>./tests/Shanty/Application</directory>
+        </testsuite>
     </testsuites>
     <php>
         <const name="TESTS_SHANTY_MONGO_CONNECTIONSTRING" value="127.0.0.1" />
