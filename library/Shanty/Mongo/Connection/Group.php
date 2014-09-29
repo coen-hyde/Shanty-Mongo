@@ -180,7 +180,11 @@ class Shanty_Mongo_Connection_Group
 		$connectionString .= implode(',', $hostStringList);
 
 		// Set database
-		if (isset($connectionOptions['database'])) $connectionString .= '/'.$connectionOptions['database'];
+		if (isset($connectionOptions['database'])) {
+            $connectionString .= '/'.$connectionOptions['database'];
+        } elseif (isset($connectionOptions['path'])) {
+            $connectionString .= $connectionOptions['path'];
+        }
 
 		return $connectionString;
 	}
