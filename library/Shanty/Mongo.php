@@ -41,7 +41,7 @@ class Shanty_Mongo
 		static::storeRequirement('Ignore', new Shanty_Mongo_Validate_StubTrue());
 		
 		// Requirement creator for validators
-		static::storeRequirementCreator('/^Validator:([A-Za-z]+[\w\-:]*)$/', function($data, $options = null) {
+        static::storeRequirementCreator('/^Validator:([A-Za-z\\\]+[\w\-:]*)$/', function($data, $options = null) {
 			$instanceClass = $data[1];
 			if (!class_exists($instanceClass)) {
 				$instanceClass = 'Zend_Validate_'.$instanceClass;
@@ -60,7 +60,7 @@ class Shanty_Mongo
 		});
 		
 		// Requirement creator for filters
-		static::storeRequirementCreator('/^Filter:([A-Za-z]+[\w\-:]*)$/', function($data, $options = null) {
+        static::storeRequirementCreator('/^Filter:([A-Za-z\\\]+[\w\-:]*)$/', function($data, $options = null) {
 			$instanceClass = $data[1];
 			if (!class_exists($instanceClass)) {
 				$instanceClass = 'Zend_Filter_'.$instanceClass;
@@ -83,9 +83,9 @@ class Shanty_Mongo
 			
 			return new Shanty_Mongo_Validate_Class($data[1]);
 		};
-		
-		static::storeRequirementCreator('/^Document:([A-Za-z]+[\w\-]*)$/', $classValidator);
-		static::storeRequirementCreator('/^DocumentSet:([A-Za-z]+[\w\-]*)$/', $classValidator);
+
+        static::storeRequirementCreator('/^Document:([A-Za-z\\\]+[\w\-]*)$/', $classValidator);
+        static::storeRequirementCreator('/^DocumentSet:([A-Za-z\\\]+[\w\-]*)$/', $classValidator);
 		
 		static::$_initialised = true;
 	}
