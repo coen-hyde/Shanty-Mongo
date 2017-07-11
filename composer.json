@@ -20,7 +20,8 @@
         }
     ],
     "require": {
-        "php": ">=5.3"
+        "php": ">=5.4",
+        "ext-mongo" : ">=1.4.0",
     },
     "require-dev": {
         "digital-canvas/zend-framework": "1.12.0",

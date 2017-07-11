@@ -395,8 +395,8 @@ class Shanty_Mongo_Document extends Shanty_Mongo_Collection implements ArrayAcce
 					
 					// Find the document class
 					$matches = array();
-					preg_match("/^{$requirement}:([A-Za-z][\w\-]*)$/", $requirementSearch, $matches);
-					
+                    preg_match("/^{$requirement}:([A-Za-z\\\\][\\w\\\\]*)/", $requirementSearch, $matches);
+
 					if (!empty($matches)) {
 						if (!class_exists($matches[1])) {
 							require_once 'Shanty/Mongo/Exception.php';

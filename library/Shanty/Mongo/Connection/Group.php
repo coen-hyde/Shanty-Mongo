@@ -130,7 +130,8 @@ class Shanty_Mongo_Connection_Group
 	{
 		// Select master
 		$write = $this->_masters->selectNode();
-		if ($write && !$write->connected) {
+        $connections = $write->getConnections();
+		if ($write && empty($connections)) {
                     $write->connect();
                 }
 		
@@ -179,7 +180,11 @@ class Shanty_Mongo_Connection_Group
 		$connectionString .= implode(',', $hostStringList);
 
 		// Set database
-		if (isset($connectionOptions['database'])) $connectionString .= '/'.$connectionOptions['database'];
+		if (isset($connectionOptions['database'])) {
+            $connectionString .= '/'.$connectionOptions['database'];
+        } elseif (isset($connectionOptions['path'])) {
+            $connectionString .= $connectionOptions['path'];
+        }
 
 		return $connectionString;
 	}
