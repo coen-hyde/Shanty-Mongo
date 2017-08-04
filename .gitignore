@@ -7,3 +7,4 @@ library/Zend
 .DS_Store
 composer.lock
 vendor
+/nbproject/
